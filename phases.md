@@ -49,7 +49,7 @@ Goal: findings become a grade and a prioritized to-do list.
 
 - [x] Risk weight per finding (`severity × confidence × exposure × asset_criticality`).
 - [x] Per-category score via exponential decay; overall weighted score.
-- [ ] Hard caps (confirmed critical → F; high internet-facing → C; expired cert / exposed secret → D).
+- [x] Hard caps (confirmed critical → F; high internet-facing → C; expired cert / exposed secret → D).
 - [x] Letter grades (A/B/C/D/F) + per-category subscores.
 - [ ] **"Fix next" ranking**: `points_regained_if_fixed / effort`.
 - [ ] Remediation renderer: what/why + stack-specific how + effort + CWE/OWASP refs.

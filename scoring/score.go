@@ -76,6 +76,58 @@ type Report struct {
 	Score      float64         `json:"score"`
 	Grade      string          `json:"grade"`
 	Categories []CategoryScore `json:"categories"`
+	// Uncapped is the weighted score before hard caps.
+	Uncapped float64 `json:"uncapped"`
+	Caps     []Cap   `json:"caps,omitempty"`
+}
+
+// Cap is a hard limit on the grade caused by one finding, SSL Labs style:
+// one serious flaw caps the grade however good everything else is.
+type Cap struct {
+	Grade       string `json:"grade"`
+	Reason      string `json:"reason"`
+	Fingerprint string `json:"fingerprint"`
+	Title       string `json:"title"`
+}
+
+// capCeiling is the highest score allowed under each capped grade.
+var capCeiling = map[string]float64{"C": 79.9, "D": 69.9, "F": 59.9}
+
+// capsFor returns every cap the findings trigger.
+func capsFor(findings []core.Finding) []Cap {
+	var caps []Cap
+	add := func(grade, reason string, f core.Finding) {
+		caps = append(caps, Cap{Grade: grade, Reason: reason, Fingerprint: f.Fingerprint, Title: f.Title})
+	}
+	for _, f := range findings {
+		if !Counts(f) {
+			continue
+		}
+		confirmed := f.Confidence == core.ConfidenceConfirmed
+		internet := ExposureFactor(f.Asset.Exposure) == 1.0
+		switch {
+		case confirmed && f.Severity == core.SeverityCritical:
+			add("F", "confirmed critical finding", f)
+		case confirmed && f.Severity == core.SeverityHigh && internet:
+			add("C", "confirmed high finding on an internet-facing asset", f)
+		}
+		if f.HasTag(core.TagExpiredCert) {
+			add("D", "expired TLS certificate", f)
+		}
+		if f.HasTag(core.TagExposedSecret) && internet {
+			add("D", "publicly exposed secret", f)
+		}
+	}
+	sort.SliceStable(caps, func(i, j int) bool { return caps[i].Grade > caps[j].Grade }) // worst (F) first
+	return caps
+}
+
+// applyCaps lowers score to the ceiling of the worst cap.
+func applyCaps(score float64, caps []Cap) float64 {
+	for _, c := range caps {
+		score = min(score, capCeiling[c.Grade])
+	}
+	return score
 }
 
 // Grade maps a score to a letter: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, else F.
@@ -122,11 +174,13 @@ func Score(findings []core.Finding, opts Options) Report {
 		totalWeight += w
 	}
 
-	overall := 100.0
+	uncapped := 100.0
 	if totalWeight > 0 {
-		overall = round1(weighted / totalWeight)
+		uncapped = round1(weighted / totalWeight)
 	}
-	return Report{Score: overall, Grade: Grade(overall), Categories: cats}
+	caps := capsFor(findings)
+	overall := applyCaps(uncapped, caps)
+	return Report{Score: overall, Grade: Grade(overall), Categories: cats, Uncapped: uncapped, Caps: caps}
 }
 
 // assessed returns the categories to score, in declaration order.
