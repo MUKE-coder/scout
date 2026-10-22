@@ -103,4 +103,7 @@ type ScanResult struct {
 	Errors     []CheckError   `json:"errors,omitempty"`
 	Score      float64        `json:"score"`
 	Grade      string         `json:"grade"`
+	// Assessed lists the categories of the checks that ran; the score only
+	// covers these.
+	Assessed []Category `json:"assessed,omitempty"`
 }

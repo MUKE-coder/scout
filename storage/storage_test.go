@@ -28,7 +28,8 @@ func sampleScan(id, target string, finished time.Time) core.ScanResult {
 		ID: id, Target: core.Target{Name: target, URL: target, Environment: core.EnvDev},
 		Mode: core.ModeSafe, StartedAt: finished.Add(-time.Minute), FinishedAt: finished,
 		Findings: []core.Finding{f, g}, Score: 72.5, Grade: "C",
-		Skipped: []core.SkippedCheck{{CheckID: "app.sqli", Mode: core.ModeActive, Reason: "mode cap"}},
+		Assessed: []core.Category{core.CategoryHeaders, core.CategoryTLS},
+		Skipped:  []core.SkippedCheck{{CheckID: "app.sqli", Mode: core.ModeActive, Reason: "mode cap"}},
 	}
 }
 
@@ -55,7 +56,7 @@ func storeContract(t *testing.T, s Store) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Grade != "C" || len(got.Findings) != 2 || len(got.Skipped) != 1 || got.Target.URL != "https://a.example" {
+	if got.Grade != "C" || len(got.Findings) != 2 || len(got.Skipped) != 1 || got.Target.URL != "https://a.example" || len(got.Assessed) != 2 {
 		t.Fatalf("GetScan round trip lost data: %+v", got)
 	}
 

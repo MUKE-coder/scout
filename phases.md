@@ -59,7 +59,7 @@ Goal: findings become a grade and a prioritized to-do list.
 ## Phase 4 — CLI output & CI mode
 Goal: usable from a terminal and a pipeline before the UI exists.
 
-- [ ] `scout scan` renders a clean terminal report: grade, subscores, Fix-next top 5, findings table.
+- [x] `scout scan` renders a clean terminal report: grade, subscores, Fix-next top 5, findings table.
 - [ ] Output formats: pretty, `--json`, `--sarif` (GitHub Code Scanning).
 - [ ] `scout ci --fail-on <sev> --new-only`: exit codes drive build pass/fail; `--new-only` uses fingerprint diff vs. last scan.
 - [ ] `scout diff <a> <b>`: new / fixed / regressed.

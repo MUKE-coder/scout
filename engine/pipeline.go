@@ -74,6 +74,7 @@ func (e *Engine) finish(ctx context.Context, res *core.ScanResult, assessed []co
 	}
 	mergeHistory(res.Findings, prev, res.FinishedAt)
 
+	res.Assessed = assessed
 	opts := e.opts.Scoring
 	opts.Assessed = assessed
 	report := scoring.Score(res.Findings, opts)

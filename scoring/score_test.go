@@ -26,6 +26,13 @@ func TestNoFindingsScoresPerfect(t *testing.T) {
 	}
 }
 
+func TestNothingAssessedHasNoGrade(t *testing.T) {
+	r := Score(nil, Options{Assessed: []core.Category{}})
+	if r.Grade != "" || r.Score != 0 || len(r.Categories) != 0 {
+		t.Fatalf("empty assessment should have no grade: %+v", r)
+	}
+}
+
 func TestDecayValues(t *testing.T) {
 	only := Options{Assessed: []core.Category{core.CategoryApp}}
 	cases := map[core.Severity]float64{

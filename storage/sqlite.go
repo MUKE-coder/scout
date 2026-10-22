@@ -17,16 +17,17 @@ import (
 // scanRow is the persisted scan. The full target and bookkeeping live in
 // JSON columns; frequently queried fields are real columns.
 type scanRow struct {
-	ID          string `gorm:"primaryKey"`
-	TargetName  string `gorm:"index"`
-	Mode        int
-	StartedAt   time.Time
-	FinishedAt  time.Time `gorm:"index"`
-	Score       float64
-	Grade       string
-	TargetJSON  string
-	SkippedJSON string
-	ErrorsJSON  string
+	ID           string `gorm:"primaryKey"`
+	TargetName   string `gorm:"index"`
+	Mode         int
+	StartedAt    time.Time
+	FinishedAt   time.Time `gorm:"index"`
+	Score        float64
+	Grade        string
+	TargetJSON   string
+	SkippedJSON  string
+	ErrorsJSON   string
+	AssessedJSON string
 }
 
 func (scanRow) TableName() string { return "scout_scans" }
@@ -205,10 +206,15 @@ func toScanRow(sc core.ScanResult) (scanRow, error) {
 	if err != nil {
 		return scanRow{}, err
 	}
+	assessed, err := json.Marshal(sc.Assessed)
+	if err != nil {
+		return scanRow{}, err
+	}
 	return scanRow{
 		ID: sc.ID, TargetName: sc.Target.Name, Mode: int(sc.Mode),
 		StartedAt: sc.StartedAt, FinishedAt: sc.FinishedAt, Score: sc.Score, Grade: sc.Grade,
 		TargetJSON: string(target), SkippedJSON: string(skipped), ErrorsJSON: string(errs),
+		AssessedJSON: string(assessed),
 	}, nil
 }
 
@@ -220,8 +226,8 @@ func fromScanRow(r scanRow) (core.ScanResult, error) {
 	for _, part := range []struct {
 		raw string
 		dst any
-	}{{r.TargetJSON, &sc.Target}, {r.SkippedJSON, &sc.Skipped}, {r.ErrorsJSON, &sc.Errors}} {
-		if part.raw == "" {
+	}{{r.TargetJSON, &sc.Target}, {r.SkippedJSON, &sc.Skipped}, {r.ErrorsJSON, &sc.Errors}, {r.AssessedJSON, &sc.Assessed}} {
+		if part.raw == "" || part.raw == "null" {
 			continue
 		}
 		if err := json.Unmarshal([]byte(part.raw), part.dst); err != nil {

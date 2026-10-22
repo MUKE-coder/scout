@@ -8,6 +8,8 @@ import (
 	"github.com/MUKE-coder/scout"
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/engine"
+	"github.com/MUKE-coder/scout/report"
+	"github.com/MUKE-coder/scout/scoring"
 )
 
 // errNotImplemented marks commands whose behaviour lands in a later phase.
@@ -27,6 +29,7 @@ func NewRootCmd() *cobra.Command {
 	root.PersistentFlags().String("log-level", "info", "log level: debug, info, warn, error")
 	root.PersistentFlags().String("log-format", "text", "log format: text or json")
 	root.PersistentFlags().String("config", "", "path to scout.yaml")
+	root.PersistentFlags().String("color", "auto", "color output: auto, always, never")
 
 	root.AddCommand(newScanCmd(), newServeCmd(), newCICmd(), newDiffCmd(), newOwnershipCmd(), newVersionCmd())
 	return root
@@ -122,8 +125,11 @@ func newScanCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				fmt.Fprintf(out, "%s: grade %s (%.1f), mode %s, %d findings, %d skipped, %d errors\n",
-					t.Name, res.Grade, res.Score, res.Mode, len(res.Findings), len(res.Skipped), len(res.Errors))
+				r := report.Build(res, scoring.Options{Criticality: cfg.Criticality})
+				if err := report.Pretty(out, r, report.PrettyOptions{Color: useColor(cmd)}); err != nil {
+					return err
+				}
+				fmt.Fprintln(out)
 			}
 			return nil
 		},

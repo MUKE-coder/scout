@@ -73,7 +73,8 @@ type CategoryScore struct {
 	Worst core.Severity `json:"worst"`
 }
 
-// Report is the scored outcome of a set of findings.
+// Report is the scored outcome of a set of findings. When nothing was
+// assessed, Grade is empty and Score is 0.
 type Report struct {
 	Score      float64         `json:"score"`
 	Grade      string          `json:"grade"`
@@ -176,6 +177,10 @@ func Score(findings []core.Finding, opts Options) Report {
 		totalWeight += w
 	}
 
+	if len(cats) == 0 {
+		// Nothing was assessed: report no grade rather than a misleading A.
+		return Report{}
+	}
 	uncapped := 100.0
 	if totalWeight > 0 {
 		uncapped = round1(weighted / totalWeight)
