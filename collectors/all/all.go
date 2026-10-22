@@ -14,10 +14,10 @@
 package all
 
 // Collectors register here as they are implemented. Keep the list sorted.
-//
-//	import (
-//		_ "github.com/MUKE-coder/scout/collectors/dns"
-//		_ "github.com/MUKE-coder/scout/collectors/exposure"
-//		_ "github.com/MUKE-coder/scout/collectors/headers"
-//		_ "github.com/MUKE-coder/scout/collectors/tls"
-//	)
+import (
+	_ "github.com/MUKE-coder/scout/collectors/config"
+	_ "github.com/MUKE-coder/scout/collectors/dns"
+	_ "github.com/MUKE-coder/scout/collectors/exposure"
+	_ "github.com/MUKE-coder/scout/collectors/headers"
+	_ "github.com/MUKE-coder/scout/collectors/tls"
+)
