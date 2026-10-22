@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/MUKE-coder/scout"
+	"github.com/MUKE-coder/scout/engine"
 	"github.com/MUKE-coder/scout/report"
 )
 
@@ -117,6 +118,16 @@ func TestOwnershipToken(t *testing.T) {
 	out, _ = run("ownership", "-t", "http://localhost:8080")
 	if !strings.Contains(out, "no ownership proof is needed") {
 		t.Fatalf("local target: %q", out)
+	}
+}
+
+func TestOwnershipTokenUsesSigningKey(t *testing.T) {
+	unkeyed, _ := run("ownership", "-t", "https://shop.example.com")
+	t.Setenv("SCOUT_SIGNING_KEY", "install-secret")
+	keyed, _ := run("ownership", "-t", "https://shop.example.com")
+	want := engine.OwnershipToken([]byte("install-secret"), "shop.example.com")
+	if !strings.Contains(keyed, want) || unkeyed == keyed {
+		t.Fatalf("token must match the signing key scans verify with:\n%s", keyed)
 	}
 }
 

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -9,11 +10,6 @@ import (
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/engine"
 )
-
-// errNotImplemented marks commands whose behaviour lands in a later phase.
-func errNotImplemented(cmd string, phase int) error {
-	return fmt.Errorf("%s: not implemented yet (arrives in phase %d)", cmd, phase)
-}
 
 // NewRootCmd builds the scout command tree.
 func NewRootCmd() *cobra.Command {
@@ -65,8 +61,14 @@ func newOwnershipCmd() *cobra.Command {
 				fmt.Fprintf(out, "%s is local: no ownership proof is needed.\n", t.Host())
 				return nil
 			}
+			// Use the same key scans verify with, or the token would not match.
+			explicit, _ := cmd.Flags().GetString("config")
+			cfg, err := scout.LoadConfig(scout.FindConfig(explicit), os.Getenv)
+			if err != nil {
+				return err
+			}
 			host := t.Host()
-			token := engine.OwnershipToken(nil, host)
+			token := engine.OwnershipToken([]byte(cfg.SigningKey), host)
 			fmt.Fprintf(out, "Ownership token for %s:\n\n  %s\n\n", host, token)
 			fmt.Fprintf(out, "Publish it in one of these places before running an active scan:\n")
 			fmt.Fprintf(out, "  DNS TXT on _scout-verify.%s   %s%s\n", host, engine.TXTPrefix, token)
