@@ -215,6 +215,30 @@ func (s *Server) compliance(c *gin.Context) {
 	c.JSON(http.StatusOK, report.BuildCompliance(scans, s.d.Engine.Checks()))
 }
 
+// htmlReport renders the printable HTML report of every target's latest
+// scan (?download=1 sets an attachment filename).
+func (s *Server) htmlReport(c *gin.Context) {
+	scans, err := s.latestScans(c.Request.Context())
+	if err != nil {
+		fail(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	results := make([]report.Result, 0, len(scans))
+	for _, sc := range scans {
+		results = append(results, report.Build(sc, s.d.Scoring))
+	}
+	if c.Query("download") != "" {
+		c.Header("Content-Disposition", `attachment; filename="scout-report-`+time.Now().UTC().Format("20060102")+`.html"`)
+	}
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	// The report is static: forbid scripts as defense in depth.
+	c.Header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; img-src data:")
+	title := s.d.Settings.AppName + " security report"
+	if err := report.HTML(c.Writer, results, report.HTMLOptions{Title: title, Version: s.d.Settings.Version}); err != nil {
+		s.d.Logger.Error("rendering report", "err", err)
+	}
+}
+
 type startScanRequest struct {
 	Target string `json:"target" binding:"required"` // a configured target name or URL
 	Mode   string `json:"mode"`

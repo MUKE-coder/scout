@@ -118,7 +118,7 @@ Goal: the "wow" surfaces.
 - [x] **Attack-surface map**: interactive graph domain → hosts → ports/services → routes, nodes colored by worst severity.
 - [x] **Scan diff view** in the dashboard.
 - [x] **Compliance view**: OWASP Top 10 / ASVS coverage heatmap.
-- [ ] **Reports**: PDF/HTML export for clients/audits.
+- [x] **Reports**: PDF/HTML export for clients/audits.
 - [ ] Optional AI: explain-in-context, draft fix PR, stakeholder summary (with redaction).
 
 ## Phase 11 — Docs, examples & release

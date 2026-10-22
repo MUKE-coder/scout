@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Download, OctagonX, Play } from "lucide-react";
+import { Download, OctagonX, Play, Printer } from "lucide-react";
 import { useApi } from "../lib/useApi";
 import { API, ApiError, api, getToken } from "../lib/api";
 import { useLive } from "../lib/live";
@@ -95,9 +95,10 @@ export function Settings() {
 
         <Schedules />
 
-        <Section title="Data export">
-          <p className="mb-4 text-[13px] text-muted">Download the latest findings of every target.</p>
+        <Section title="Reports and export">
+          <p className="mb-4 text-[13px] text-muted">The report and exports cover the latest scan of every target.</p>
           <div className="flex flex-wrap gap-2">
+            <ReportButtons />
             <ExportButton format="json" />
             <ExportButton format="csv" />
           </div>
@@ -200,6 +201,48 @@ function ExportButton({ format }: { format: "json" | "csv" }) {
       <Download size={16} strokeWidth={1.5} aria-hidden />
       {format.toUpperCase()}
     </Button>
+  );
+}
+
+async function fetchReport(): Promise<Blob> {
+  const res = await fetch(`${API}/report`, { headers: { Authorization: `Bearer ${getToken() ?? ""}` } });
+  if (!res.ok) throw new Error(res.statusText);
+  return res.blob();
+}
+
+// HTML report download, and print-to-PDF via the browser's print dialog.
+function ReportButtons() {
+  const [busy, setBusy] = useState(false);
+  async function run(print: boolean) {
+    setBusy(true);
+    try {
+      const url = URL.createObjectURL(await fetchReport());
+      if (print) {
+        const w = window.open(url, "_blank");
+        if (w) w.addEventListener("load", () => w.print(), { once: true });
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `scout-report-${new Date().toISOString().slice(0, 10)}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <Button variant="primary" onClick={() => run(false)} disabled={busy}>
+        <Download size={16} strokeWidth={1.5} aria-hidden />
+        HTML report
+      </Button>
+      <Button onClick={() => run(true)} disabled={busy}>
+        <Printer size={16} strokeWidth={1.5} aria-hidden />
+        Print / PDF
+      </Button>
+    </>
   );
 }
 

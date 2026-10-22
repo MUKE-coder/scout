@@ -196,6 +196,18 @@ func TestSurfaceEndpoint(t *testing.T) {
 	}
 }
 
+func TestReportEndpoint(t *testing.T) {
+	f := newFixture(t)
+	f.set(finding("/a", core.SeverityHigh))
+	f.scan(t)
+	w := f.do(http.MethodGet, "/scout/api/report?download=1", "")
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "Test security report") ||
+		!strings.Contains(w.Header().Get("Content-Disposition"), ".html") ||
+		!strings.Contains(w.Header().Get("Content-Security-Policy"), "default-src 'none'") {
+		t.Fatalf("report: %d %v %.200s", w.Code, w.Header(), w.Body)
+	}
+}
+
 func TestOverview(t *testing.T) {
 	f := newFixture(t)
 	f.set(finding("/a", core.SeverityCritical))

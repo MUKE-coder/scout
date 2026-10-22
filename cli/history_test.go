@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -80,6 +81,23 @@ func TestPruneCommand(t *testing.T) {
 	out, err := run("prune", "--db", db, "--retention", "1h")
 	if err != nil || !strings.Contains(out, "Removed 3 scan(s)") {
 		t.Fatalf("prune: %v %q", err, out)
+	}
+}
+
+func TestReportCommand(t *testing.T) {
+	db, _ := seedHistory(t)
+	out := filepath.Join(t.TempDir(), "report.html")
+	if _, err := run("report", "--db", db, "--out", out); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(out)
+	if err != nil || !strings.Contains(string(raw), "<h2 class=\"target\">site</h2>") {
+		t.Fatalf("report not written: %v", err)
+	}
+	// A specific scan by prefix, to stdout.
+	stdout, err := run("report", "aaaa", "--db", db)
+	if err != nil || !strings.Contains(stdout, "aaaa1111") {
+		t.Fatalf("report by id: %v", err)
 	}
 }
 

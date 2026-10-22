@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Opts.Title}}</title>
+<style>
+  :root {
+    --text: #09090b; --muted: #52525b; --subtle: #71717a; --border: #e4e4e7; --surface: #fafafa; --surface-2: #f4f4f5;
+    --critical: #ce2c31; --high: #cc4e00; --medium: #ab6400; --low: #1d4ed8; --info: #52525b; --ok: #18794e; --accent: #6e56cf;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--text); font: 14px/1.6 "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 32px; }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+  h2 { font-size: 22px; font-weight: 600; margin: 48px 0 8px; }
+  h3 { font-size: 16px; font-weight: 600; margin: 32px 0 12px; }
+  h4 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
+  p { margin: 0 0 8px; }
+  .muted { color: var(--muted); } .subtle { color: var(--subtle); font-size: 12px; }
+  code, pre, .mono { font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  .card { border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin: 16px 0; break-inside: avoid; }
+  .grade { display: flex; align-items: center; gap: 24px; }
+  .grade .letter { font-size: 48px; font-weight: 600; line-height: 1; }
+  .ok { color: var(--ok); } .medium { color: var(--medium); } .high { color: var(--high); } .critical { color: var(--critical); } .low { color: var(--low); } .info { color: var(--info); } .none { color: var(--subtle); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); padding: 8px 0; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.num, th.num { text-align: right; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 500; padding: 1px 8px; border-radius: 6px; background: var(--surface-2); }
+  .sev { border-left: 3px solid var(--border); padding-left: 16px; }
+  .sev.critical { border-color: var(--critical); } .sev.high { border-color: var(--high); } .sev.medium { border-color: var(--medium); } .sev.low { border-color: var(--low); } .sev.info { border-color: var(--info); }
+  .finding { break-inside: avoid; margin: 0 0 24px; }
+  .finding h4 { color: var(--text); }
+  pre { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; white-space: pre-wrap; word-break: break-all; margin: 8px 0; }
+  .label { font-size: 12px; color: var(--subtle); margin-top: 12px; }
+  a { color: var(--accent); }
+  header.cover { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 8px; }
+  @media print {
+    main { padding: 0; max-width: none; }
+    h2.target { break-before: page; }
+    h2.target:first-of-type { break-before: auto; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="cover">
+    <h1>{{.Opts.Title}}</h1>
+    <p class="muted">Generated {{date .Opts.Generated}} by Scout {{.Opts.Version}}</p>
+    <p class="muted">{{len .Targets}} target(s). Findings marked accepted risk or false positive are excluded.</p>
+  </header>
+
+  {{range .Targets}}
+  <h2 class="target">{{.Scan.Target.Name}}</h2>
+  <p class="muted mono">{{if .Scan.Target.URL}}{{.Scan.Target.URL}}{{else}}{{.Scan.Target.Repo}}{{end}}</p>
+  <p class="subtle">{{.Scan.Target.Environment}} · {{.Scan.Mode}} mode · scanned {{date .Scan.StartedAt}} · scan {{.Scan.ID}}</p>
+
+  <div class="card grade">
+    {{if .Report.Grade}}
+    <div class="letter {{gradeClass .Report.Grade}}">{{.Report.Grade}}</div>
+    <div>
+      <div><strong>{{score .Report.Score}}</strong> / 100</div>
+      {{range .Report.Caps}}<div class="muted">Capped at {{.Grade}}: {{.Reason}} ({{.Title}})</div>{{end}}
+    </div>
+    {{else}}
+    <div class="letter none">–</div><div class="muted">No checks ran, so nothing was assessed.</div>
+    {{end}}
+  </div>
+
+  {{if .Report.Categories}}
+  <h3>Categories</h3>
+  <table>
+    <tr><th>Category</th><th class="num">Score</th><th class="num">Grade</th><th class="num">Open</th></tr>
+    {{range .Report.Categories}}
+    <tr><td>{{title (print .Category)}}</td><td class="num">{{score .Score}}</td><td class="num {{gradeClass .Grade}}">{{.Grade}}</td><td class="num">{{.Findings}}</td></tr>
+    {{end}}
+  </table>
+  {{end}}
+
+  {{if .FixNext}}
+  <h3>Fix next</h3>
+  <table>
+    <tr><th>#</th><th>Finding</th><th class="num">Points</th><th class="num">Effort</th></tr>
+    {{range $i, $f := .FixNext}}
+    <tr><td>{{inc $i}}</td><td><span class="{{print $f.Severity}}">●</span> {{$f.Title}}<div class="subtle mono">{{$f.Asset}}</div></td><td class="num">+{{score $f.Points}}</td><td class="num">{{effort $f.Effort}}</td></tr>
+    {{end}}
+  </table>
+  {{end}}
+
+  {{$stacks := .Stacks}}
+  {{range .Sections}}
+  <h3>{{title (print .Severity)}} ({{len .Findings}})</h3>
+  <div class="sev {{print .Severity}}">
+    {{range .Findings}}
+    <div class="finding">
+      <h4>{{.Title}}</h4>
+      <div class="subtle mono">{{.Asset.Value}}{{if .Location}} ({{.Location}}){{end}} · {{.CheckID}}</div>
+      <div class="subtle">{{.Confidence}} · {{.Category}} · effort {{effort .Remediation.Effort}} · first seen {{date .FirstSeen}}</div>
+      {{if .Remediation.What}}<p style="margin-top:8px">{{.Remediation.What}}</p>{{end}}
+      {{if .Remediation.Why}}<p class="muted">{{.Remediation.Why}}</p>{{end}}
+      {{if .Evidence.Matched}}<div class="label">Evidence</div><pre>{{.Evidence.Matched}}</pre>{{end}}
+      {{range fixes .Remediation.How $stacks}}
+      <div class="label">Fix ({{.Stack}})</div><pre>{{.Code}}</pre>
+      {{end}}
+      {{if or .CWE .OWASP}}<div class="subtle">{{range .CWE}}<a href="{{cweURL .}}">{{.}}</a> {{end}}{{range .OWASP}}OWASP {{.}} {{end}}</div>{{end}}
+    </div>
+    {{end}}
+  </div>
+  {{else}}
+  <p class="muted">No open findings.</p>
+  {{end}}
+  {{end}}
+</main>
+</body>
+</html>
