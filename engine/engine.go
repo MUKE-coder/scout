@@ -95,6 +95,9 @@ func New(reg *core.Registry, opts Options) *Engine {
 	return &Engine{reg: reg, opts: opts, log: log}
 }
 
+// Checks returns every registered check, sorted by ID.
+func (e *Engine) Checks() []core.Check { return e.reg.All() }
+
 // Request describes one scan.
 type Request struct {
 	Target core.Target

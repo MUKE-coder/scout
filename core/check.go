@@ -24,6 +24,15 @@ type Describer interface {
 	Description() string
 }
 
+// StandardsMapper is optionally implemented by checks to declare which
+// standards requirements they test, for the compliance coverage view.
+type StandardsMapper interface {
+	// OWASP returns OWASP Top 10 2021 IDs, e.g. "A05:2021".
+	OWASP() []string
+	// ASVS returns ASVS 4.0.3 requirement or chapter IDs, e.g. "V14.4.1".
+	ASVS() []string
+}
+
 // Registry holds the checks available to a scan. It is safe for concurrent use.
 type Registry struct {
 	mu     sync.RWMutex

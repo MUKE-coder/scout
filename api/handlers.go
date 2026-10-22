@@ -204,6 +204,17 @@ func (s *Server) surface(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"nodes": nodes})
 }
 
+// compliance maps the latest findings and registered checks onto OWASP Top
+// 10 and ASVS.
+func (s *Server) compliance(c *gin.Context) {
+	scans, err := s.latestScans(c.Request.Context())
+	if err != nil {
+		fail(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, report.BuildCompliance(scans, s.d.Engine.Checks()))
+}
+
 type startScanRequest struct {
 	Target string `json:"target" binding:"required"` // a configured target name or URL
 	Mode   string `json:"mode"`
