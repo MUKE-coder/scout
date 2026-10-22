@@ -2,10 +2,14 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/MUKE-coder/scout"
+	"github.com/MUKE-coder/scout/report"
 )
 
 func run(args ...string) (string, error) {
@@ -41,12 +45,35 @@ func TestScanDryRun(t *testing.T) {
 }
 
 func TestScanRunsEngine(t *testing.T) {
-	out, err := run("scan", "--target", "http://localhost:1", "--mode", "safe")
+	db := filepath.Join(t.TempDir(), "scout.db")
+	out, err := run("scan", "--target", "http://localhost:1", "--mode", "safe", "--db", db, "--color", "never")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "mode safe") {
-		t.Fatalf("scan summary missing: %q", out)
+	if !strings.Contains(out, "mode safe") || !strings.Contains(out, "Grade") {
+		t.Fatalf("terminal report missing: %q", out)
+	}
+	if _, err := os.Stat(db); err != nil {
+		t.Fatalf("scan was not persisted: %v", err)
+	}
+}
+
+func TestScanJSONAndSARIF(t *testing.T) {
+	sarif := filepath.Join(t.TempDir(), "out.sarif")
+	out, err := run("scan", "--target", "http://localhost:1", "--db", "", "--json", "--sarif", sarif)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc report.Document
+	if err := json.Unmarshal([]byte(out), &doc); err != nil {
+		t.Fatalf("--json output is not JSON: %v\n%s", err, out)
+	}
+	if doc.Tool != "scout" || len(doc.Results) != 1 {
+		t.Fatalf("doc = %+v", doc)
+	}
+	raw, err := os.ReadFile(sarif)
+	if err != nil || !strings.Contains(string(raw), `"version": "2.1.0"`) {
+		t.Fatalf("SARIF not written: %v", err)
 	}
 }
 
