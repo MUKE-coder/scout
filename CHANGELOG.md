@@ -8,12 +8,37 @@ the public API may change between minor versions.
 ## [Unreleased]
 
 ### Not yet included
-- **Deeper collectors.** Active DAST input testing (SQLi/XSS/SSRF/path
+- **Offensive collectors.** Active DAST input testing (SQLi/XSS/SSRF/path
   traversal), authentication and access control (JWT, IDOR, missing-auth,
-  CORS), Nuclei templates, and host and code/supply-chain checks are not
-  bundled yet.
+  CORS), and Nuclei exploit templates are not bundled.
+- **Heavier supply-chain checks.** Dependency CVEs (govulncheck), embedded
+  SAST (gosec/Semgrep), container image CVEs (Trivy), git-history secret
+  scanning and a host agent are not bundled.
 - **WAF effectiveness test** (Sentinel) — needs the offensive check corpus.
 - **AI draft-fix-PR** — needs repository and GitHub write access.
+
+## [0.3.0] — 2026-10-22
+
+Adds source-tree analysis collectors.
+
+### Added
+- **secrets** (`code.secrets`) — scans the repo for committed credentials
+  (AWS/Google/Slack/GitHub/Stripe keys, private-key blocks, JWTs, hard-coded
+  secret assignments). Values are masked and redacted in evidence; weak
+  generic hits in test files and docs are downgraded so fixtures don't skew
+  the grade, while strong key patterns stay high everywhere.
+- **dockerfile** (`code.dockerfile`) — lints Dockerfiles for running as root
+  or no `USER`, unpinned base images, remote `ADD`, and secrets in ENV/ARG.
+- Shared `collectors/internal/repo` walker (skips VCS/deps/build dirs and
+  binary/large files).
+
+### Fixed
+- **dns** collector no longer errors on `localhost` / single-label hosts.
+- **tls** collector's deliberate weak-protocol probes use `#nosec G402`.
+
+### Notes
+- Nine collectors / 35 checks total. Still HTTP-surface + source analysis,
+  not the full OWASP Top 10 — active DAST and auth testing remain out.
 
 ## [0.2.0] — 2026-10-22
 
@@ -81,6 +106,7 @@ First tagged release. Everything around the security checks is in place.
 - **Optional AI** — redacted explanations and stakeholder summaries via the
   Vercel AI Gateway, off by default.
 
-[Unreleased]: https://github.com/MUKE-coder/scout/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/MUKE-coder/scout/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/MUKE-coder/scout/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/MUKE-coder/scout/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/MUKE-coder/scout/releases/tag/v0.1.0

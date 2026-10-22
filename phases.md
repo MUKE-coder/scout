@@ -94,7 +94,7 @@ Goal: cover the server and the supply chain.
 - [ ] **Host agent** (optional): SSH config, firewall, listening services, OS package CVEs, file permissions, env/process secrets.
 - [ ] **Docker**: root/privileged containers, exposed socket, image CVEs (Trivy).
 - [ ] **Code collector**: `govulncheck` (reachability-aware), `gitleaks` (repo + git history), `gosec` + Semgrep SAST, Dockerfile/IaC (Trivy).
-- [ ] Config-posture checks consolidated (gin.DebugMode in prod, default creds, Sentinel/Pulse misconfig).
+- [x] Config-posture checks consolidated (gin.DebugMode in prod, default creds, Sentinel/Pulse misconfig).
 
 ## Phase 8 — Scheduling & prod operations
 Goal: safe to leave running against production.

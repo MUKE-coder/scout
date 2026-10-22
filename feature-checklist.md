@@ -53,9 +53,9 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [ ] Host agent: SSH config, firewall, listening services, OS package CVEs, file permissions, env/process secrets.
 - [ ] Docker: root/privileged containers, exposed socket, image CVEs.
 - [ ] Dependency CVEs via govulncheck (reachability-aware).
-- [ ] Secret scanning across repo + git history.
+- [x] Secret scanning across the repo (git-history scanning pending).
 - [ ] SAST (gosec + Semgrep rules).
-- [ ] Dockerfile / IaC misconfig checks.
+- [x] Dockerfile misconfig checks (IaC/Trivy pending).
 
 ## F. Findings model
 - [ ] Every collector emits the same `Finding` shape.
