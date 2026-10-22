@@ -22,7 +22,8 @@ type Lifecycle struct {
 
 // NewLifecycle returns a lifecycle derived from parent.
 func NewLifecycle(parent context.Context) *Lifecycle {
-	ctx, cancel := context.WithCancel(parent)
+	// cancel is kept on the struct and called by Shutdown.
+	ctx, cancel := context.WithCancel(parent) // #nosec G118 -- cancelled in Shutdown
 	return &Lifecycle{ctx: ctx, cancel: cancel}
 }
 
