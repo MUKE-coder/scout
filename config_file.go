@@ -122,6 +122,7 @@ func applyEnv(c *Config, getenv func(string) string) error {
 	str("SCOUT_USERNAME", &c.Username)
 	str("SCOUT_PASSWORD", &c.Password)
 	str("SCOUT_JWT_SECRET", &c.JWTSecret)
+	applyAlertEnv(c, getenv)
 
 	if v := getenv("SCOUT_ENV"); v != "" {
 		env, err := core.ParseEnvironment(v)

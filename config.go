@@ -40,6 +40,8 @@ type Config struct {
 	Window *ScanWindow `json:"window,omitempty" yaml:"window"`
 	// Schedules run scans automatically while Scout is serving.
 	Schedules []Schedule `json:"schedules,omitempty" yaml:"schedules"`
+	// Alerts notify about new or regressed findings after each saved scan.
+	Alerts *AlertsConfig `json:"alerts,omitempty" yaml:"alerts"`
 
 	// SigningKey signs the X-Scout-Scan self-test header. Generated if empty.
 	SigningKey string `json:"-" yaml:"signing_key"`
@@ -146,7 +148,10 @@ func (c Config) Validate() error {
 			return err
 		}
 	}
-	return validateSchedules(c.Schedules, c.Targets)
+	if err := validateSchedules(c.Schedules, c.Targets); err != nil {
+		return err
+	}
+	return c.Alerts.Validate()
 }
 
 // ValidateDashboard adds the checks needed before serving the dashboard:

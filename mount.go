@@ -112,6 +112,10 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 	s.lifecycle.Go(func(ctx context.Context) {
 		runPruner(ctx, store, c.Retention, DefaultPruneInterval, log)
 	})
+	if d := c.Alerts.dispatcher(store, log); d != nil {
+		s.lifecycle.Go(func(ctx context.Context) { d.Run(ctx, bus) })
+		log.Info("alerts active", "channels", len(d.Notifiers), "min_severity", d.MinSeverity)
+	}
 	if len(c.Schedules) > 0 {
 		sched, start, err := newScheduler(c.Schedules, c.Targets, log, s.runScheduled)
 		if err != nil {
@@ -205,6 +209,9 @@ func mergeConfig(dst *Config, src Config) {
 	}
 	if len(src.Scope.Hosts)+len(src.Scope.IncludePaths)+len(src.Scope.ExcludePaths) > 0 {
 		dst.Scope = src.Scope
+	}
+	if src.Alerts != nil {
+		dst.Alerts = src.Alerts
 	}
 	if len(src.Schedules) > 0 {
 		dst.Schedules = src.Schedules

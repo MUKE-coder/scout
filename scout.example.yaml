@@ -53,6 +53,24 @@ retention: 2160h    # 90 days
 #     targets: [local]           # omit for every target
 #     mode: safe
 
+# Alerts for findings that are new or regressed since the previous scan.
+# Secrets can come from SCOUT_SLACK_WEBHOOK, SCOUT_DISCORD_WEBHOOK and
+# SCOUT_SMTP_PASSWORD instead of this file.
+# alerts:
+#   min_severity: high
+#   dashboard_url: https://scout.example.com/scout/ui/
+#   slack:   { webhook_url: "https://hooks.slack.com/services/..." }
+#   discord: { webhook_url: "https://discord.com/api/webhooks/..." }
+#   email:
+#     host: smtp.example.com
+#     port: 587                  # STARTTLS
+#     username: scout
+#     from: scout@example.com
+#     to: [security@example.com]
+#   webhooks:                    # JSON, signed X-Scout-Signature: sha256=HMAC(secret, ts + "." + body)
+#     - url: https://ops.example.com/hooks/scout
+#       secret: change-me
+
 # Only scan inside this daily window (omit to allow any time).
 # window:
 #   start: "02:00"
