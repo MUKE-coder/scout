@@ -81,12 +81,12 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [ ] Optional AI explanations redact bodies/params/PII before sending.
 
 ## I. Interfaces
-- [ ] `scout scan` (URL and/or repo) with mode selection.
-- [ ] `scout ci --fail-on --new-only --sarif` with correct exit codes.
-- [ ] `scout diff <a> <b>` shows new/fixed/regressed.
+- [x] `scout scan` (URL and/or repo) with mode selection.
+- [x] `scout ci --fail-on --new-only --sarif` with correct exit codes.
+- [x] `scout diff <a> <b>` shows new/fixed/regressed.
 - [ ] `scout serve` runs the dashboard.
-- [ ] Output formats: pretty, JSON, SARIF.
-- [ ] Config file + env overrides.
+- [x] Output formats: pretty, JSON, SARIF.
+- [x] Config file + env overrides.
 
 ## J. Dashboard (see style-guide.md)
 - [ ] Embedded via `//go:embed`; no separate frontend deploy; `ui/dist/` committed.
