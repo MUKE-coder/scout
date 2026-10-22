@@ -35,6 +35,7 @@ type Scout struct {
 	engine    *engine.Engine
 	bus       *engine.Bus
 	kill      *engine.KillSwitch
+	scheduler *scheduler
 	lifecycle *Lifecycle
 }
 
@@ -111,6 +112,16 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 	s.lifecycle.Go(func(ctx context.Context) {
 		runPruner(ctx, store, c.Retention, DefaultPruneInterval, log)
 	})
+	if len(c.Schedules) > 0 {
+		sched, start, err := newScheduler(c.Schedules, c.Targets, log, s.runScheduled)
+		if err != nil {
+			_ = s.lifecycle.Shutdown(time.Second)
+			return nil, err
+		}
+		s.scheduler = sched
+		s.lifecycle.Go(start)
+		log.Info("schedules active", "count", len(c.Schedules))
+	}
 	return s, nil
 }
 
@@ -128,6 +139,9 @@ func (s *Scout) Register(r gin.IRouter) {
 		Scoring:  scoring.Options{Criticality: s.cfg.Criticality},
 		Go:       s.lifecycle.Go,
 		Logger:   s.log,
+		Schedules: func() any {
+			return s.scheduler.info(s.cfg.Schedules)
+		},
 	}).Register(g)
 
 	registerDashboard(g)
@@ -191,6 +205,12 @@ func mergeConfig(dst *Config, src Config) {
 	}
 	if len(src.Scope.Hosts)+len(src.Scope.IncludePaths)+len(src.Scope.ExcludePaths) > 0 {
 		dst.Scope = src.Scope
+	}
+	if len(src.Schedules) > 0 {
+		dst.Schedules = src.Schedules
+	}
+	if src.Window != nil {
+		dst.Window = src.Window
 	}
 	if len(src.Criticality) > 0 {
 		dst.Criticality = src.Criticality

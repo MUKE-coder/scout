@@ -4,7 +4,7 @@ import { useApi } from "../lib/useApi";
 import { API, ApiError, api, getToken } from "../lib/api";
 import { useLive } from "../lib/live";
 import type { Settings as SettingsData } from "../lib/types";
-import { capitalize } from "../lib/format";
+import { capitalize, dateTime } from "../lib/format";
 import { Button, Card, PageTitle, Spinner } from "../components/ui";
 import { ErrorNote } from "../components/EmptyState";
 import { Pill } from "../components/Severity";
@@ -76,7 +76,7 @@ export function Settings() {
           />
         </Section>
 
-        <Section title="Limits and schedule">
+        <Section title="Limits">
           <Rows
             rows={[
               ["Rate limit", <span className="tabular">{data.rate_limit} requests/s per host</span>],
@@ -89,10 +89,11 @@ export function Settings() {
                   ? `${data.window.start}–${data.window.end}${data.window.days?.length ? ` on ${data.window.days.join(", ")}` : ""}${data.window.timezone ? ` (${data.window.timezone})` : ""}`
                   : "Any time",
               ],
-              ["Scheduled scans", <span className="text-muted">Not available yet: scheduling arrives in a later release.</span>],
             ]}
           />
         </Section>
+
+        <Schedules />
 
         <Section title="Data export">
           <p className="mb-4 text-[13px] text-muted">Download the latest findings of every target.</p>
@@ -107,6 +108,44 @@ export function Settings() {
         <p className="text-[12px] text-subtle">Scout {data.version}</p>
       </div>
     </>
+  );
+}
+
+interface ScheduleInfo {
+  name: string;
+  cron: string;
+  timezone?: string;
+  targets?: string[];
+  mode?: string;
+  next: string;
+}
+
+function Schedules() {
+  const { data } = useApi<{ schedules: ScheduleInfo[] }>("/schedules");
+  const schedules = data?.schedules ?? [];
+  return (
+    <Section title="Schedules">
+      {schedules.length === 0 ? (
+        <p className="text-[13px] text-muted">
+          No scheduled scans. Add a <code className="font-mono">schedules</code> list to scout.yaml to scan automatically.
+        </p>
+      ) : (
+        <ul className="flex flex-col">
+          {schedules.map((s) => (
+            <li key={s.name} className="flex flex-wrap items-center gap-3 border-b border-border py-3 last:border-0">
+              <span className="w-32 text-[14px] font-medium">{s.name}</span>
+              <code className="font-mono text-[13px] text-muted">
+                {s.cron}
+                {s.timezone && ` (${s.timezone})`}
+              </code>
+              <span className="text-[13px] text-muted">{s.targets?.length ? s.targets.join(", ") : "All targets"}</span>
+              <Pill className="bg-surface-2 text-muted">{s.mode || "safe"} cap</Pill>
+              <span className="ml-auto text-[12px] text-subtle">next {dateTime(s.next)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
   );
 }
 

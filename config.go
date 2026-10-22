@@ -38,6 +38,8 @@ type Config struct {
 
 	// Window restricts when scans may run; nil allows any time.
 	Window *ScanWindow `json:"window,omitempty" yaml:"window"`
+	// Schedules run scans automatically while Scout is serving.
+	Schedules []Schedule `json:"schedules,omitempty" yaml:"schedules"`
 
 	// SigningKey signs the X-Scout-Scan self-test header. Generated if empty.
 	SigningKey string `json:"-" yaml:"signing_key"`
@@ -144,7 +146,7 @@ func (c Config) Validate() error {
 			return err
 		}
 	}
-	return nil
+	return validateSchedules(c.Schedules, c.Targets)
 }
 
 // ValidateDashboard adds the checks needed before serving the dashboard:

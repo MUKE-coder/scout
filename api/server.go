@@ -45,6 +45,8 @@ type Deps struct {
 	// cancels and waits for it.
 	Go     func(func(ctx context.Context))
 	Logger *slog.Logger
+	// Schedules lists configured schedules with next run times.
+	Schedules func() any
 }
 
 // Server serves /scout/api/* and /scout/ws/live.
@@ -91,6 +93,7 @@ func (s *Server) Register(g *gin.RouterGroup) {
 	a.POST("/kill", s.kill)
 	a.POST("/resume", s.resume)
 	a.GET("/settings", s.settings)
+	a.GET("/schedules", s.schedules)
 	a.GET("/export", s.export)
 
 	g.GET("/ws/live", s.d.Auth.Middleware(), s.live)

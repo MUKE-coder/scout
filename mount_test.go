@@ -60,6 +60,27 @@ func TestMountedLoginFlow(t *testing.T) {
 	}
 }
 
+func TestMountedSchedules(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	s := Mount(r, Config{
+		AppName:   "x",
+		Targets:   []core.Target{{Name: "shop", URL: "http://localhost:1"}},
+		Schedules: []Schedule{{Name: "nightly", Cron: "0 3 * * *", Targets: []string{"shop"}}},
+	})
+	defer s.Close(time.Second)
+	if s.scheduler == nil {
+		t.Fatal("scheduler not started")
+	}
+	info := s.scheduler.info(s.cfg.Schedules)
+	if len(info) != 1 || info[0].Next.IsZero() || info[0].Next.Hour() != 3 {
+		t.Fatalf("info = %+v", info)
+	}
+	if _, err := New(Config{Schedules: []Schedule{{Name: "x", Cron: "@daily"}}}); err == nil {
+		t.Fatal("schedules without targets must be rejected")
+	}
+}
+
 func TestMountKeepsDefaultsForPartialConfig(t *testing.T) {
 	s, err := New(Config{AppName: "x"})
 	if err != nil {

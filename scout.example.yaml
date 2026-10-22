@@ -44,6 +44,15 @@ check_timeout: 60s
 db: scout.db        # scan history (SQLite)
 retention: 2160h    # 90 days
 
+# Scheduled scans (run while `scout serve` is up). Each schedule's mode is a
+# cap; the environment caps it further. Overlapping runs are skipped.
+# schedules:
+#   - name: nightly
+#     cron: "0 3 * * *"          # or @daily, @hourly, "@every 6h"
+#     timezone: Europe/London    # optional; local time otherwise
+#     targets: [local]           # omit for every target
+#     mode: safe
+
 # Only scan inside this daily window (omit to allow any time).
 # window:
 #   start: "02:00"

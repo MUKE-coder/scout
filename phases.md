@@ -99,7 +99,7 @@ Goal: cover the server and the supply chain.
 ## Phase 8 — Scheduling & prod operations
 Goal: safe to leave running against production.
 
-- [ ] Scheduled scans (cron) with per-schedule mode caps.
+- [x] Scheduled scans (cron) with per-schedule mode caps.
 - [ ] Alerting: Slack, Discord, email, webhooks (HMAC) — reuse Pulse/Sentinel patterns.
 - [x] Scan history retention + pruning.
 - [x] Baseline / accepted-risk workflow (mute a finding with a reason + expiry).

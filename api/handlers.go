@@ -507,6 +507,14 @@ func (s *Server) settings(c *gin.Context) {
 	c.JSON(http.StatusOK, s.d.Settings)
 }
 
+func (s *Server) schedules(c *gin.Context) {
+	var list any = []any{}
+	if s.d.Schedules != nil {
+		list = s.d.Schedules()
+	}
+	c.JSON(http.StatusOK, gin.H{"schedules": list})
+}
+
 // export downloads the latest findings as JSON or CSV.
 func (s *Server) export(c *gin.Context) {
 	scans, err := s.latestScans(c.Request.Context())
