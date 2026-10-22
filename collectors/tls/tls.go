@@ -71,12 +71,16 @@ func handshake(ctx context.Context, t core.Target) (*state, error) {
 		st := &state{host: host, addr: addr}
 
 		// 1. A normal, verifying handshake to collect the certificate chain.
+		// A TLS scanner must allow old versions to observe what the server
+		// accepts; it reads, never trusts, what it negotiates.
+		// #nosec G402 -- scanner probes legacy TLS on purpose
 		conn, err := dial(ctx, addr, &tls.Config{ServerName: host, MinVersion: tls.VersionTLS10})
 		if err != nil {
 			// Record the verification error but still try to read the chain
 			// from an InsecureSkipVerify handshake, so cert checks can run.
 			st.verifyErr = err
-			conn, err = dial(ctx, addr, &tls.Config{ServerName: host, InsecureSkipVerify: true, MinVersion: tls.VersionTLS10}) //nolint:gosec // we only read the cert; we never trust it
+			// #nosec G402 -- we only read the presented chain, never trust it
+			conn, err = dial(ctx, addr, &tls.Config{ServerName: host, InsecureSkipVerify: true, MinVersion: tls.VersionTLS10})
 			if err != nil {
 				return nil, err
 			}
@@ -117,7 +121,8 @@ func dial(ctx context.Context, addr string, cfg *tls.Config) (*tls.Conn, error) 
 // from TLS 1.0 up. Returns 0 if none succeed.
 func lowestAccepted(ctx context.Context, host, addr string) uint16 {
 	for _, v := range []uint16{tls.VersionTLS10, tls.VersionTLS11, tls.VersionTLS12, tls.VersionTLS13} {
-		cfg := &tls.Config{ServerName: host, InsecureSkipVerify: true, MinVersion: v, MaxVersion: v} //nolint:gosec // version probe only
+		// #nosec G402 -- deliberately probing each legacy version to report what the server accepts
+		cfg := &tls.Config{ServerName: host, InsecureSkipVerify: true, MinVersion: v, MaxVersion: v}
 		conn, err := dial(ctx, addr, cfg)
 		if err == nil {
 			_ = conn.Close()
