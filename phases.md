@@ -72,7 +72,7 @@ Goal: the product people see. Follow `style-guide.md` exactly.
 - [x] JWT auth; default creds refused outside dev; login rate limit.
 - [x] REST API under `/scout/api/` + WebSocket `/scout/ws/live`.
 - [x] **Overview**: grade ring, 30-day trend, category subscore bars, Fix-next top 5, env cards (dev/staging/prod).
-- [ ] **Findings**: filterable table (severity, category, asset, status, new/regressed), bulk actions.
+- [x] **Findings**: filterable table (severity, category, asset, status, new/regressed), bulk actions.
 - [ ] **Finding detail**: request/response evidence viewer with payload highlighted, remediation panel, Verify-fix button, history timeline.
 - [ ] **Live scan view**: per-collector progress over WebSocket.
 - [ ] **Settings**: targets, scope, modes, schedules, data export (JSON/CSV), danger zone.

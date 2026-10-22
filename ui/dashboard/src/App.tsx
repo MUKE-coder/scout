@@ -8,6 +8,7 @@ import { useAuthed } from "./lib/auth";
 
 // Pages load on demand so charting code is only fetched where it is used.
 const Overview = lazy(() => import("./pages/Overview").then((m) => ({ default: m.Overview })));
+const Findings = lazy(() => import("./pages/Findings").then((m) => ({ default: m.Findings })));
 
 export function App() {
   const authed = useAuthed();
@@ -17,7 +18,7 @@ export function App() {
       <Routes>
         <Route element={<Shell />}>
           <Route index element={<Overview />} />
-          <Route path="findings" element={<Placeholder title="Findings" />} />
+          <Route path="findings" element={<Findings />} />
           <Route path="live" element={<Placeholder title="Live scan" />} />
           <Route path="settings" element={<Placeholder title="Settings" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
