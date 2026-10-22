@@ -9,8 +9,8 @@ Convention: `[ ]` = todo, `[~]` = in progress, `[x]` = done.
 ## Phase 0 — Foundation & scaffolding
 Goal: the skeleton compiles, the Mount pattern and CLI shell exist, nothing scans yet.
 
-- [ ] Initialize Go module `github.com/<owner>/scout`, Go 1.24+, no CGo.
-- [ ] Repo layout: `core/`, `collectors/`, `engine/`, `scoring/`, `remediation/`, `storage/`, `api/`, `cli/`, `ui/`, `examples/`, `docs/`.
+- [x] Initialize Go module `github.com/MUKE-coder/scout`, Go 1.24+, no CGo.
+- [x] Repo layout: `core/`, `collectors/`, `engine/`, `scoring/`, `remediation/`, `storage/`, `api/`, `cli/`, `ui/`, `examples/`, `docs/`.
 - [ ] Define `core` types: `Finding`, `Asset`, `Evidence`, `Remediation`, `Severity`, `Confidence`, `Category`, `Mode`, `Status`, `Target`, `ScanResult`.
 - [ ] Define the `Check` interface and a `Registry` that checks register into.
 - [ ] `scout.Config` + functional options (`WithTarget`, `WithMode`, `WithScope`, `WithConfig`).
