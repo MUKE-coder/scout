@@ -34,16 +34,20 @@ func TestEffectiveModeCappedInProd(t *testing.T) {
 }
 
 func TestDefaultCredentialsRefusedOutsideDev(t *testing.T) {
-	if _, err := NewConfig(WithEnvironment(core.EnvProd)); err == nil {
-		t.Fatal("prod with default creds must be refused")
+	prod, err := NewConfig(WithEnvironment(core.EnvProd))
+	if err != nil {
+		t.Fatalf("a prod scan config needs no dashboard creds: %v", err)
 	}
-	if _, err := NewConfig(WithEnvironment(core.EnvDev)); err != nil {
-		t.Fatalf("dev with default creds should be allowed: %v", err)
+	if prod.ValidateDashboard() == nil {
+		t.Fatal("prod dashboard with default creds must be refused")
+	}
+	if DefaultConfig().ValidateDashboard() != nil {
+		t.Fatal("dev dashboard with default creds should be allowed")
 	}
 	c := DefaultConfig()
 	c.Environment, c.Username, c.Password = core.EnvProd, "ops", "long-random-secret"
-	if _, err := NewConfig(WithConfig(c)); err != nil {
-		t.Fatalf("custom creds in prod: %v", err)
+	if c.ValidateDashboard() != nil {
+		t.Fatal("custom creds in prod should be allowed")
 	}
 }
 

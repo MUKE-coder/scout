@@ -141,6 +141,12 @@ func (c Config) Validate() error {
 			return err
 		}
 	}
+	return nil
+}
+
+// ValidateDashboard adds the checks needed before serving the dashboard:
+// default credentials are refused outside dev.
+func (c Config) ValidateDashboard() error {
 	if c.Environment != core.EnvDev && c.UsesDefaultCredentials() {
 		return fmt.Errorf("default dashboard credentials are refused in %s: set Username/Password", c.Environment)
 	}

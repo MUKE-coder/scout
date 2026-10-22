@@ -53,6 +53,9 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := c.ValidateDashboard(); err != nil {
+		return nil, err
+	}
 
 	var store storage.Store = storage.NewMemory(storage.DefaultMemoryCapacity)
 	if c.DBPath != "" {
