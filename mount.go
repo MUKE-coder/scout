@@ -78,9 +78,7 @@ func (s *Scout) Register(r gin.IRouter) {
 	api := g.Group("/api")
 	api.GET("/health", s.handleHealth)
 
-	g.GET("/ui/*path", func(c *gin.Context) {
-		c.String(http.StatusOK, "Scout dashboard arrives in phase 5.")
-	})
+	registerDashboard(g)
 	s.log.Info("scout mounted", "base", BasePath, "env", s.cfg.Environment, "mode", s.cfg.EffectiveMode())
 }
 

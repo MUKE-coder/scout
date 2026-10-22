@@ -68,7 +68,7 @@ Goal: usable from a terminal and a pipeline before the UI exists.
 ## Phase 5 — Dashboard (embedded React)
 Goal: the product people see. Follow `style-guide.md` exactly.
 
-- [ ] `ui/dashboard` scaffold: React 19 + Vite + Tailwind 4 + Recharts + Geist. Commit `ui/dist/`, embed via `//go:embed`.
+- [x] `ui/dashboard` scaffold: React 19 + Vite + Tailwind 4 + Recharts + Geist. Commit `ui/dist/`, embed via `//go:embed`.
 - [ ] JWT auth; default creds refused outside dev; login rate limit.
 - [ ] REST API under `/scout/api/` + WebSocket `/scout/ws/live`.
 - [ ] **Overview**: grade ring, 30-day trend, category subscore bars, Fix-next top 5, env cards (dev/staging/prod).
