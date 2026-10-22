@@ -4,6 +4,7 @@
 - [Safety model](safety.md) — modes, environment caps, ownership, the guard.
 - [Configuration](configuration.md) — `scout.yaml`, env vars, precedence.
 - [CLI](cli.md) — every command and its flags.
+- [Writing a collector](collectors.md) — the `core.Check` contract and a worked example.
 
 See also the repository [README](../README.md),
 [CHANGELOG](../CHANGELOG.md), [SECURITY](../SECURITY.md) and
