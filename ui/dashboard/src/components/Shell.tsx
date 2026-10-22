@@ -1,18 +1,22 @@
 import { NavLink, Outlet } from "react-router";
-import { Activity, LayoutDashboard, ListChecks, LogOut, Moon, Settings, Sun } from "lucide-react";
+import { Activity, LayoutDashboard, ListChecks, LogOut, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { setToken } from "../lib/api";
+import { useApi } from "../lib/useApi";
+import type { Settings } from "../lib/types";
+import { NewScanButton } from "./NewScanButton";
 
 const nav = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/findings", label: "Findings", icon: ListChecks },
   { to: "/live", label: "Live scan", icon: Activity },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 // App shell: 240px sidebar, 56px top bar, one scrollable main area.
 export function Shell() {
   const [theme, toggleTheme] = useTheme();
+  const settings = useApi<Settings>("/settings");
   return (
     <div className="flex h-screen bg-bg text-text">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border md:flex">
@@ -57,9 +61,13 @@ export function Shell() {
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 md:px-8">
-          <span className="text-[13px] font-medium text-muted md:hidden">Scout</span>
-          <span className="hidden md:block" />
+        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border px-4 md:px-8">
+          <span className="text-[13px] font-medium text-muted">
+            <span className="md:hidden">Scout · </span>
+            {settings.data?.app_name}
+            {settings.data && <span className="text-subtle"> · {settings.data.environment}</span>}
+          </span>
+          <NewScanButton targets={settings.data?.targets ?? []} />
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-[1280px] px-4 py-8 md:px-8">

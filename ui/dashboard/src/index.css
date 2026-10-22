@@ -37,6 +37,14 @@
   --sev-info: #71717a;
   --ok: #30a46c;
 
+  /* Badge text: a readable shade of each severity on its 12% tint. */
+  --sev-critical-fg: #ff6369;
+  --sev-high-fg: #ff8b3e;
+  --sev-medium-fg: #ffc53d;
+  --sev-low-fg: #70a5ff;
+  --sev-info-fg: #a1a1aa;
+  --ok-fg: #3dd68c;
+
   color-scheme: dark;
 }
 
@@ -49,6 +57,13 @@
   --text: #09090b;
   --text-muted: #52525b;
   --text-subtle: #71717a;
+
+  --sev-critical-fg: #ce2c31;
+  --sev-high-fg: #cc4e00;
+  --sev-medium-fg: #ab6400;
+  --sev-low-fg: #1d4ed8;
+  --sev-info-fg: #52525b;
+  --ok-fg: #18794e;
   color-scheme: light;
 }
 
@@ -71,6 +86,12 @@
   --color-low: var(--sev-low);
   --color-info: var(--sev-info);
   --color-ok: var(--ok);
+  --color-critical-fg: var(--sev-critical-fg);
+  --color-high-fg: var(--sev-high-fg);
+  --color-medium-fg: var(--sev-medium-fg);
+  --color-low-fg: var(--sev-low-fg);
+  --color-info-fg: var(--sev-info-fg);
+  --color-ok-fg: var(--ok-fg);
 
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
