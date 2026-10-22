@@ -48,9 +48,9 @@ Goal: point Scout at any URL and get real findings. No app integration needed ye
 Goal: findings become a grade and a prioritized to-do list.
 
 - [x] Risk weight per finding (`severity × confidence × exposure × asset_criticality`).
-- [ ] Per-category score via exponential decay; overall weighted score.
+- [x] Per-category score via exponential decay; overall weighted score.
 - [ ] Hard caps (confirmed critical → F; high internet-facing → C; expired cert / exposed secret → D).
-- [ ] Letter grades (A/B/C/D/F) + per-category subscores.
+- [x] Letter grades (A/B/C/D/F) + per-category subscores.
 - [ ] **"Fix next" ranking**: `points_regained_if_fixed / effort`.
 - [ ] Remediation renderer: what/why + stack-specific how + effort + CWE/OWASP refs.
 - [ ] Per-asset criticality config.
