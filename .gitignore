@@ -1,0 +1,29 @@
+# Binaries
+/scout
+/scout.exe
+/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Local data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+/data/
+
+# UI (dist is committed on purpose)
+ui/dashboard/node_modules/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
