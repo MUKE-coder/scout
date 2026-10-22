@@ -13,7 +13,7 @@ Goal: the skeleton compiles, the Mount pattern and CLI shell exist, nothing scan
 - [x] Repo layout: `core/`, `collectors/`, `engine/`, `scoring/`, `remediation/`, `storage/`, `api/`, `cli/`, `ui/`, `examples/`, `docs/`.
 - [x] Define `core` types: `Finding`, `Asset`, `Evidence`, `Remediation`, `Severity`, `Confidence`, `Category`, `Mode`, `Status`, `Target`, `ScanResult`.
 - [x] Define the `Check` interface and a `Registry` that checks register into.
-- [ ] `scout.Config` + functional options (`WithTarget`, `WithMode`, `WithScope`, `WithConfig`).
+- [x] `scout.Config` + functional options (`WithTarget`, `WithMode`, `WithScope`, `WithConfig`).
 - [ ] `storage` interface with two backends: in-memory ring buffer + pure-Go SQLite (`glebarez/sqlite`), auto-migrated schema.
 - [ ] CLI shell with `cobra`: `scan`, `serve`, `ci`, `diff`, `version` (stubs that parse flags).
 - [ ] `scout.Mount(router, cfg)` stub that registers the `/scout` route group.
