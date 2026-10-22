@@ -50,17 +50,6 @@ func newServeCmd() *cobra.Command {
 	return cmd
 }
 
-func newDiffCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "diff <scan-a> <scan-b>",
-		Short: "Show new, fixed and regressed findings between two scans",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errNotImplemented("diff", 4)
-		},
-	}
-}
-
 func newOwnershipCmd() *cobra.Command {
 	var target string
 	cmd := &cobra.Command{
