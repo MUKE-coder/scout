@@ -1,0 +1,35 @@
+# Example GitHub Actions workflow: run Scout in CI and fail the build on new
+# or regressed findings. Copy to .github/workflows/ in your own repository.
+#
+# Exit codes: 0 gate passed, 1 gate failed, 2 error.
+name: Security scan
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write # to upload SARIF
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Scout
+        run: go install github.com/MUKE-coder/scout/cmd/scout@latest
+
+      # Scan the repository (code and supply-chain checks) and fail on new or
+      # regressed high/critical findings. --sarif uploads results to the
+      # Security tab. Drop --new-only to gate on all open findings.
+      - name: Scout CI scan
+        run: scout ci --repo . --fail-on high --new-only --sarif scout.sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scout.sarif

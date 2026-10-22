@@ -122,7 +122,7 @@ Goal: the "wow" surfaces.
 - [x] Optional AI: explain-in-context, draft fix PR, stakeholder summary (with redaction). (Via Vercel AI Gateway. Draft fix PR is deferred: it needs repo and GitHub write access.)
 
 ## Phase 11 — Docs, examples & release
-- [ ] `examples/`: minimal website scan, full Gin app with `Mount()`, CI workflow.
+- [x] `examples/`: minimal website scan, full Gin app with `Mount()`, CI workflow.
 - [ ] Docs site (match the family docs style).
 - [ ] README with badges, quick start, dashboard screenshots.
 - [ ] SemVer, CHANGELOG, `STABILITY.md`, security policy, v1.0.0 tag.
