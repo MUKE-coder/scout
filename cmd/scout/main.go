@@ -10,6 +10,9 @@ import (
 	"os"
 
 	"github.com/MUKE-coder/scout/cli"
+
+	// Register every built-in collector's checks into the default registry.
+	_ "github.com/MUKE-coder/scout/collectors/all"
 )
 
 func main() {
