@@ -75,7 +75,7 @@ Goal: the product people see. Follow `style-guide.md` exactly.
 - [x] **Findings**: filterable table (severity, category, asset, status, new/regressed), bulk actions.
 - [x] **Finding detail**: request/response evidence viewer with payload highlighted, remediation panel, Verify-fix button, history timeline.
 - [x] **Live scan view**: per-collector progress over WebSocket.
-- [ ] **Settings**: targets, scope, modes, schedules, data export (JSON/CSV), danger zone.
+- [x] **Settings**: targets, scope, modes, schedules, data export (JSON/CSV), danger zone.
 
 ## Phase 6 — DAST & the Gin-aware SDK
 Goal: deep app testing, with the route-table advantage.

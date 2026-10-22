@@ -1,0 +1,1 @@
+var e=[`critical`,`high`,`medium`,`low`,`info`],t=[`open`,`fixed`,`accepted-risk`,`false-positive`];export{t as n,e as t};

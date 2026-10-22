@@ -84,13 +84,13 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [x] `scout scan` (URL and/or repo) with mode selection.
 - [x] `scout ci --fail-on --new-only --sarif` with correct exit codes.
 - [x] `scout diff <a> <b>` shows new/fixed/regressed.
-- [ ] `scout serve` runs the dashboard.
+- [x] `scout serve` runs the dashboard.
 - [x] Output formats: pretty, JSON, SARIF.
 - [x] Config file + env overrides.
 
 ## J. Dashboard (see style-guide.md)
-- [ ] Embedded via `//go:embed`; no separate frontend deploy; `ui/dist/` committed.
-- [ ] JWT auth; default creds refused outside dev; login rate limit.
+- [x] Embedded via `//go:embed`; no separate frontend deploy; `ui/dist/` committed.
+- [x] JWT auth; default creds refused outside dev; login rate limit.
 - [ ] Overview: grade ring, trend, subscores, Fix-next top 5, env cards.
 - [ ] Findings table: filter by severity/category/asset/status/new-regressed + bulk actions.
 - [ ] Finding detail slide-over: evidence viewer, remediation, verify button, history.

@@ -2,7 +2,6 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router";
 import { Shell } from "./components/Shell";
 import { Spinner } from "./components/ui";
-import { Placeholder } from "./pages/Placeholder";
 import { Login } from "./pages/Login";
 import { useAuthed } from "./lib/auth";
 
@@ -10,6 +9,7 @@ import { useAuthed } from "./lib/auth";
 const Overview = lazy(() => import("./pages/Overview").then((m) => ({ default: m.Overview })));
 const Findings = lazy(() => import("./pages/Findings").then((m) => ({ default: m.Findings })));
 const Live = lazy(() => import("./pages/Live").then((m) => ({ default: m.Live })));
+const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
 
 export function App() {
   const authed = useAuthed();
@@ -21,7 +21,7 @@ export function App() {
           <Route index element={<Overview />} />
           <Route path="findings" element={<Findings />} />
           <Route path="live" element={<Live />} />
-          <Route path="settings" element={<Placeholder title="Settings" />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
