@@ -102,6 +102,7 @@ func newScanCmd() *cobra.Command {
 				CheckTimeout: cfg.CheckTimeout,
 				RateLimit:    cfg.RateLimit,
 				Scope:        cfg.Scope,
+				SigningKey:   []byte(cfg.SigningKey),
 			})
 			out := cmd.OutOrStdout()
 			for _, t := range cfg.Targets {

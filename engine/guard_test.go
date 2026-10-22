@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/selftest"
 )
 
 // getCheck fetches path on the target through the scan's guarded client and
@@ -49,6 +50,37 @@ func TestGuardAllowsTargetHostByDefault(t *testing.T) {
 	}
 	if err != nil || hits.Load() != 1 {
 		t.Fatalf("in-scope request failed: err=%v hits=%d", err, hits.Load())
+	}
+}
+
+func TestEveryRequestCarriesSignedHeader(t *testing.T) {
+	key := []byte("shared-with-sentinel-0123456789ab")
+	var verified, total atomic.Int32
+	var lastScan atomic.Value
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		total.Add(1)
+		if info, err := selftest.Verify(r, key, time.Now(), 0); err == nil {
+			verified.Add(1)
+			lastScan.Store(info.ScanID)
+		}
+	}))
+	defer srv.Close()
+
+	var errs [3]error
+	e := newEngine(t, Options{SigningKey: key},
+		getCheck("a", srv.URL+"/", &errs[0]),
+		getCheck("b", srv.URL+"/api?x=1", &errs[1]),
+		getCheck("c", srv.URL+"/deep/path", &errs[2]),
+	)
+	res, err := e.Run(context.Background(), Request{Target: core.Target{Name: "t", URL: srv.URL, Environment: core.EnvDev}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total.Load() != 3 || verified.Load() != 3 {
+		t.Fatalf("verified %d of %d requests", verified.Load(), total.Load())
+	}
+	if lastScan.Load() != res.ID {
+		t.Fatalf("header scan id %v != scan %s", lastScan.Load(), res.ID)
 	}
 }
 

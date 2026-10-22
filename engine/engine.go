@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/selftest"
 )
 
 // Defaults used when Options leave a field zero.
@@ -43,6 +44,9 @@ type Options struct {
 	Kill *KillSwitch
 	// Transport is the base HTTP transport; nil uses http.DefaultTransport.
 	Transport http.RoundTripper
+	// SigningKey signs the X-Scout-Scan header. Empty generates a random
+	// key per engine, which Sentinel cannot verify; set it to share one.
+	SigningKey []byte
 }
 
 // Engine runs scans. It is safe for concurrent use.
@@ -62,6 +66,9 @@ func New(reg *core.Registry, opts Options) *Engine {
 	}
 	if opts.Now == nil {
 		opts.Now = time.Now
+	}
+	if len(opts.SigningKey) == 0 {
+		opts.SigningKey = selftest.NewKey()
 	}
 	log := opts.Logger
 	if log == nil {
@@ -95,10 +102,11 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	if !e.opts.Window.Allows(e.opts.Now()) {
 		return core.ScanResult{}, ErrOutsideWindow
 	}
-	ctx = core.WithHTTPClient(ctx, e.client(req.Target))
+	scanID := NewScanID()
+	ctx = core.WithHTTPClient(ctx, e.client(req.Target, scanID))
 	policy := NewPolicy(req.Target, req.Mode)
 	res := core.ScanResult{
-		ID:        NewScanID(),
+		ID:        scanID,
 		Target:    req.Target,
 		Mode:      policy.Effective,
 		StartedAt: e.opts.Now(),
@@ -120,12 +128,14 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 
 // client builds the guarded HTTP client for one scan. Scope defaults to the
 // target's own host so it is never wider than what the user pointed at.
-func (e *Engine) client(t core.Target) *http.Client {
+// Requests that pass the guard are signed with the self-test header.
+func (e *Engine) client(t core.Target, scanID string) *http.Client {
 	scope := e.opts.Scope
 	if len(scope.Hosts) == 0 && t.Host() != "" {
 		scope.Hosts = []string{t.Host()}
 	}
-	return &http.Client{Transport: newGuardTransport(e.opts.Transport, scope, e.opts.RateLimit, e.opts.Window, e.opts.Kill)}
+	signer := &selftest.Transport{Base: e.opts.Transport, Key: e.opts.SigningKey, ScanID: scanID, Now: e.opts.Now}
+	return &http.Client{Transport: newGuardTransport(signer, scope, e.opts.RateLimit, e.opts.Window, e.opts.Kill)}
 }
 
 // decide applies the policy to every selected check.
