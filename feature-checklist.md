@@ -107,10 +107,10 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [ ] Scout is fully functional with neither Sentinel nor Pulse present.
 
 ## L. Operations & quality
-- [ ] Scheduled scans with per-schedule mode caps.
-- [ ] Alerting: Slack, Discord, email, webhook (HMAC).
-- [ ] Retention + pruning of scan history.
-- [ ] Accepted-risk/mute workflow with reason + expiry.
+- [x] Scheduled scans with per-schedule mode caps.
+- [x] Alerting: Slack, Discord, email, webhook (HMAC).
+- [x] Retention + pruning of scan history.
+- [x] Accepted-risk/mute workflow with reason + expiry.
 - [x] No CGo; builds on Linux/macOS/Windows.
 - [ ] Graceful shutdown stops all goroutines.
 - [ ] Unit + integration tests green in CI; gosec clean.
