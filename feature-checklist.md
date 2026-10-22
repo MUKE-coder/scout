@@ -65,13 +65,13 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [ ] CWE + OWASP mapping on every finding.
 
 ## G. Scoring & ranking
-- [ ] 0–100 score + letter grade (A–F).
-- [ ] Per-category subscores.
-- [ ] Exponential decay (many lows never outweigh one critical; score never negative).
-- [ ] Hard caps applied (critical→F, high internet-facing→C, expired cert/exposed secret→D).
-- [ ] Per-asset criticality is configurable and affects the score.
-- [ ] "Fix next" ranking = points regained / effort, and it's sorted correctly.
-- [ ] Scores are deterministic and covered by golden-file tests.
+- [x] 0–100 score + letter grade (A–F).
+- [x] Per-category subscores.
+- [x] Exponential decay (many lows never outweigh one critical; score never negative).
+- [x] Hard caps applied (critical→F, high internet-facing→C, expired cert/exposed secret→D).
+- [x] Per-asset criticality is configurable and affects the score.
+- [x] "Fix next" ranking = points regained / effort, and it's sorted correctly.
+- [x] Scores are deterministic and covered by golden-file tests.
 
 ## H. Recommendations
 - [ ] Every check ships a deterministic remediation template (no AI required).
