@@ -51,6 +51,30 @@ go run ./cmd/scout scan --repo ./lab --mode safe --env dev
 | `/api/users/[id]` | IDOR (no ownership check) | interactive (needs test accounts to auto-detect) |
 | `.env` (committed) | Hard-coded secrets | `code.secrets` (`--repo`) |
 | `Dockerfile` | Root user, unpinned base, secret in ENV | `code.dockerfile` (`--repo`) |
+| `lib/crypto.js` | MD5/SHA-1 hashing, `Math.random` tokens | `code.weak-crypto`, `code.insecure-random` (`--repo`) |
+| `lib/logger.js` | Password/token written to logs | `code.secret-logging` (`--repo`) |
+| `/search`, dangerous sinks | `eval` / `exec` / raw HTML in source | `code.dangerous-sink` (`--repo`) |
+| `/api/debug` | Stack trace returned to client | `app.info-disclosure` |
+| `/api/graphql` | Introspection enabled | `api.graphql-introspection` |
+
+### Also present as targets (detected once you implement the active probe)
+
+These endpoints are deliberately vulnerable so the active DAST/auth probes
+have something to hit. Scout ships the check *scaffold* for several of these
+(`collectors/dast`, `collectors/authz`); the attack logic is yours to write
+(see `docs/collector-buildsheet.md`).
+
+| Endpoint | Vulnerability | Active check |
+|---|---|---|
+| `/api/users/[id]` | IDOR / BOLA | `auth.idor` |
+| `/api/ssti?name=` | Server-side template injection | (SSTI probe) |
+| `/api/ping?host=` | OS command injection | `app.cmd-injection` |
+| `/api/xxe` (POST XML) | XXE | (XXE probe) |
+| `/api/upload` (POST) | Unrestricted file upload | (upload probe) |
+| `/api/profile` (POST) | Mass assignment (`isAdmin`) | `auth.mass-assignment` |
+| `/api/checkout` (POST) | Business logic (negative quantity) | (logic probe) |
+| `/api/transfer` (POST) | CSRF (no token) | `app.csrf-form` |
+| `/api/data` | CORS (reflected origin + credentials) | `auth.cors` |
 
 ## Fixing them
 
