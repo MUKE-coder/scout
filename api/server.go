@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/MUKE-coder/scout/ai"
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/engine"
 	"github.com/MUKE-coder/scout/scoring"
@@ -47,6 +48,8 @@ type Deps struct {
 	Logger *slog.Logger
 	// Schedules lists configured schedules with next run times.
 	Schedules func() any
+	// AI is the optional AI client; nil means AI features are off.
+	AI *ai.Client
 }
 
 // Server serves /scout/api/* and /scout/ws/live.
@@ -88,6 +91,9 @@ func (s *Server) Register(g *gin.RouterGroup) {
 	a.GET("/surface", s.surface)
 	a.GET("/compliance", s.compliance)
 	a.GET("/report", s.htmlReport)
+	a.GET("/ai", s.aiStatus)
+	a.POST("/ai/explain/:fingerprint", s.aiExplain)
+	a.POST("/ai/summary", s.aiSummary)
 	a.POST("/scans", s.startScan)
 	a.GET("/findings", s.listFindings)
 	a.GET("/findings/:fingerprint", s.getFinding)

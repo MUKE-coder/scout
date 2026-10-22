@@ -9,6 +9,7 @@ import { Button, Spinner } from "./ui";
 import { ErrorNote } from "./EmptyState";
 import { Pill, SeverityBadge, SeverityDot } from "./Severity";
 import { StatusDialog, needsReason } from "./StatusDialog";
+import { AIButton } from "./AIAnswer";
 
 interface Detail {
   finding: FindingRow;
@@ -80,6 +81,8 @@ function Body({ detail, onChanged }: { detail: Detail; onChanged: () => void }) 
         </div>
         <Actions f={f} onChanged={onChanged} />
       </header>
+
+      <AIButton path={`/ai/explain/${encodeURIComponent(f.fingerprint)}`} label="Explain with AI" />
 
       {(r.what || r.why) && (
         <Section title="What and why">

@@ -71,6 +71,15 @@ retention: 2160h    # 90 days
 #     - url: https://ops.example.com/hooks/scout
 #       secret: change-me
 
+# Optional AI explanations and stakeholder summaries via the Vercel AI
+# Gateway (any provider/model). Off unless enabled AND AI_GATEWAY_API_KEY is
+# set in the environment (the key is never read from this file). Findings are
+# redacted first: evidence bodies are never sent; hosts, IPs, emails, query
+# strings and tokens are masked. The dashboard shows exactly what was sent.
+# ai:
+#   enabled: true
+#   model: anthropic/claude-sonnet-5.5
+
 # Only scan inside this daily window (omit to allow any time).
 # window:
 #   start: "02:00"

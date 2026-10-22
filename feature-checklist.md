@@ -78,7 +78,7 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [ ] Fixes are stack-specific (Gin / Nginx / Caddy / Next.js / Dockerfile as detected).
 - [ ] Sentinel-aware fixes include exact config blocks.
 - [ ] Each finding has a working "Verify fix" that re-runs just that check.
-- [ ] Optional AI explanations redact bodies/params/PII before sending.
+- [x] Optional AI explanations redact bodies/params/PII before sending.
 
 ## I. Interfaces
 - [x] `scout scan` (URL and/or repo) with mode selection.

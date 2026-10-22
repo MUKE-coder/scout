@@ -42,6 +42,8 @@ type Config struct {
 	Schedules []Schedule `json:"schedules,omitempty" yaml:"schedules"`
 	// Alerts notify about new or regressed findings after each saved scan.
 	Alerts *AlertsConfig `json:"alerts,omitempty" yaml:"alerts"`
+	// AI enables optional, redacted AI explanations (off by default).
+	AI *AIConfig `json:"ai,omitempty" yaml:"ai"`
 
 	// SigningKey signs the X-Scout-Scan self-test header. Generated if empty.
 	SigningKey string `json:"-" yaml:"signing_key"`
@@ -151,7 +153,10 @@ func (c Config) Validate() error {
 	if err := validateSchedules(c.Schedules, c.Targets); err != nil {
 		return err
 	}
-	return c.Alerts.Validate()
+	if err := c.Alerts.Validate(); err != nil {
+		return err
+	}
+	return c.AI.Validate()
 }
 
 // ValidateDashboard adds the checks needed before serving the dashboard:

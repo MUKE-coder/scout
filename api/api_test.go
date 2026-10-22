@@ -36,7 +36,7 @@ func finding(path string, sev core.Severity) core.Finding {
 		Asset: core.Asset{Kind: core.AssetURL, Value: "http://localhost:1" + path, Path: path, Exposure: core.ExposureInternal}}
 }
 
-func newFixture(t *testing.T) *fixture {
+func newFixture(t *testing.T, mods ...func(*Deps)) *fixture {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	f := &fixture{store: storage.NewMemory(50), kill: engine.NewKillSwitch(), wg: &sync.WaitGroup{}}
@@ -58,9 +58,12 @@ func newFixture(t *testing.T) *fixture {
 		go func() { defer f.wg.Done(); fn(ctx) }()
 	}
 	f.r = gin.New()
-	New(Deps{Auth: auth, Store: f.store, Engine: eng, Bus: bus, Kill: f.kill, Go: spawn,
-		Settings: Settings{AppName: "Test", Environment: core.EnvDev, Mode: core.ModeSafe, Targets: []core.Target{site}}}).
-		Register(f.r.Group("/scout"))
+	deps := Deps{Auth: auth, Store: f.store, Engine: eng, Bus: bus, Kill: f.kill, Go: spawn,
+		Settings: Settings{AppName: "Test", Environment: core.EnvDev, Mode: core.ModeSafe, Targets: []core.Target{site}}}
+	for _, m := range mods {
+		m(&deps)
+	}
+	New(deps).Register(f.r.Group("/scout"))
 
 	w := f.do(http.MethodPost, "/scout/api/auth/login", `{"username":"ops","password":"pw"}`)
 	var resp loginResponse

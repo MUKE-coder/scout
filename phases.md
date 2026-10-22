@@ -119,7 +119,7 @@ Goal: the "wow" surfaces.
 - [x] **Scan diff view** in the dashboard.
 - [x] **Compliance view**: OWASP Top 10 / ASVS coverage heatmap.
 - [x] **Reports**: PDF/HTML export for clients/audits.
-- [ ] Optional AI: explain-in-context, draft fix PR, stakeholder summary (with redaction).
+- [x] Optional AI: explain-in-context, draft fix PR, stakeholder summary (with redaction). (Via Vercel AI Gateway. Draft fix PR is deferred: it needs repo and GitHub write access.)
 
 ## Phase 11 — Docs, examples & release
 - [ ] `examples/`: minimal website scan, full Gin app with `Mount()`, CI workflow.

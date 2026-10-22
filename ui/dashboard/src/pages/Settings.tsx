@@ -8,6 +8,7 @@ import { capitalize, dateTime } from "../lib/format";
 import { Button, Card, PageTitle, Spinner } from "../components/ui";
 import { ErrorNote } from "../components/EmptyState";
 import { Pill } from "../components/Severity";
+import { AIButton } from "../components/AIAnswer";
 
 const capText: Record<string, string> = {
   dev: "Every mode is allowed.",
@@ -101,6 +102,9 @@ export function Settings() {
             <ReportButtons />
             <ExportButton format="json" />
             <ExportButton format="csv" />
+          </div>
+          <div className="mt-4">
+            <AIButton path="/ai/summary" label="AI stakeholder summary" />
           </div>
         </Section>
 

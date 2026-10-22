@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/MUKE-coder/scout/ai"
 	"github.com/MUKE-coder/scout/api"
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/engine"
@@ -35,6 +36,7 @@ type Scout struct {
 	engine    *engine.Engine
 	bus       *engine.Bus
 	kill      *engine.KillSwitch
+	ai        *ai.Client
 	scheduler *scheduler
 	lifecycle *Lifecycle
 }
@@ -107,6 +109,7 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 		engine:    eng,
 		bus:       bus,
 		kill:      kill,
+		ai:        c.AI.client(os.Getenv, log),
 		lifecycle: NewLifecycle(context.Background()),
 	}
 	s.lifecycle.Go(func(ctx context.Context) {
@@ -143,6 +146,7 @@ func (s *Scout) Register(r gin.IRouter) {
 		Scoring:  scoring.Options{Criticality: s.cfg.Criticality},
 		Go:       s.lifecycle.Go,
 		Logger:   s.log,
+		AI:       s.ai,
 		Schedules: func() any {
 			return s.scheduler.info(s.cfg.Schedules)
 		},
@@ -212,6 +216,9 @@ func mergeConfig(dst *Config, src Config) {
 	}
 	if src.Alerts != nil {
 		dst.Alerts = src.Alerts
+	}
+	if src.AI != nil {
+		dst.AI = src.AI
 	}
 	if len(src.Schedules) > 0 {
 		dst.Schedules = src.Schedules
