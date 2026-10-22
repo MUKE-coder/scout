@@ -41,7 +41,15 @@ func runServe(cmd *cobra.Command, addr, db string) error {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-	s, err := scout.New(scout.Config{AppName: "Scout", DBPath: db})
+	explicit, _ := cmd.Flags().GetString("config")
+	cfg, err := scout.LoadConfig(scout.FindConfig(explicit), os.Getenv)
+	if err != nil {
+		return err
+	}
+	if cmd.Flags().Changed("db") || cfg.DBPath == "" {
+		cfg.DBPath = db
+	}
+	s, err := scout.New(cfg)
 	if err != nil {
 		return err
 	}

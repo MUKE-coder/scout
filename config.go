@@ -32,9 +32,12 @@ type Config struct {
 	CheckTimeout time.Duration `json:"check_timeout" yaml:"check_timeout"`
 
 	// DBPath is the SQLite file. Empty uses in-memory storage only.
-	DBPath string `json:"db_path" yaml:"db_path"`
+	DBPath string `json:"db_path" yaml:"db"`
 	// Retention is how long scan history is kept.
 	Retention time.Duration `json:"retention" yaml:"retention"`
+
+	// Window restricts when scans may run; nil allows any time.
+	Window *ScanWindow `json:"window,omitempty" yaml:"window"`
 
 	// SigningKey signs the X-Scout-Scan self-test header. Generated if empty.
 	SigningKey string `json:"-" yaml:"signing_key"`

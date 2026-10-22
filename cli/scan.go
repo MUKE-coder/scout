@@ -41,33 +41,59 @@ func (f *scanFlags) bind(cmd *cobra.Command) {
 }
 
 // config validates the flags and turns them into a scout.Config.
-func (f *scanFlags) config() (scout.Config, error) {
-	mode, err := core.ParseMode(f.mode)
-	if err != nil {
-		return scout.Config{}, err
-	}
-	env, err := core.ParseEnvironment(f.env)
-	if err != nil {
-		return scout.Config{}, err
-	}
-	opts := []scout.Option{scout.WithEnvironment(env), scout.WithMode(mode), scout.WithDB(f.db)}
-	for _, t := range f.targets {
-		opts = append(opts, scout.WithTarget(t))
-	}
-	cfg, err := scout.NewConfig(opts...)
+//
+// Precedence: defaults < scout.yaml < SCOUT_* environment < flags. A flag
+// only overrides when it was actually passed.
+func (f *scanFlags) config(cmd *cobra.Command) (scout.Config, error) {
+	explicit, _ := cmd.Flags().GetString("config")
+	cfg, err := scout.LoadConfig(scout.FindConfig(explicit), os.Getenv)
 	if err != nil {
 		return cfg, err
 	}
-	if f.repo != "" {
-		cfg.Targets = append(cfg.Targets, core.Target{Name: f.repo, Repo: f.repo, Environment: env})
+	changed := cmd.Flags().Changed
+
+	if changed("env") {
+		env, err := core.ParseEnvironment(f.env)
+		if err != nil {
+			return cfg, err
+		}
+		cfg.Environment = env
+		for i := range cfg.Targets {
+			cfg.Targets[i].Environment = env
+		}
 	}
-	for i := range cfg.Targets {
-		cfg.Targets[i].AllowActive = f.optIn
+	if changed("mode") {
+		mode, err := core.ParseMode(f.mode)
+		if err != nil {
+			return cfg, err
+		}
+		cfg.Mode = mode
+	}
+	if changed("db") || cfg.DBPath == "" {
+		cfg.DBPath = f.db // the flag default (scout.db) applies when config sets none
+	}
+	if changed("target") {
+		cfg.Targets = nil
+		for _, u := range f.targets {
+			t := core.Target{Name: u, URL: u, Environment: cfg.Environment}
+			if err := t.Validate(); err != nil {
+				return cfg, err
+			}
+			cfg.Targets = append(cfg.Targets, t)
+		}
+	}
+	if f.repo != "" {
+		cfg.Targets = append(cfg.Targets, core.Target{Name: f.repo, Repo: f.repo, Environment: cfg.Environment})
+	}
+	if changed("allow-active") {
+		for i := range cfg.Targets {
+			cfg.Targets[i].AllowActive = f.optIn
+		}
 	}
 	if len(cfg.Targets) == 0 {
-		return cfg, fmt.Errorf("nothing to scan: pass --target and/or --repo")
+		return cfg, fmt.Errorf("nothing to scan: pass --target and/or --repo, or list targets in scout.yaml")
 	}
-	return cfg, nil
+	return cfg, cfg.Validate()
 }
 
 // openStore opens the configured history store, or memory-only when DBPath
@@ -82,16 +108,21 @@ func openStore(cfg scout.Config) (storage.Store, error) {
 // registry supplies the checks the CLI runs. Tests replace it.
 var registry = core.DefaultRegistry
 
-func newEngine(cfg scout.Config, store storage.Store) *engine.Engine {
+func newEngine(cfg scout.Config, store storage.Store) (*engine.Engine, error) {
+	window, err := cfg.Window.EngineWindow()
+	if err != nil {
+		return nil, err
+	}
 	return engine.New(registry, engine.Options{
 		Concurrency:  cfg.Concurrency,
 		CheckTimeout: cfg.CheckTimeout,
 		RateLimit:    cfg.RateLimit,
 		Scope:        cfg.Scope,
+		Window:       window,
 		SigningKey:   []byte(cfg.SigningKey),
 		Store:        store,
 		Scoring:      scoring.Options{Criticality: cfg.Criticality},
-	})
+	}), nil
 }
 
 func newScanCmd() *cobra.Command {
@@ -103,7 +134,7 @@ func newScanCmd() *cobra.Command {
   scout scan --target https://example.com --mode safe
   scout scan --target https://example.com --json > result.json`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, err := f.config()
+			cfg, err := f.config(cmd)
 			if err != nil {
 				return err
 			}
@@ -116,7 +147,10 @@ func newScanCmd() *cobra.Command {
 			}
 			defer store.Close()
 
-			eng := newEngine(cfg, store)
+			eng, err := newEngine(cfg, store)
+			if err != nil {
+				return err
+			}
 			var results []report.Result
 			for _, t := range cfg.Targets {
 				res, err := eng.Run(cmd.Context(), engine.Request{Target: t, Mode: cfg.Mode})
@@ -134,7 +168,10 @@ func newScanCmd() *cobra.Command {
 
 // plan prints the dry-run plan for every target.
 func plan(cmd *cobra.Command, cfg scout.Config) error {
-	eng := newEngine(cfg, nil)
+	eng, err := newEngine(cfg, nil)
+	if err != nil {
+		return err
+	}
 	out := cmd.OutOrStdout()
 	for _, t := range cfg.Targets {
 		p, err := eng.Plan(cmd.Context(), engine.Request{Target: t, Mode: cfg.Mode})

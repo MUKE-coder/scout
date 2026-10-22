@@ -1,0 +1,61 @@
+# Scout configuration. Copy to scout.yaml (read automatically from the
+# working directory) or pass --config path/to/file.yaml.
+#
+# Precedence: built-in defaults < this file < SCOUT_* environment < flags.
+# Unknown keys are rejected, so a typo never silently disables a setting.
+
+app_name: My API
+
+# dev | staging | prod. Caps the mode: dev allows everything, staging allows
+# active (intrusive with allow_active), prod allows safe (active with
+# allow_active and verified ownership, never intrusive).
+environment: dev
+
+# passive | safe | active | intrusive (always capped by the environment).
+mode: safe
+
+targets:
+  - name: local
+    url: http://localhost:8080
+    # Per-target opt-in for active mode in prod / intrusive in staging.
+    allow_active: false
+    # Default criticality for this target's assets (1.0 if unset).
+    criticality: 1.0
+
+# Only these hosts and paths are ever touched. Empty hosts means each
+# target's own host.
+scope:
+  hosts: []
+  include_paths: []
+  exclude_paths: [/logout]
+
+# Weight findings by how much an asset matters. First match wins.
+criticality:
+  - host: api.example.com
+    path_prefix: /payments
+    value: 1.5
+  - host: "*.marketing.example.com"
+    value: 0.7
+
+rate_limit: 10      # requests per second per host
+concurrency: 4      # checks run in parallel
+check_timeout: 60s
+
+db: scout.db        # scan history (SQLite)
+retention: 2160h    # 90 days
+
+# Only scan inside this daily window (omit to allow any time).
+# window:
+#   start: "02:00"
+#   end: "05:00"
+#   days: [mon, tue, wed, thu, fri]
+#   timezone: Europe/London
+
+# Share this with Sentinel so it can verify Scout's X-Scout-Scan header.
+# Prefer the SCOUT_SIGNING_KEY environment variable over committing it here.
+# signing_key: ""
+
+# Dashboard login. The defaults (admin / scout) are refused outside dev.
+# Prefer SCOUT_USERNAME / SCOUT_PASSWORD / SCOUT_JWT_SECRET.
+# username: admin
+# password: scout

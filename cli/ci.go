@@ -62,7 +62,7 @@ previous scan count. With no previous scan, every finding counts as new.`,
 			if err != nil {
 				return err
 			}
-			cfg, err := f.config()
+			cfg, err := f.config(cmd)
 			if err != nil {
 				return err
 			}
@@ -73,7 +73,10 @@ previous scan count. With no previous scan, every finding counts as new.`,
 			defer store.Close()
 
 			ctx := cmd.Context()
-			eng := newEngine(cfg, store)
+			eng, err := newEngine(cfg, store)
+			if err != nil {
+				return err
+			}
 			var results []report.Result
 			failing := 0
 			for _, t := range cfg.Targets {

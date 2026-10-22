@@ -18,21 +18,21 @@ type Route struct {
 
 // Target is something Scout scans: a URL, a host, a repo, or all three.
 type Target struct {
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 	// URL is the base URL for black-box scanning ("https://example.com").
-	URL string `json:"url,omitempty"`
+	URL string `json:"url,omitempty" yaml:"url"`
 	// Repo is a local path for code and supply-chain collectors.
-	Repo string `json:"repo,omitempty"`
+	Repo string `json:"repo,omitempty" yaml:"repo"`
 
-	Environment Environment `json:"environment"`
+	Environment Environment `json:"environment" yaml:"environment"`
 	// AllowActive is the explicit per-target opt-in required for Active
 	// mode in prod and Intrusive mode in staging.
-	AllowActive bool `json:"allow_active,omitempty"`
+	AllowActive bool `json:"allow_active,omitempty" yaml:"allow_active"`
 	// Criticality is the default asset criticality for findings on this target.
-	Criticality float64 `json:"criticality,omitempty"`
+	Criticality float64 `json:"criticality,omitempty" yaml:"criticality"`
 
 	// Routes is the real route table when the app uses scout.Mount.
-	Routes []Route `json:"routes,omitempty"`
+	Routes []Route `json:"routes,omitempty" yaml:"-"`
 }
 
 // Host returns the hostname of the target URL, or "" if there is none.

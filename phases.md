@@ -63,7 +63,7 @@ Goal: usable from a terminal and a pipeline before the UI exists.
 - [x] Output formats: pretty, `--json`, `--sarif` (GitHub Code Scanning).
 - [x] `scout ci --fail-on <sev> --new-only`: exit codes drive build pass/fail; `--new-only` uses fingerprint diff vs. last scan.
 - [x] `scout diff <a> <b>`: new / fixed / regressed.
-- [ ] Config file (`scout.yaml`) + env var overrides.
+- [x] Config file (`scout.yaml`) + env var overrides.
 
 ## Phase 5 — Dashboard (embedded React)
 Goal: the product people see. Follow `style-guide.md` exactly.
