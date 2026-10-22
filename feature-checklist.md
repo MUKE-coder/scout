@@ -5,15 +5,15 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 ---
 
 ## A. Core & safety (non-negotiable)
-- [ ] Every check declares a `Mode` and a `Category`.
-- [ ] Environment (`dev|staging|prod`) caps the max mode; checks above the cap are skipped and reported as skipped.
+- [x] Every check declares a `Mode` and a `Category`.
+- [x] Environment (`dev|staging|prod`) caps the max mode; checks above the cap are skipped and reported as skipped.
 - [ ] A scan never sends attack traffic in Passive mode.
-- [ ] Prod never runs Intrusive mode; Active in prod requires explicit per-target opt-in.
-- [ ] Ownership verification (DNS TXT or `/.well-known/scout-verify.txt`) is enforced before Active mode on any non-local host.
-- [ ] Scope allowlist, rate limiting, scan windows, and a kill switch all work and are tested.
-- [ ] Every outbound scan request carries the signed self-test header.
-- [ ] Dry-run/plan mode lists exactly what would run and runs nothing.
-- [ ] A single failing/panicking check cannot crash the scan.
+- [x] Prod never runs Intrusive mode; Active in prod requires explicit per-target opt-in.
+- [x] Ownership verification (DNS TXT or `/.well-known/scout-verify.txt`) is enforced before Active mode on any non-local host.
+- [x] Scope allowlist, rate limiting, scan windows, and a kill switch all work and are tested.
+- [x] Every outbound scan request carries the signed self-test header.
+- [x] Dry-run/plan mode lists exactly what would run and runs nothing.
+- [x] A single failing/panicking check cannot crash the scan.
 - [ ] No real user credentials are ever used; only configured test accounts.
 
 ## B. Website / black-box scanning (works with only a URL)
@@ -59,8 +59,8 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 
 ## F. Findings model
 - [ ] Every collector emits the same `Finding` shape.
-- [ ] Stable fingerprint → dedupe across scans.
-- [ ] FirstSeen/LastSeen tracked; status lifecycle (open/fixed/accepted-risk/false-positive).
+- [x] Stable fingerprint → dedupe across scans.
+- [x] FirstSeen/LastSeen tracked; status lifecycle (open/fixed/accepted-risk/false-positive).
 - [ ] Evidence captured (request/response, matched pattern, config line) and redactable.
 - [ ] CWE + OWASP mapping on every finding.
 

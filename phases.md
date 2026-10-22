@@ -30,7 +30,7 @@ Goal: the scan loop runs checks safely with mode caps. This is the backbone ever
 - [x] Signed self-test header (`X-Scout-Scan: <hmac>`) on all outbound scan requests.
 - [x] **Target ownership verification**: DNS TXT record or `/.well-known/scout-verify.txt`; required before Active mode on any non-local host.
 - [x] Findings pipeline: dedupe by fingerprint, merge FirstSeen/LastSeen, persist, emit to event bus.
-- [ ] Unit tests for mode capping, scope enforcement, fingerprint stability.
+- [x] Unit tests for mode capping, scope enforcement, fingerprint stability.
 
 ## Phase 2 — MVP collectors (passive + safe, any target)
 Goal: point Scout at any URL and get real findings. No app integration needed yet.
