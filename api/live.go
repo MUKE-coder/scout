@@ -147,7 +147,7 @@ func (s *Server) live(c *gin.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			conn.Close(websocket.StatusNormalClosure, "")
+			_ = conn.Close(websocket.StatusNormalClosure, "") // the client already went away
 			return
 		case <-ping.C:
 			pctx, cancel := context.WithTimeout(ctx, 10*time.Second)
