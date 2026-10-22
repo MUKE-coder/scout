@@ -101,7 +101,7 @@ Goal: safe to leave running against production.
 
 - [ ] Scheduled scans (cron) with per-schedule mode caps.
 - [ ] Alerting: Slack, Discord, email, webhooks (HMAC) — reuse Pulse/Sentinel patterns.
-- [ ] Scan history retention + pruning.
+- [x] Scan history retention + pruning.
 - [ ] Baseline / accepted-risk workflow (mute a finding with a reason + expiry).
 
 ## Phase 9 — Sentinel & Pulse integrations

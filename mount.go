@@ -98,7 +98,7 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 		Scoring:      scoring.Options{Criticality: c.Criticality},
 		Logger:       log,
 	})
-	return &Scout{
+	s := &Scout{
 		cfg:       c,
 		log:       log,
 		store:     store,
@@ -107,7 +107,11 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 		bus:       bus,
 		kill:      kill,
 		lifecycle: NewLifecycle(context.Background()),
-	}, nil
+	}
+	s.lifecycle.Go(func(ctx context.Context) {
+		runPruner(ctx, store, c.Retention, DefaultPruneInterval, log)
+	})
+	return s, nil
 }
 
 // Register adds the /scout route group to r.

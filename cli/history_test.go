@@ -75,6 +75,14 @@ func TestDiffCommand(t *testing.T) {
 	}
 }
 
+func TestPruneCommand(t *testing.T) {
+	db, _ := seedHistory(t) // three scans dated Oct 1-3 2026
+	out, err := run("prune", "--db", db, "--retention", "1h")
+	if err != nil || !strings.Contains(out, "Removed 3 scan(s)") {
+		t.Fatalf("prune: %v %q", err, out)
+	}
+}
+
 func TestDiffUnknownScan(t *testing.T) {
 	db, _ := seedHistory(t)
 	if _, err := run("diff", "zzzz", "aaaa", "--db", db); err == nil || !strings.Contains(err.Error(), "no scan matches") {

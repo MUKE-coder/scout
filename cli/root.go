@@ -3,12 +3,14 @@ package cli
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/MUKE-coder/scout"
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/engine"
+	"github.com/MUKE-coder/scout/storage"
 )
 
 // NewRootCmd builds the scout command tree.
@@ -25,7 +27,7 @@ func NewRootCmd() *cobra.Command {
 	root.PersistentFlags().String("config", "", "path to scout.yaml")
 	root.PersistentFlags().String("color", "auto", "color output: auto, always, never")
 
-	root.AddCommand(newScanCmd(), newServeCmd(), newCICmd(), newDiffCmd(), newOwnershipCmd(), newVersionCmd())
+	root.AddCommand(newScanCmd(), newServeCmd(), newCICmd(), newDiffCmd(), newOwnershipCmd(), newPruneCmd(), newVersionCmd())
 	return root
 }
 
@@ -79,6 +81,44 @@ func newOwnershipCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&target, "target", "t", "", "target URL")
 	_ = cmd.MarkFlagRequired("target")
+	return cmd
+}
+
+func newPruneCmd() *cobra.Command {
+	var (
+		db        string
+		retention time.Duration
+	)
+	cmd := &cobra.Command{
+		Use:   "prune",
+		Short: "Delete scans older than the retention period",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			explicit, _ := cmd.Flags().GetString("config")
+			cfg, err := scout.LoadConfig(scout.FindConfig(explicit), os.Getenv)
+			if err != nil {
+				return err
+			}
+			if cmd.Flags().Changed("db") || cfg.DBPath == "" {
+				cfg.DBPath = db
+			}
+			if cmd.Flags().Changed("retention") {
+				cfg.Retention = retention
+			}
+			store, err := storage.OpenSQLite(cfg.DBPath)
+			if err != nil {
+				return err
+			}
+			defer store.Close()
+			n, err := scout.Prune(cmd.Context(), store, cfg.Retention, time.Now())
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "Removed %d scan(s) older than %s.\n", n, cfg.Retention)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&db, "db", "scout.db", "SQLite file with scan history")
+	cmd.Flags().DurationVar(&retention, "retention", scout.DefaultRetention, "keep scans newer than this (e.g. 720h)")
 	return cmd
 }
 
