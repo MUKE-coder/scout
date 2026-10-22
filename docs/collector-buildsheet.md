@@ -189,7 +189,24 @@ Then the deepest:
 > checks is not forced to compile them; consider a build tag if the weight
 > becomes a problem.
 
-When the first collector lands and its package is added to
-`collectors/all/all.go`, `scout scan` immediately produces real findings and
-every downstream surface (grade, dashboard, SARIF, compliance, reports)
-works with no further change.
+## 6. Skeletons already in the tree
+
+Two offensive collectors are scaffolded and compile, with complete metadata,
+mode, OWASP/ASVS mapping and remediation templates — only the attack logic is
+a stub marked `TODO(you)`:
+
+- **`collectors/dast`** — `app.sqli`, `app.cmd-injection`, `app.ssrf`,
+  `app.path-traversal`, `app.open-redirect`, `app.reflected-xss`.
+- **`collectors/authz`** — `auth.jwt`, `auth.idor`, `auth.missing`,
+  `auth.cors`, `auth.mass-assignment`.
+
+Each check's `Run` is a safe no-op that returns no findings until you fill the
+stub. To finish one: implement the probe (every request through
+`core.HTTPClient(ctx)`, test accounts only, honor `Mode()`), return a
+`core.Finding` with the ready-made `Remediation<Name>` attached, add a test,
+and blank-import the package in `collectors/all`. They are deliberately **not**
+imported yet, so the shipped build never exposes no-op active checks.
+
+When a collector lands and its package is added to `collectors/all/all.go`,
+`scout scan` immediately produces real findings and every downstream surface
+(grade, dashboard, SARIF, compliance, reports) works with no further change.

@@ -13,6 +13,13 @@
 // dashboard, SARIF and the compliance view pick it up automatically.
 package all
 
+// Skeletons awaiting implementation (NOT imported, so they do not register
+// until their probe stubs are filled in — see each package and
+// docs/collector-buildsheet.md):
+//   - collectors/dast  (app.sqli, app.ssrf, app.reflected-xss, ...)
+//   - collectors/authz (auth.jwt, auth.idor, auth.missing, auth.cors, ...)
+// Add a blank import below once a check in them is real.
+//
 // Collectors register here as they are implemented. Keep the list sorted.
 import (
 	_ "github.com/MUKE-coder/scout/collectors/config"
