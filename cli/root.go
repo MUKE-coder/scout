@@ -122,8 +122,8 @@ func newScanCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				fmt.Fprintf(out, "%s: mode %s, %d findings, %d skipped, %d errors\n",
-					t.Name, res.Mode, len(res.Findings), len(res.Skipped), len(res.Errors))
+				fmt.Fprintf(out, "%s: grade %s (%.1f), mode %s, %d findings, %d skipped, %d errors\n",
+					t.Name, res.Grade, res.Score, res.Mode, len(res.Findings), len(res.Skipped), len(res.Errors))
 			}
 			return nil
 		},

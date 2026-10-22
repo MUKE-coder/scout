@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/scoring"
 	"github.com/MUKE-coder/scout/storage"
 )
 
@@ -55,9 +56,10 @@ func mergeHistory(findings []core.Finding, prev []core.Finding, now time.Time) {
 	}
 }
 
-// finish runs the findings pipeline: dedupe, merge history, persist, emit.
-// Storage problems are recorded on the result rather than failing the scan.
-func (e *Engine) finish(ctx context.Context, res *core.ScanResult) {
+// finish runs the findings pipeline: dedupe, merge history, score, persist,
+// emit. Storage problems are recorded on the result rather than failing the
+// scan.
+func (e *Engine) finish(ctx context.Context, res *core.ScanResult, assessed []core.Category) {
 	res.Findings = dedupe(res.Findings)
 
 	var prev []core.Finding
@@ -71,6 +73,11 @@ func (e *Engine) finish(ctx context.Context, res *core.ScanResult) {
 		}
 	}
 	mergeHistory(res.Findings, prev, res.FinishedAt)
+
+	opts := e.opts.Scoring
+	opts.Assessed = assessed
+	report := scoring.Score(res.Findings, opts)
+	res.Score, res.Grade = report.Score, report.Grade
 
 	if e.opts.Store != nil {
 		// Persist even if the scan was cancelled: partial results are real.

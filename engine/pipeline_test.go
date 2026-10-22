@@ -98,6 +98,46 @@ func TestHistoryMergeAndPersist(t *testing.T) {
 	}
 }
 
+func TestScanIsScored(t *testing.T) {
+	e := newEngine(t, Options{},
+		check("crit", core.ModePassive, func(context.Context, core.Target) ([]core.Finding, error) {
+			return []core.Finding{assetFinding("/x", core.SeverityCritical, core.ConfidenceConfirmed)}, nil
+		}),
+	)
+	res, _ := e.Run(context.Background(), Request{Target: localTarget})
+	if res.Grade != "F" || res.Score > 59.9 {
+		t.Fatalf("confirmed critical should grade F: %v %s", res.Score, res.Grade)
+	}
+
+	clean := newEngine(t, Options{}, check("ok", core.ModePassive, returns()))
+	res, _ = clean.Run(context.Background(), Request{Target: localTarget})
+	if res.Grade != "A" || res.Score != 100 {
+		t.Fatalf("clean scan: %v %s", res.Score, res.Grade)
+	}
+}
+
+func TestScoreUsesOnlyAssessedCategories(t *testing.T) {
+	// Two medium header findings; only the headers category ran, so it alone
+	// sets the score instead of being diluted by unscanned categories at 100.
+	e := newEngine(t, Options{},
+		check("hdr", core.ModePassive, func(context.Context, core.Target) ([]core.Finding, error) {
+			var out []core.Finding
+			for _, p := range []string{"/a", "/b"} {
+				fd := assetFinding(p, core.SeverityMedium, core.ConfidenceConfirmed)
+				fd.Category = core.CategoryHeaders
+				fd.Asset.Exposure = core.ExposureInternal
+				out = append(out, fd)
+			}
+			return out, nil
+		}),
+	)
+	res, _ := e.Run(context.Background(), Request{Target: localTarget})
+	// Internal exposure (0.4): risk 2×8×0.4 = 6.4 → 100·e^(−6.4/50) ≈ 88.
+	if res.Score != 88 {
+		t.Fatalf("score = %v, want 88 from the headers category alone", res.Score)
+	}
+}
+
 func TestEventsPublished(t *testing.T) {
 	bus := NewBus()
 	events, unsubscribe := bus.Subscribe(100)

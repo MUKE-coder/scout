@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/scoring"
 	"github.com/MUKE-coder/scout/selftest"
 	"github.com/MUKE-coder/scout/storage"
 )
@@ -57,6 +58,8 @@ type Options struct {
 	Store storage.Store
 	// Bus receives scan progress and finding events. Nil disables events.
 	Bus *Bus
+	// Scoring tunes the score; Assessed is filled from the checks that ran.
+	Scoring scoring.Options
 }
 
 // Engine runs scans. It is safe for concurrent use.
@@ -140,8 +143,22 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	e.opts.Bus.Publish(Event{Type: EventScanStarted, ScanID: res.ID, Time: res.StartedAt, Total: len(run)})
 	res.Findings, res.Errors = e.runChecks(ctx, res.ID, req.Target, run)
 	res.FinishedAt = e.opts.Now()
-	e.finish(ctx, &res)
+	e.finish(ctx, &res, categoriesOf(run))
 	return res, nil
+}
+
+// categoriesOf returns the distinct categories of checks, which are the
+// categories a scan actually assessed.
+func categoriesOf(checks []core.Check) []core.Category {
+	seen := map[core.Category]bool{}
+	out := []core.Category{}
+	for _, c := range checks {
+		if !seen[c.Category()] {
+			seen[c.Category()] = true
+			out = append(out, c.Category())
+		}
+	}
+	return out
 }
 
 // client builds the guarded HTTP client for one scan. Scope defaults to the
