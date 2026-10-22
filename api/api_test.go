@@ -180,6 +180,22 @@ func TestDiffEndpoint(t *testing.T) {
 	}
 }
 
+func TestSurfaceEndpoint(t *testing.T) {
+	f := newFixture(t)
+	f.set(finding("/admin", core.SeverityHigh))
+	f.scan(t)
+	w := f.do(http.MethodGet, "/scout/api/surface", "")
+	got := decode[struct {
+		Nodes []struct {
+			Label string `json:"label"`
+			Open  int    `json:"open"`
+		} `json:"nodes"`
+	}](t, w)
+	if len(got.Nodes) != 1 || got.Nodes[0].Label != "localhost" || got.Nodes[0].Open != 1 {
+		t.Fatalf("surface = %s", w.Body)
+	}
+}
+
 func TestOverview(t *testing.T) {
 	f := newFixture(t)
 	f.set(finding("/a", core.SeverityCritical))

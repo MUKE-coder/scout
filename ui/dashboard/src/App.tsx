@@ -11,6 +11,7 @@ const Findings = lazy(() => import("./pages/Findings").then((m) => ({ default: m
 const Live = lazy(() => import("./pages/Live").then((m) => ({ default: m.Live })));
 const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
 const History = lazy(() => import("./pages/History").then((m) => ({ default: m.History })));
+const Surface = lazy(() => import("./pages/Surface").then((m) => ({ default: m.Surface })));
 
 export function App() {
   const authed = useAuthed();
@@ -22,6 +23,7 @@ export function App() {
           <Route index element={<Overview />} />
           <Route path="findings" element={<Findings />} />
           <Route path="live" element={<Live />} />
+          <Route path="surface" element={<Surface />} />
           <Route path="history" element={<History />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />

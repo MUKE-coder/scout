@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { LiveProvider, useLive } from "../lib/live";
-import { Activity, History, LayoutDashboard, ListChecks, LogOut, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
+import { Activity, History, LayoutDashboard, ListChecks, LogOut, Moon, Network, Settings as SettingsIcon, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { setToken } from "../lib/api";
 import { useApi } from "../lib/useApi";
@@ -10,6 +10,7 @@ import { NewScanButton } from "./NewScanButton";
 const nav = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/findings", label: "Findings", icon: ListChecks },
+  { to: "/surface", label: "Attack surface", icon: Network },
   { to: "/live", label: "Live scan", icon: Activity },
   { to: "/history", label: "History", icon: History },
   { to: "/settings", label: "Settings", icon: SettingsIcon },

@@ -115,7 +115,7 @@ Goal: the family moat.
 ## Phase 10 — Advanced visualization & reporting
 Goal: the "wow" surfaces.
 
-- [ ] **Attack-surface map**: interactive graph domain → hosts → ports/services → routes, nodes colored by worst severity.
+- [x] **Attack-surface map**: interactive graph domain → hosts → ports/services → routes, nodes colored by worst severity.
 - [x] **Scan diff view** in the dashboard.
 - [ ] **Compliance view**: OWASP Top 10 / ASVS coverage heatmap.
 - [ ] **Reports**: PDF/HTML export for clients/audits.
