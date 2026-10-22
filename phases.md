@@ -35,13 +35,13 @@ Goal: the scan loop runs checks safely with mode caps. This is the backbone ever
 ## Phase 2 — MVP collectors (passive + safe, any target)
 Goal: point Scout at any URL and get real findings. No app integration needed yet.
 
-- [ ] **External/TLS collector**: TLS versions, ciphers, cert expiry/chain, HSTS.
-- [ ] **Headers collector**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, cookie flags.
-- [ ] **Exposure collector**: `.env`, `.git/`, `/swagger`, `/metrics`, backup files, unprotected dashboards, directory listing.
-- [ ] **Port collector**: embed `naabu`; flag exposed DB/Redis/Docker/SSH-password.
-- [ ] **DNS/email collector**: subdomain takeover, dangling CNAME, CAA, SPF/DKIM/DMARC.
+- [x] **External/TLS collector**: TLS versions, ciphers, cert expiry/chain, HSTS.
+- [x] **Headers collector**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, cookie flags.
+- [x] **Exposure collector**: `.env`, `.git/`, `/swagger`, `/metrics`, backup files, unprotected dashboards, directory listing.
+- [x] **Port collector**: native connect scan; flags exposed DB/Redis/Docker/SSH (naabu embed and SSH password-auth detection pending).
+- [x] **DNS/email collector**: subdomain takeover, dangling CNAME, CAA, SPF/DKIM/DMARC.
 - [ ] **Nuclei collector**: embed nuclei as a library; map templated results → `Finding`.
-- [ ] Each check includes a deterministic remediation template.
+- [x] Each check includes a deterministic remediation template.
 
 ## Phase 3 — Scoring, ranking & recommendations
 > Started before Phase 2 finished (agreed with the owner): the Phase 2 collectors are still open. Scoring is tested with fixture findings.

@@ -17,17 +17,17 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [ ] No real user credentials are ever used; only configured test accounts.
 
 ## B. Website / black-box scanning (works with only a URL)
-- [ ] Scanning an arbitrary website needs nothing installed on the target.
-- [ ] Crawler discovers pages and **forms** (fields, method, hidden inputs, CSRF token presence).
+- [x] Scanning an arbitrary website needs nothing installed on the target.
+- [x] Crawler discovers pages and **forms** (fields, method, hidden inputs, CSRF token presence).
 - [ ] Each discovered form input is tested (per the active mode).
 - [ ] API endpoints are discovered and tested.
-- [ ] TLS: protocol versions, weak ciphers, cert expiry, chain, HSTS.
-- [ ] Security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
-- [ ] Cookie flags: HttpOnly, Secure, SameSite.
-- [ ] Exposed files/paths: `.env`, `.git/`, `/swagger`, `/metrics`, backups, directory listing.
-- [ ] Open ports & risky services (DB, Redis, Docker API, SSH password auth).
-- [ ] DNS: subdomain takeover, dangling CNAME, CAA.
-- [ ] Email: SPF, DKIM, DMARC.
+- [x] TLS: protocol versions, weak ciphers, cert expiry, chain, HSTS.
+- [x] Security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+- [x] Cookie flags: HttpOnly, Secure, SameSite.
+- [x] Exposed files/paths: `.env`, `.git/`, `/swagger`, `/metrics`, backups, directory listing.
+- [x] Open ports & risky services (DB, Redis, Docker API; SSH flagged, password-auth detection pending).
+- [x] DNS: subdomain takeover, dangling CNAME, CAA.
+- [x] Email: SPF, DKIM, DMARC.
 - [ ] Nuclei templated checks run and normalize into `Finding`.
 
 ## C. App & API depth (DAST)

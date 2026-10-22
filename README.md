@@ -20,15 +20,17 @@ embedded dashboard, and zero external services.
 
 > ## ⚠️ Project status: pre-release (v0.x)
 >
-> The **engine, scoring, dashboard, CLI, scheduling, alerts, reports,
-> integrations and optional AI are complete and tested.** The security
-> **checks (collectors)** that actually probe a target are **not bundled
-> yet**, so today a scan runs safely but reports **no findings**.
+> The engine, scoring, dashboard, CLI, scheduling, alerts, reports,
+> integrations and optional AI are complete and tested. As of **v0.2.0**,
+> Scout ships **seven collectors (33 checks)** — headers, TLS, DNS/email,
+> exposure, config, a GET-only **crawler** (pages, forms, CSRF, endpoints)
+> and a **port** scan for exposed services — and finds real, verified issues.
 >
-> Everything in this README works as described *except* that findings lists
-> come back empty until collectors ship. The `core.Check` interface is
-> stable — see **[Add your own checks](#add-your-own-checks)**. This is why
-> Scout is `v0.x`, not `v1.0`.
+> Still to come: **active DAST** input testing (SQLi/XSS/SSRF), **auth/access
+> control** (JWT, IDOR, CORS), **Nuclei**, and **code/supply-chain** checks.
+> Until those land Scout covers the HTTP surface and exposed services, not
+> the full OWASP Top 10 — so it is `v0.x`, not `v1.0`. Adding collectors is
+> straightforward: see **[Add your own checks](#add-your-own-checks)**.
 
 ---
 
