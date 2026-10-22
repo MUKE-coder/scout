@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"runtime/debug"
 	"sort"
 	"sync"
@@ -30,6 +31,18 @@ type Options struct {
 	Logger       *slog.Logger
 	// Now is the clock; tests override it.
 	Now func() time.Time
+
+	// Scope limits what checks may touch. Empty Hosts means only the
+	// target's own host.
+	Scope core.Scope
+	// RateLimit is max requests per second per host; <= 0 disables it.
+	RateLimit int
+	// Window restricts when scans may run; nil allows any time.
+	Window *Window
+	// Kill is the global kill switch; nil means none.
+	Kill *KillSwitch
+	// Transport is the base HTTP transport; nil uses http.DefaultTransport.
+	Transport http.RoundTripper
 }
 
 // Engine runs scans. It is safe for concurrent use.
@@ -76,6 +89,13 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	if err := req.Target.Validate(); err != nil {
 		return core.ScanResult{}, err
 	}
+	if e.opts.Kill.Killed() {
+		return core.ScanResult{}, ErrKilled
+	}
+	if !e.opts.Window.Allows(e.opts.Now()) {
+		return core.ScanResult{}, ErrOutsideWindow
+	}
+	ctx = core.WithHTTPClient(ctx, e.client(req.Target))
 	policy := NewPolicy(req.Target, req.Mode)
 	res := core.ScanResult{
 		ID:        NewScanID(),
@@ -96,6 +116,16 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	res.Findings, res.Errors = e.runChecks(ctx, req.Target, run)
 	res.FinishedAt = e.opts.Now()
 	return res, nil
+}
+
+// client builds the guarded HTTP client for one scan. Scope defaults to the
+// target's own host so it is never wider than what the user pointed at.
+func (e *Engine) client(t core.Target) *http.Client {
+	scope := e.opts.Scope
+	if len(scope.Hosts) == 0 && t.Host() != "" {
+		scope.Hosts = []string{t.Host()}
+	}
+	return &http.Client{Transport: newGuardTransport(e.opts.Transport, scope, e.opts.RateLimit, e.opts.Window, e.opts.Kill)}
 }
 
 // decide applies the policy to every selected check.
