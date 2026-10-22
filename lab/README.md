@@ -58,6 +58,7 @@ go run ./cmd/scout scan --repo ./lab --mode safe --env dev
 | `/api/graphql` | Introspection enabled | `api.graphql-introspection` |
 | `/api/v1/users` + `/api/v2/users` | Deprecated API version still live | `api.improper-asset-mgmt` |
 | `/api/reset` | Reset link built from the Host header | `app.host-header` |
+| (whole app) | `X-Powered-By: Next.js` banner leaks the framework | `app.version-disclosure` |
 
 ### Also present as targets (detected once you implement the active probe)
 
