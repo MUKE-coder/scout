@@ -111,7 +111,7 @@ Run this checklist before calling any milestone "done". It is the acceptance gat
 - [ ] Alerting: Slack, Discord, email, webhook (HMAC).
 - [ ] Retention + pruning of scan history.
 - [ ] Accepted-risk/mute workflow with reason + expiry.
-- [ ] No CGo; builds on Linux/macOS/Windows.
+- [x] No CGo; builds on Linux/macOS/Windows.
 - [ ] Graceful shutdown stops all goroutines.
 - [ ] Unit + integration tests green in CI; gosec clean.
 - [ ] Docs, examples (website scan, Gin Mount, CI workflow), README with screenshots.
