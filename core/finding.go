@@ -90,9 +90,30 @@ type Finding struct {
 	CWE         []string    `json:"cwe,omitempty"`
 	OWASP       []string    `json:"owasp,omitempty"`
 	Remediation Remediation `json:"remediation"`
-	Status      Status      `json:"status"`
-	FirstSeen   time.Time   `json:"first_seen"`
-	LastSeen    time.Time   `json:"last_seen"`
+	// Tags mark findings that scoring treats specially, such as TagExpiredCert.
+	Tags      []string  `json:"tags,omitempty"`
+	Status    Status    `json:"status"`
+	FirstSeen time.Time `json:"first_seen"`
+	LastSeen  time.Time `json:"last_seen"`
+}
+
+// Finding tags with scoring meaning.
+const (
+	// TagExpiredCert marks an expired TLS certificate (caps the grade at D).
+	TagExpiredCert = "expired-cert"
+	// TagExposedSecret marks a leaked credential or key (caps the grade at D
+	// when the asset is internet-facing).
+	TagExposedSecret = "exposed-secret"
+)
+
+// HasTag reports whether the finding carries tag.
+func (f Finding) HasTag(tag string) bool {
+	for _, t := range f.Tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
 }
 
 // Fingerprint returns the stable identity of a finding: checkID + asset +

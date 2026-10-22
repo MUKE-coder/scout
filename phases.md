@@ -44,9 +44,10 @@ Goal: point Scout at any URL and get real findings. No app integration needed ye
 - [ ] Each check includes a deterministic remediation template.
 
 ## Phase 3 — Scoring, ranking & recommendations
+> Started before Phase 2 finished (agreed with the owner): the Phase 2 collectors are still open. Scoring is tested with fixture findings.
 Goal: findings become a grade and a prioritized to-do list.
 
-- [ ] Risk weight per finding (`severity × confidence × exposure × asset_criticality`).
+- [x] Risk weight per finding (`severity × confidence × exposure × asset_criticality`).
 - [ ] Per-category score via exponential decay; overall weighted score.
 - [ ] Hard caps (confirmed critical → F; high internet-facing → C; expired cert / exposed secret → D).
 - [ ] Letter grades (A/B/C/D/F) + per-category subscores.
