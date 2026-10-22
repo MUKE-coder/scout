@@ -11,10 +11,12 @@ import (
 	"runtime/debug"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/selftest"
+	"github.com/MUKE-coder/scout/storage"
 )
 
 // Defaults used when Options leave a field zero.
@@ -50,6 +52,11 @@ type Options struct {
 	// Verifier proves target ownership before Active mode on non-local
 	// hosts. Nil uses DNS and the well-known file, keyed by SigningKey.
 	Verifier *Verifier
+	// Store persists scans and supplies history for FirstSeen and status
+	// carry-over. Nil keeps results in memory only.
+	Store storage.Store
+	// Bus receives scan progress and finding events. Nil disables events.
+	Bus *Bus
 }
 
 // Engine runs scans. It is safe for concurrent use.
@@ -130,8 +137,10 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	}
 	e.log.Info("scan starting", "scan", res.ID, "target", req.Target.Name,
 		"mode", policy.Effective, "run", len(run), "skipped", len(res.Skipped))
-	res.Findings, res.Errors = e.runChecks(ctx, req.Target, run)
+	e.opts.Bus.Publish(Event{Type: EventScanStarted, ScanID: res.ID, Time: res.StartedAt, Total: len(run)})
+	res.Findings, res.Errors = e.runChecks(ctx, res.ID, req.Target, run)
 	res.FinishedAt = e.opts.Now()
+	e.finish(ctx, &res)
 	return res, nil
 }
 
@@ -190,11 +199,12 @@ type checkOutcome struct {
 
 // runChecks runs checks on a bounded worker pool. Results are returned in
 // check-ID order so scans are deterministic regardless of scheduling.
-func (e *Engine) runChecks(ctx context.Context, t core.Target, checks []core.Check) ([]core.Finding, []core.CheckError) {
+func (e *Engine) runChecks(ctx context.Context, scanID string, t core.Target, checks []core.Check) ([]core.Finding, []core.CheckError) {
 	jobs := make(chan core.Check)
 	outcomes := make(chan checkOutcome, len(checks))
 
 	var wg sync.WaitGroup
+	var done atomic.Int32
 	workers := min(e.opts.Concurrency, max(len(checks), 1))
 	for range workers {
 		wg.Add(1)
@@ -203,6 +213,12 @@ func (e *Engine) runChecks(ctx context.Context, t core.Target, checks []core.Che
 			for c := range jobs {
 				fs, err := e.runOne(ctx, c, t)
 				outcomes <- checkOutcome{id: c.ID(), findings: fs, err: err}
+				ev := Event{Type: EventCheckFinished, ScanID: scanID, Time: e.opts.Now(), CheckID: c.ID(),
+					Count: len(fs), Total: len(checks), Done: int(done.Add(1))}
+				if err != nil {
+					ev.Error = err.Error()
+				}
+				e.opts.Bus.Publish(ev)
 			}
 		}()
 	}

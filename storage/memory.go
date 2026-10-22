@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -38,6 +39,7 @@ func (m *Memory) ordered() []core.ScanResult {
 }
 
 func (m *Memory) SaveScan(_ context.Context, s core.ScanResult) error {
+	s = cloneScan(s) // the caller may keep mutating its copy
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i := 1; i <= m.count; i++ {
@@ -60,7 +62,7 @@ func (m *Memory) GetScan(_ context.Context, id string) (core.ScanResult, error) 
 	defer m.mu.RUnlock()
 	for _, s := range m.ordered() {
 		if s.ID == id {
-			return s, nil
+			return cloneScan(s), nil
 		}
 	}
 	return core.ScanResult{}, ErrNotFound
@@ -84,7 +86,7 @@ func (m *Memory) LatestScan(_ context.Context, target string) (core.ScanResult, 
 	defer m.mu.RUnlock()
 	for _, s := range m.ordered() {
 		if s.Target.Name == target {
-			return s, nil
+			return cloneScan(s), nil
 		}
 	}
 	return core.ScanResult{}, ErrNotFound
@@ -129,6 +131,15 @@ func (m *Memory) Prune(_ context.Context, before time.Time) (int, error) {
 }
 
 func (m *Memory) Close() error { return nil }
+
+// cloneScan copies the slices a caller could mutate, so the store and its
+// callers never share backing arrays.
+func cloneScan(s core.ScanResult) core.ScanResult {
+	s.Findings = slices.Clone(s.Findings)
+	s.Skipped = slices.Clone(s.Skipped)
+	s.Errors = slices.Clone(s.Errors)
+	return s
+}
 
 func matches(fd core.Finding, f FindingFilter) bool {
 	if f.Severity != nil && fd.Severity != *f.Severity {

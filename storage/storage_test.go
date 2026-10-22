@@ -115,6 +115,20 @@ func TestSQLiteStore(t *testing.T) {
 	storeContract(t, s)
 }
 
+func TestMemoryDoesNotAlias(t *testing.T) {
+	m := NewMemory(3)
+	ctx := context.Background()
+	sc := sampleScan("s1", "https://a.example", time.Now())
+	_ = m.SaveScan(ctx, sc)
+	sc.Findings[0].Title = "mutated after save"
+	got, _ := m.GetScan(ctx, "s1")
+	got.Findings[1].Title = "mutated after read"
+	again, _ := m.GetScan(ctx, "s1")
+	if again.Findings[0].Title != "Missing CSP" || again.Findings[1].Title != "Expired cert" {
+		t.Fatalf("store shares memory with callers: %q, %q", again.Findings[0].Title, again.Findings[1].Title)
+	}
+}
+
 func TestMemoryRingOverwritesOldest(t *testing.T) {
 	m := NewMemory(3)
 	ctx := context.Background()
