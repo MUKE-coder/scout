@@ -15,16 +15,36 @@ package authz
 
 import (
 	"context"
+	"net/http"
+	"net/url"
+	"strings"
 
+	"github.com/MUKE-coder/scout/collectors/internal/httpx"
 	"github.com/MUKE-coder/scout/core"
 )
 
-// Checks returns the access-control checks. Register the implemented ones via
-// collectors/all.
+// init registers the IMPLEMENTED access-control checks. A blank import of this
+// package (from collectors/all) activates them. IDOR and MassAssignment are
+// intentionally excluded until Scout has a test-identity config surface — see
+// their Run methods — so nothing ships as a silent no-op.
+func init() {
+	for _, c := range implementedChecks() {
+		core.Register(c)
+	}
+}
+
+// Checks returns every access-control check, implemented or not, for metadata
+// and template tests.
 func Checks() []core.Check {
 	return []core.Check{
 		JWT{}, IDOR{}, MissingAuth{}, CORS{}, MassAssignment{},
 	}
+}
+
+// implementedChecks returns only the checks with real probe logic, which are
+// the ones registered and run.
+func implementedChecks() []core.Check {
+	return []core.Check{JWT{}, MissingAuth{}, CORS{}}
 }
 
 // --- JWT weaknesses (passive token inspection) -------------------------
@@ -39,10 +59,75 @@ func (JWT) OWASP() []string         { return []string{"A07:2021"} }
 func (JWT) ASVS() []string          { return []string{"V3.5.3"} }
 
 func (c JWT) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
-	// TODO(you): given a token (from config or a login via test account),
-	// decode header/claims and flag alg:none, missing signature verification,
-	// or a missing/overlong exp. Attach RemediationJWT. Inspection only.
-	return nil, nil
+	res, err := discover(ctx, t)
+	if err != nil || res == nil {
+		return nil, err
+	}
+	// Harvest tokens observed on the base page and discovered endpoints.
+	urls := []string{t.URL}
+	urls = append(urls, res.Endpoints...)
+	seenToken := map[string]bool{}
+	var out []core.Finding
+	for _, raw := range urls {
+		if raw == "" {
+			continue
+		}
+		page, gerr := httpx.Get(ctx, raw)
+		if gerr != nil {
+			continue
+		}
+		for _, tok := range tokensFromPage(page) {
+			if seenToken[tok] {
+				continue
+			}
+			seenToken[tok] = true
+			hdr, claims, ok := parseJWT(tok)
+			if !ok {
+				continue
+			}
+			if f, bad := jwtWeakness(t, page, hdr, claims); bad {
+				out = append(out, f)
+			}
+		}
+	}
+	return out, nil
+}
+
+// jwtWeakness returns a finding when a token's header/claims are unsafe.
+// Signature strength is out of scope (no cracking); we flag alg:none and a
+// missing expiry, the two weaknesses provable by inspection alone.
+func jwtWeakness(t core.Target, page *httpx.Page, hdr jwtHeader, claims jwtClaims) (core.Finding, bool) {
+	alg := strings.ToLower(strings.TrimSpace(hdr.Alg))
+	var problems []string
+	if alg == "none" || alg == "" {
+		problems = append(problems, "alg:none (unsigned)")
+	}
+	if claims.Exp == nil {
+		problems = append(problems, "no exp claim (never expires)")
+	}
+	if len(problems) == 0 {
+		return core.Finding{}, false
+	}
+	sev := core.SeverityMedium
+	if alg == "none" || alg == "" {
+		sev = core.SeverityHigh // forgeable
+	}
+	return core.Finding{
+		Title:      "Weak JWT: " + strings.Join(problems, ", "),
+		Category:   core.CategoryAuth,
+		Severity:   sev,
+		Confidence: core.ConfidenceConfirmed, // read straight from the token
+		Asset:      urlAsset(t, page.URL.String()),
+		Location:   "jwt",
+		Evidence: core.Evidence{
+			Matched:  "JWT header alg=" + hdr.Alg + "; " + strings.Join(problems, "; "),
+			Notes:    "token inspected, not verified or stored",
+			Redacted: true,
+		},
+		CWE:         []string{"CWE-347"},
+		OWASP:       []string{"A07:2021"},
+		Remediation: RemediationJWT,
+	}, true
 }
 
 var RemediationJWT = core.Remediation{
@@ -65,9 +150,12 @@ func (IDOR) OWASP() []string         { return []string{"A01:2021"} }
 func (IDOR) ASVS() []string          { return []string{"V4.2.1"} }
 
 func (c IDOR) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
-	// TODO(you): with two test accounts, request account A's object IDs as
-	// account B and flag any that return B unauthorized data. Attach
-	// RemediationIDOR.
+	// Deliberately not implemented yet, and intentionally NOT registered (see
+	// implementedChecks). Correct IDOR testing requires two authenticated test
+	// identities to compare what each may reach, plus non-destructive
+	// read-back. Scout has no test-identity config surface yet, so a probe
+	// here would be either unsafe or unreliable. Implement once scout.Config
+	// carries test accounts; until then this returns nothing.
 	return nil, nil
 }
 
@@ -92,12 +180,77 @@ func (MissingAuth) Description() string {
 func (MissingAuth) OWASP() []string { return []string{"A01:2021"} }
 
 func (c MissingAuth) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
-	// TODO(you): request discovered/routed endpoints with no credentials and
-	// flag those that return protected data instead of 401/403. With
-	// scout.Mount, cross-check t.Routes for routes lacking auth middleware
-	// (that part can run in passive mode — see the note below). Attach
-	// RemediationMissingAuth.
-	return nil, nil
+	var out []core.Finding
+	reported := map[string]bool{}
+
+	// 1. Route-table analysis (requires scout.Mount). A sensitive route whose
+	// middleware chain contains no auth gate is a confirmed gap in the config,
+	// independent of any request.
+	for _, r := range t.Routes {
+		if !looksSensitive(r.Path) || hasAuthMiddleware(r.Middleware) {
+			continue
+		}
+		key := "route:" + strings.ToUpper(r.Method) + " " + r.Path
+		if reported[key] {
+			continue
+		}
+		reported[key] = true
+		out = append(out, core.Finding{
+			Title:       "Route has no auth middleware: " + strings.ToUpper(r.Method) + " " + r.Path,
+			Category:    core.CategoryAuth,
+			Severity:    core.SeverityHigh,
+			Confidence:  core.ConfidenceConfirmed,
+			Asset:       core.Asset{Kind: core.AssetRoute, Value: strings.ToUpper(r.Method) + " " + r.Path, Method: r.Method, Path: r.Path, Exposure: exposure(t), Criticality: t.Criticality},
+			Location:    strings.ToUpper(r.Method) + " " + r.Path,
+			Evidence:    core.Evidence{Matched: "middleware chain [" + strings.Join(r.Middleware, ", ") + "] contains no auth gate"},
+			CWE:         []string{"CWE-306"},
+			OWASP:       []string{"A01:2021"},
+			Remediation: RemediationMissingAuth,
+		})
+	}
+
+	// 2. Unauthenticated HTTP probe of discovered sensitive endpoints. A 2xx
+	// with a body (not a login redirect or 401/403) is a likely gap. This is
+	// "likely", not "confirmed": we cannot be certain the data is protected
+	// without a comparison identity.
+	res, err := discover(ctx, t)
+	if err != nil {
+		return out, err
+	}
+	if res != nil {
+		for _, raw := range res.Endpoints {
+			u, perr := url.Parse(raw)
+			if perr != nil || !looksSensitive(u.EscapedPath()) {
+				continue
+			}
+			key := "http:" + raw
+			if reported[key] {
+				continue
+			}
+			// Send with no credentials at all.
+			page, gerr := doWithHeaders(ctx, raw, nil)
+			if gerr != nil {
+				continue
+			}
+			if !protectedStatusOK(page.Status) || len(page.Body) == 0 {
+				continue // 401/403/redirect/empty → protected, good
+			}
+			reported[key] = true
+			out = append(out, core.Finding{
+				Title:       "Sensitive endpoint reachable without authentication",
+				Category:    core.CategoryAuth,
+				Severity:    core.SeverityMedium,
+				Confidence:  core.ConfidenceLikely,
+				Asset:       urlAsset(t, raw),
+				Location:    u.EscapedPath(),
+				Evidence:    core.Evidence{Request: page.Request, Notes: "unauthenticated GET returned 2xx with a body"},
+				CWE:         []string{"CWE-306"},
+				OWASP:       []string{"A01:2021"},
+				Remediation: RemediationMissingAuth,
+			})
+		}
+	}
+	return out, nil
 }
 
 var RemediationMissingAuth = core.Remediation{
@@ -119,11 +272,60 @@ func (CORS) Description() string     { return "CORS policy is dangerously permis
 func (CORS) OWASP() []string         { return []string{"A05:2021"} }
 
 func (c CORS) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
-	// TODO(you): send requests with an Origin header and flag reflecting an
-	// arbitrary origin together with Access-Control-Allow-Credentials: true,
-	// or a wildcard with credentials. Attach RemediationCORS. (Reading
-	// response headers is safe mode.)
-	return nil, nil
+	res, err := discover(ctx, t)
+	if err != nil || res == nil {
+		return nil, err
+	}
+	const evilOrigin = "https://scout-cors-probe.example.com"
+	var out []core.Finding
+	reported := map[string]bool{}
+
+	// Test the base URL and any discovered endpoints; one finding per origin
+	// policy per URL.
+	urls := []string{t.URL}
+	urls = append(urls, res.Endpoints...)
+	for _, raw := range urls {
+		if raw == "" || reported[raw] {
+			continue
+		}
+		h := http.Header{}
+		h.Set("Origin", evilOrigin)
+		page, gerr := doWithHeaders(ctx, raw, h)
+		if gerr != nil {
+			continue
+		}
+		acao := strings.TrimSpace(page.Header.Get("Access-Control-Allow-Origin"))
+		acac := strings.EqualFold(strings.TrimSpace(page.Header.Get("Access-Control-Allow-Credentials")), "true")
+
+		reflects := acao == evilOrigin
+		wildcard := acao == "*"
+		// The dangerous combinations: reflecting an arbitrary origin with
+		// credentials, or (invalid but seen) wildcard with credentials.
+		if !((reflects && acac) || (wildcard && acac)) {
+			continue
+		}
+		reported[raw] = true
+		detail := "reflects arbitrary Origin with credentials"
+		if wildcard {
+			detail = "wildcard Access-Control-Allow-Origin with credentials"
+		}
+		out = append(out, core.Finding{
+			Title:      "Permissive CORS policy",
+			Category:   core.CategoryAuth,
+			Severity:   core.SeverityHigh,
+			Confidence: core.ConfidenceConfirmed,
+			Asset:      urlAsset(t, raw),
+			Evidence: core.Evidence{
+				Request:  page.Request,
+				Response: page.Response,
+				Matched:  "Access-Control-Allow-Origin: " + acao + "; Access-Control-Allow-Credentials: true (" + detail + ")",
+			},
+			CWE:         []string{"CWE-942"},
+			OWASP:       []string{"A05:2021"},
+			Remediation: RemediationCORS,
+		})
+	}
+	return out, nil
 }
 
 var RemediationCORS = core.Remediation{
@@ -147,10 +349,12 @@ func (MassAssignment) Description() string {
 func (MassAssignment) OWASP() []string { return []string{"A08:2021"} }
 
 func (c MassAssignment) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
-	// TODO(you): with a test account, submit an extra privileged field to an
-	// update endpoint and verify (read-back) whether it was applied. Attach
-	// RemediationMassAssignment. Non-destructive: revert or use a scratch
-	// object.
+	// Deliberately not implemented yet, and intentionally NOT registered (see
+	// implementedChecks). A correct probe submits an extra privileged field to
+	// an update endpoint with a test account and reads back whether it stuck —
+	// a state-changing request that needs a test identity and a scratch object
+	// to stay non-destructive. Scout has neither config surface yet. Implement
+	// once test accounts exist; until then this returns nothing.
 	return nil, nil
 }
 
