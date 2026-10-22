@@ -80,6 +80,15 @@ retention: 2160h    # 90 days
 #   enabled: true
 #   model: anthropic/claude-sonnet-5.5
 
+# Optional links to the sibling tools. Both are auto-detected (Scout probes
+# their health endpoint) and optional; Scout is fully useful with neither.
+# Tokens come from SCOUT_PULSE_TOKEN and SCOUT_SENTINEL_TOKEN, not this file.
+# integrations:
+#   pulse:
+#     url: http://localhost:7070        # scans register at /pulse/api/test-runs
+#   sentinel:
+#     url: http://localhost:6060        # Scout's exposure score is pushed here
+
 # Only scan inside this daily window (omit to allow any time).
 # window:
 #   start: "02:00"

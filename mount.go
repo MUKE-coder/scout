@@ -119,6 +119,9 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 		s.lifecycle.Go(func(ctx context.Context) { d.Run(ctx, bus) })
 		log.Info("alerts active", "channels", len(d.Notifiers), "min_severity", d.MinSeverity)
 	}
+	if d := c.Integrations.dispatcher(store, os.Getenv, log); d != nil {
+		s.lifecycle.Go(func(ctx context.Context) { d.Run(ctx, bus) })
+	}
 	if len(c.Schedules) > 0 {
 		sched, start, err := newScheduler(c.Schedules, c.Targets, log, s.runScheduled)
 		if err != nil {
@@ -219,6 +222,9 @@ func mergeConfig(dst *Config, src Config) {
 	}
 	if src.AI != nil {
 		dst.AI = src.AI
+	}
+	if src.Integrations != nil {
+		dst.Integrations = src.Integrations
 	}
 	if len(src.Schedules) > 0 {
 		dst.Schedules = src.Schedules

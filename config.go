@@ -44,6 +44,8 @@ type Config struct {
 	Alerts *AlertsConfig `json:"alerts,omitempty" yaml:"alerts"`
 	// AI enables optional, redacted AI explanations (off by default).
 	AI *AIConfig `json:"ai,omitempty" yaml:"ai"`
+	// Integrations links optional Pulse and Sentinel instances.
+	Integrations *IntegrationsConfig `json:"integrations,omitempty" yaml:"integrations"`
 
 	// SigningKey signs the X-Scout-Scan self-test header. Generated if empty.
 	SigningKey string `json:"-" yaml:"signing_key"`
@@ -156,7 +158,10 @@ func (c Config) Validate() error {
 	if err := c.Alerts.Validate(); err != nil {
 		return err
 	}
-	return c.AI.Validate()
+	if err := c.AI.Validate(); err != nil {
+		return err
+	}
+	return c.Integrations.Validate()
 }
 
 // ValidateDashboard adds the checks needed before serving the dashboard:

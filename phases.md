@@ -108,9 +108,9 @@ Goal: safe to leave running against production.
 Goal: the family moat.
 
 - [ ] **WAF effectiveness test**: safe attack corpus → Sentinel blocked vs. passed → catch-rate % + bypass list.
-- [ ] **Pulse overlay**: register scans via `/pulse/api/test-runs`.
-- [ ] **Shared security score**: feed Scout exposure score into Sentinel's runtime score.
-- [ ] All integrations auto-detected and optional.
+- [x] **Pulse overlay**: register scans via `/pulse/api/test-runs`.
+- [x] **Shared security score**: feed Scout exposure score into Sentinel's runtime score.
+- [x] All integrations auto-detected and optional.
 
 ## Phase 10 — Advanced visualization & reporting
 Goal: the "wow" surfaces.
