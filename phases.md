@@ -12,7 +12,7 @@ Goal: the skeleton compiles, the Mount pattern and CLI shell exist, nothing scan
 - [x] Initialize Go module `github.com/MUKE-coder/scout`, Go 1.24+, no CGo.
 - [x] Repo layout: `core/`, `collectors/`, `engine/`, `scoring/`, `remediation/`, `storage/`, `api/`, `cli/`, `ui/`, `examples/`, `docs/`.
 - [x] Define `core` types: `Finding`, `Asset`, `Evidence`, `Remediation`, `Severity`, `Confidence`, `Category`, `Mode`, `Status`, `Target`, `ScanResult`.
-- [ ] Define the `Check` interface and a `Registry` that checks register into.
+- [x] Define the `Check` interface and a `Registry` that checks register into.
 - [ ] `scout.Config` + functional options (`WithTarget`, `WithMode`, `WithScope`, `WithConfig`).
 - [ ] `storage` interface with two backends: in-memory ring buffer + pure-Go SQLite (`glebarez/sqlite`), auto-migrated schema.
 - [ ] CLI shell with `cobra`: `scan`, `serve`, `ci`, `diff`, `version` (stubs that parse flags).
