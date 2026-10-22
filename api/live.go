@@ -132,14 +132,16 @@ func (t *tracker) snapshot() []scanProgress {
 // client misses events (the bus never blocks scans) and can resync from
 // GET /scans/running.
 func (s *Server) live(c *gin.Context) {
+	// Subscribe before completing the handshake, so no event published
+	// after the client is connected can be missed.
+	events, unsubscribe := s.d.Bus.Subscribe(256)
+	defer unsubscribe()
+
 	conn, err := websocket.Accept(c.Writer, c.Request, &websocket.AcceptOptions{})
 	if err != nil {
 		return // Accept already wrote the HTTP error
 	}
 	defer conn.CloseNow()
-
-	events, unsubscribe := s.d.Bus.Subscribe(256)
-	defer unsubscribe()
 	ctx := conn.CloseRead(c.Request.Context()) // we only write; this notices client close
 
 	ping := time.NewTicker(30 * time.Second)
