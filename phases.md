@@ -18,7 +18,7 @@ Goal: the skeleton compiles, the Mount pattern and CLI shell exist, nothing scan
 - [x] CLI shell with `cobra`: `scan`, `serve`, `ci`, `diff`, `version` (stubs that parse flags).
 - [x] `scout.Mount(router, cfg)` stub that registers the `/scout` route group.
 - [x] Structured logging, graceful shutdown (`context.Context` + `sync.WaitGroup`), `scout.Version`.
-- [ ] CI: GitHub Actions — build, `go vet`, `gosec`, unit tests.
+- [x] CI: GitHub Actions — build, `go vet`, `gosec`, unit tests.
 
 ## Phase 1 — Engine, modes & safety core
 Goal: the scan loop runs checks safely with mode caps. This is the backbone everything hangs off.
