@@ -24,7 +24,11 @@ type Config struct {
 	// targets that have none, so the route-table checks (unprotected routes)
 	// run with no attack traffic. Set programmatically, not from YAML.
 	Routes []core.Route `json:"-" yaml:"-"`
-	Scope  Scope        `json:"scope" yaml:"scope"`
+	// Identities are disposable test accounts for access-control checks such
+	// as IDOR. They are attached to configured targets that declare none.
+	// Never real users; carried into scans but never written to results.
+	Identities []core.Identity `json:"-" yaml:"identities"`
+	Scope      Scope           `json:"scope" yaml:"scope"`
 	// Criticality weights findings by asset (payments API 1.5, marketing
 	// site 0.7). First matching rule wins.
 	Criticality []scoring.CriticalityRule `json:"criticality,omitempty" yaml:"criticality"`
@@ -121,6 +125,19 @@ func WithRoutes(routes ...core.Route) Option {
 	return func(c *Config) { c.Routes = append(c.Routes, routes...) }
 }
 
+// WithTestIdentities registers disposable test accounts for the access-control
+// checks (IDOR and future identity-dependent probes). Each identity carries
+// the headers that authenticate it and the private resources it owns; the
+// checks are read-only and never use real user credentials.
+//
+//	scout.WithTestIdentities(
+//		core.Identity{Name: "alice", Headers: map[string]string{"Cookie": "session=a"}, Owns: []string{"/api/users/1"}},
+//		core.Identity{Name: "bob", Headers: map[string]string{"Cookie": "session=b"}, Owns: []string{"/api/users/2"}},
+//	)
+func WithTestIdentities(ids ...core.Identity) Option {
+	return func(c *Config) { c.Identities = append(c.Identities, ids...) }
+}
+
 // NewConfig builds a config from defaults plus options, then validates it.
 func NewConfig(opts ...Option) (Config, error) {
 	c := DefaultConfig()
@@ -150,6 +167,9 @@ func (c *Config) applyDefaults() {
 	for i := range c.Targets {
 		if c.Targets[i].Environment == "" {
 			c.Targets[i].Environment = c.Environment
+		}
+		if len(c.Targets[i].Identities) == 0 {
+			c.Targets[i].Identities = c.Identities
 		}
 	}
 }

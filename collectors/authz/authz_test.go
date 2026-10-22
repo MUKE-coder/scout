@@ -49,21 +49,26 @@ func TestRemediationTemplatesPresent(t *testing.T) {
 	}
 }
 
-// Unimplemented checks must stay safe no-ops.
+// MassAssignment stays a safe no-op; IDOR is a no-op only until identities are
+// configured (exercised in TestIDOR).
 func TestUnimplementedAreNoops(t *testing.T) {
 	ctx := core.WithScanCache(context.Background())
 	tgt := core.Target{URL: "http://localhost:8080", Environment: core.EnvDev}
-	for _, c := range []core.Check{IDOR{}, MassAssignment{}} {
+	for _, c := range []core.Check{MassAssignment{}} {
 		got, err := c.Run(ctx, tgt)
 		if err != nil || len(got) != 0 {
 			t.Errorf("%s: want no-op, got %d findings err=%v", c.ID(), len(got), err)
 		}
 	}
+	// IDOR with no identities configured must also report nothing.
+	if got, err := (IDOR{}).Run(ctx, tgt); err != nil || len(got) != 0 {
+		t.Errorf("IDOR unconfigured: want no-op, got %d findings err=%v", len(got), err)
+	}
 }
 
 // Only implemented checks are registered.
 func TestOnlyImplementedRegistered(t *testing.T) {
-	want := map[string]bool{"auth.jwt": true, "auth.missing": true, "auth.cors": true}
+	want := map[string]bool{"auth.jwt": true, "auth.missing": true, "auth.cors": true, "auth.idor": true}
 	for _, c := range implementedChecks() {
 		if !want[c.ID()] {
 			t.Errorf("unexpected registered check %q", c.ID())
@@ -149,6 +154,80 @@ func TestJWT(t *testing.T) {
 		got, _ := JWT{}.Run(scanCtx(srv), devTarget(srv))
 		if len(got) != 0 {
 			t.Fatalf("want 0 for a healthy token, got %+v", got)
+		}
+	})
+}
+
+// --- IDOR --------------------------------------------------------------
+
+func TestIDOR(t *testing.T) {
+	// Two owned objects; alice owns /1, bob owns /2. A server ignoring the
+	// caller's identity (returning the object for any authenticated request)
+	// is vulnerable; one that checks ownership is not.
+	objects := map[string]string{
+		"/api/users/1": `{"id":1,"email":"alice@example.com","ssn":"111"}`,
+		"/api/users/2": `{"id":2,"email":"bob@example.com","ssn":"222"}`,
+	}
+	identities := []core.Identity{
+		{Name: "alice", Headers: map[string]string{"X-Test-User": "alice"}, Owns: []string{"/api/users/1"}},
+		{Name: "bob", Headers: map[string]string{"X-Test-User": "bob"}, Owns: []string{"/api/users/2"}},
+	}
+
+	t.Run("no ownership check is flagged", func(t *testing.T) {
+		srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if body, ok := objects[r.URL.Path]; ok {
+				_, _ = w.Write([]byte(body)) // serves the object to anyone
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		t.Cleanup(srv.Close)
+		tgt := devTarget(srv)
+		tgt.Identities = identities
+		got, err := IDOR{}.Run(scanCtx(srv), tgt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// bob can read alice's object and vice versa → 2 findings.
+		if len(got) != 2 {
+			t.Fatalf("want 2 IDOR findings, got %d: %+v", len(got), got)
+		}
+		for _, f := range got {
+			if f.Severity != core.SeverityHigh || f.Confidence != core.ConfidenceConfirmed {
+				t.Errorf("idor finding not high/confirmed: %+v", f)
+			}
+			if !f.Evidence.Redacted {
+				t.Error("idor evidence must be redacted (no private body stored)")
+			}
+			if f.CWE[0] != "CWE-639" {
+				t.Errorf("cwe = %v", f.CWE)
+			}
+		}
+	})
+
+	t.Run("enforced ownership is clean", func(t *testing.T) {
+		srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			user := r.Header.Get("X-Test-User")
+			owner := map[string]string{"/api/users/1": "alice", "/api/users/2": "bob"}[r.URL.Path]
+			if owner == "" {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			if user != owner {
+				w.WriteHeader(http.StatusForbidden) // ownership enforced
+				return
+			}
+			_, _ = w.Write([]byte(objects[r.URL.Path]))
+		}))
+		t.Cleanup(srv.Close)
+		tgt := devTarget(srv)
+		tgt.Identities = identities
+		got, err := IDOR{}.Run(scanCtx(srv), tgt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != 0 {
+			t.Fatalf("want 0 findings for an app that enforces ownership, got %+v", got)
 		}
 	})
 }

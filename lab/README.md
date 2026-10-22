@@ -48,7 +48,7 @@ go run ./cmd/scout scan --repo ./lab --mode safe --env dev
 | `/api/redirect?url=` | Open redirect | `app.open-redirect` |
 | `/api/data` | CORS reflects Origin + credentials | `auth.cors` |
 | `session` cookie | Forgeable JWT (`alg:none`, no expiry) | `auth.jwt` |
-| `/api/users/[id]` | IDOR (no ownership check) | interactive (needs test accounts to auto-detect) |
+| `/api/users/[id]` | IDOR (no ownership check) | `auth.idor` (configure two test identities — see below) |
 | `.env` (committed) | Hard-coded secrets | `code.secrets` (`--repo`) |
 | `Dockerfile` | Root user, unpinned base, secret in ENV | `code.dockerfile` (`--repo`) |
 | `lib/crypto.js` | MD5/SHA-1 hashing, `Math.random` tokens | `code.weak-crypto`, `code.insecure-random` (`--repo`) |
@@ -77,6 +77,27 @@ have something to hit. Scout ships the check *scaffold* for several of these
 | `/api/checkout` (POST) | Business logic (negative quantity) | (logic probe) |
 | `/api/transfer` (POST) | CSRF (no token) | `app.csrf-form` |
 | `/api/data` | CORS (reflected origin + credentials) | `auth.cors` |
+
+## Detecting IDOR (test identities)
+
+The `auth.idor` check proves broken object-level authorization by comparison:
+it confirms one identity owns a private object, then checks whether a *different*
+identity can read the byte-identical object. It needs two disposable test
+accounts. In a YAML config:
+
+```yaml
+identities:
+  - name: alice
+    headers: { Cookie: "session=alice-token" }
+    owns: ["/api/users/1"]
+  - name: bob
+    headers: { Cookie: "session=bob-token" }
+    owns: ["/api/users/2"]
+```
+
+Or programmatically with `scout.WithTestIdentities(...)`. The probe is read-only
+(GET), compares response bodies by hash, and never stores their contents. Use
+throwaway accounts only — never real users.
 
 ## Fixing them
 

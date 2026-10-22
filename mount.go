@@ -193,6 +193,9 @@ func (s *Scout) resolveRoutes(r gin.IRouter) {
 		if len(s.cfg.Targets[i].Routes) == 0 {
 			s.cfg.Targets[i].Routes = routes
 		}
+		if len(s.cfg.Targets[i].Identities) == 0 {
+			s.cfg.Targets[i].Identities = s.cfg.Identities
+		}
 	}
 }
 

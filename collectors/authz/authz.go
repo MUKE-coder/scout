@@ -4,9 +4,10 @@
 // rules apply — every request through core.HTTPClient(ctx), test accounts
 // only, non-destructive, honor the declared Mode().
 //
-// Access-control checks (IDOR, missing-auth, privilege escalation) need two
-// configured test identities to compare what each may reach. Add that input
-// to scout.Config when you implement them; do not use real user accounts.
+// Access-control checks (IDOR, privilege escalation) need two configured test
+// identities to compare what each may reach. That surface now exists
+// (scout.WithTestIdentities / core.Target.Identities); IDOR uses it. Supply
+// disposable test accounts only — never real user accounts.
 //
 // JWT checks inspect a token the operator supplies (passive analysis of its
 // header/claims) — not a brute force. "Weak secret" cracking is out of scope
@@ -24,9 +25,10 @@ import (
 )
 
 // init registers the IMPLEMENTED access-control checks. A blank import of this
-// package (from collectors/all) activates them. IDOR and MassAssignment are
-// intentionally excluded until Scout has a test-identity config surface — see
-// their Run methods — so nothing ships as a silent no-op.
+// package (from collectors/all) activates them. IDOR is registered and runs
+// only when test identities are configured. MassAssignment is still excluded:
+// a correct probe is state-changing and needs a scratch object, which Scout
+// cannot yet create safely — see its Run method.
 func init() {
 	for _, c := range implementedChecks() {
 		core.Register(c)
@@ -42,9 +44,10 @@ func Checks() []core.Check {
 }
 
 // implementedChecks returns only the checks with real probe logic, which are
-// the ones registered and run.
+// the ones registered and run. IDOR runs only when test identities are
+// configured (see its Run); without them it reports nothing.
 func implementedChecks() []core.Check {
-	return []core.Check{JWT{}, MissingAuth{}, CORS{}}
+	return []core.Check{JWT{}, MissingAuth{}, CORS{}, IDOR{}}
 }
 
 // --- JWT weaknesses (passive token inspection) -------------------------
@@ -150,13 +153,72 @@ func (IDOR) OWASP() []string         { return []string{"A01:2021"} }
 func (IDOR) ASVS() []string          { return []string{"V4.2.1"} }
 
 func (c IDOR) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
-	// Deliberately not implemented yet, and intentionally NOT registered (see
-	// implementedChecks). Correct IDOR testing requires two authenticated test
-	// identities to compare what each may reach, plus non-destructive
-	// read-back. Scout has no test-identity config surface yet, so a probe
-	// here would be either unsafe or unreliable. Implement once scout.Config
-	// carries test accounts; until then this returns nothing.
-	return nil, nil
+	// IDOR is proven by comparison: one identity owns a private resource; a
+	// different identity must not be able to read it. This needs at least two
+	// configured test identities (scout.WithTestIdentities), at least one of
+	// which declares an owned resource. Without that config the check reports
+	// nothing — it is not a silent no-op, it is "not configured".
+	if t.URL == "" || len(t.Identities) < 2 {
+		return nil, nil
+	}
+
+	var out []core.Finding
+	reported := map[string]bool{}
+
+	for _, owner := range t.Identities {
+		for _, owned := range owner.Owns {
+			target := resolveOwnedURL(t.URL, owned)
+			if target == "" {
+				continue
+			}
+			// Establish the ownership baseline: the owner must actually be able
+			// to read its own resource. If not, we cannot prove anything.
+			ownerPage, err := doWithHeaders(ctx, target, headerFrom(owner.Headers))
+			if err != nil || !protectedStatusOK(ownerPage.Status) || len(ownerPage.Body) == 0 {
+				continue
+			}
+			ownerFP := bodyFingerprint(ownerPage.Body)
+
+			// Any other identity that receives the byte-identical object has
+			// reached data it does not own: a confirmed IDOR. Requests are
+			// read-only GETs; the owner's data is never included in evidence.
+			for _, other := range t.Identities {
+				if other.Name == owner.Name {
+					continue
+				}
+				otherPage, err := doWithHeaders(ctx, target, headerFrom(other.Headers))
+				if err != nil || !protectedStatusOK(otherPage.Status) || len(otherPage.Body) == 0 {
+					continue
+				}
+				if bodyFingerprint(otherPage.Body) != ownerFP {
+					continue // got its own/different object, or a generic page
+				}
+				key := other.Name + "->" + target
+				if reported[key] {
+					continue
+				}
+				reported[key] = true
+				out = append(out, core.Finding{
+					Title:      "IDOR: one user can read another user's object",
+					Category:   core.CategoryAuth,
+					Severity:   core.SeverityHigh,
+					Confidence: core.ConfidenceConfirmed,
+					Asset:      urlAsset(t, target),
+					Location:   target,
+					Evidence: core.Evidence{
+						Request:  otherPage.Request,
+						Matched:  "identity " + other.Name + " received the identical object owned by " + owner.Name,
+						Notes:    "non-destructive GET; response bodies compared by hash, contents not stored",
+						Redacted: true,
+					},
+					CWE:         []string{"CWE-639"},
+					OWASP:       []string{"A01:2021"},
+					Remediation: RemediationIDOR,
+				})
+			}
+		}
+	}
+	return out, nil
 }
 
 var RemediationIDOR = core.Remediation{

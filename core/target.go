@@ -16,6 +16,19 @@ type Route struct {
 	Middleware []string `json:"middleware,omitempty"`
 }
 
+// Identity is a disposable test account the access-control checks use to probe
+// authorization boundaries. It is never a real user. Headers carry whatever
+// authenticates it (e.g. "Authorization: Bearer ...", "Cookie: session=..."),
+// which the checks attach to requests they make as this identity. Owns lists
+// private resources (absolute URLs, or paths resolved against the target URL)
+// that this identity legitimately owns; the IDOR check asks whether a
+// *different* identity can read them. Every probe using these is read-only.
+type Identity struct {
+	Name    string            `json:"name" yaml:"name"`
+	Headers map[string]string `json:"headers,omitempty" yaml:"headers"`
+	Owns    []string          `json:"owns,omitempty" yaml:"owns"`
+}
+
 // Target is something Scout scans: a URL, a host, a repo, or all three.
 type Target struct {
 	Name string `json:"name" yaml:"name"`
@@ -33,6 +46,12 @@ type Target struct {
 
 	// Routes is the real route table when the app uses scout.Mount.
 	Routes []Route `json:"routes,omitempty" yaml:"-"`
+
+	// Identities are disposable test accounts for access-control checks
+	// (e.g. IDOR). Never real users. Set via scout.WithTestIdentities or the
+	// config file; empty disables the identity-dependent checks for this
+	// target. Not serialized in scan results (may carry credentials).
+	Identities []Identity `json:"-" yaml:"identities"`
 }
 
 // Host returns the hostname of the target URL, or "" if there is none.

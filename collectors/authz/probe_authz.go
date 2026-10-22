@@ -2,7 +2,9 @@ package authz
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -88,6 +90,45 @@ func doWithHeaders(ctx context.Context, rawURL string, h http.Header) (*httpx.Pa
 // protectedStatusOK reports whether a status looks like it returned data
 // (2xx) rather than an auth challenge or redirect.
 func protectedStatusOK(status int) bool { return status >= 200 && status <= 299 }
+
+// headerFrom builds an http.Header from an identity's credential map. Returns
+// nil for an empty map so an unauthenticated request is still expressible.
+func headerFrom(m map[string]string) http.Header {
+	if len(m) == 0 {
+		return nil
+	}
+	h := http.Header{}
+	for k, v := range m {
+		h.Set(k, v)
+	}
+	return h
+}
+
+// bodyFingerprint is a stable hash of a response body, used to decide whether
+// two identities received the identical object. Hashing keeps private data out
+// of findings and makes the comparison exact (low false-positive).
+func bodyFingerprint(body []byte) string {
+	sum := sha256.Sum256(body)
+	return hex.EncodeToString(sum[:])
+}
+
+// resolveOwnedURL turns an identity's owned-resource entry (an absolute URL or
+// a path relative to the target) into an absolute URL. Returns "" if neither
+// the entry nor the base yields one.
+func resolveOwnedURL(base, owned string) string {
+	if u, err := url.Parse(owned); err == nil && u.IsAbs() {
+		return u.String()
+	}
+	b, err := url.Parse(base)
+	if err != nil || b.Host == "" {
+		return ""
+	}
+	ref, err := url.Parse(owned)
+	if err != nil {
+		return ""
+	}
+	return b.ResolveReference(ref).String()
+}
 
 // sensitiveWords flag a path that probably needs authentication.
 var sensitiveWords = []string{
