@@ -1,0 +1,5 @@
+{"assessed": ["headers"], "findings": [
+  {"fingerprint": "h-csp", "check_id": "headers.csp", "title": "CSP missing", "category": "headers", "severity": "medium", "confidence": "confirmed", "asset": {"kind": "url", "value": "https://shop.example.com/", "host": "shop.example.com", "path": "/", "exposure": "internet"}, "remediation": {"effort": "M"}, "status": "open"},
+  {"fingerprint": "h-nosniff", "check_id": "headers.nosniff", "title": "nosniff missing", "category": "headers", "severity": "low", "confidence": "confirmed", "asset": {"kind": "url", "value": "https://shop.example.com/", "host": "shop.example.com", "path": "/", "exposure": "internet"}, "remediation": {"effort": "S"}, "status": "open"},
+  {"fingerprint": "h-referrer", "check_id": "headers.referrer-policy", "title": "Referrer-Policy missing", "category": "headers", "severity": "low", "confidence": "confirmed", "asset": {"kind": "url", "value": "https://shop.example.com/", "host": "shop.example.com", "path": "/", "exposure": "internet"}, "remediation": {"effort": "S"}, "status": "open"}
+]}

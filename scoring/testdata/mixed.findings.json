@@ -1,0 +1,10 @@
+{"findings": [
+  {"fingerprint": "api-high", "check_id": "auth.jwt-none", "title": "JWT accepts alg none", "category": "auth", "severity": "high", "confidence": "confirmed", "asset": {"kind": "route", "value": "POST /api/payments", "host": "api.example.com", "path": "/api/payments", "exposure": "authenticated"}, "remediation": {"effort": "M"}, "status": "open"},
+  {"fingerprint": "exp-env", "check_id": "exposure.env", "title": ".env file exposed", "category": "exposure", "severity": "high", "confidence": "likely", "asset": {"kind": "url", "value": "https://www.example.com/.env", "host": "www.example.com", "path": "/.env", "exposure": "internet"}, "tags": ["exposed-secret"], "remediation": {"effort": "S"}, "status": "open"},
+  {"fingerprint": "dns-dmarc", "check_id": "dns.dmarc", "title": "No DMARC record", "category": "dns", "severity": "low", "confidence": "confirmed", "asset": {"kind": "domain", "value": "example.com", "host": "example.com", "exposure": "internet"}, "remediation": {"effort": "S"}, "status": "open"},
+  {"fingerprint": "net-redis", "check_id": "network.redis", "title": "Redis reachable without auth", "category": "network", "severity": "critical", "confidence": "possible", "asset": {"kind": "host", "value": "10.0.0.5:6379", "host": "10.0.0.5", "port": 6379, "exposure": "internal"}, "remediation": {"effort": "L"}, "status": "open"},
+  {"fingerprint": "accepted", "check_id": "headers.csp", "title": "CSP missing on marketing", "category": "headers", "severity": "medium", "confidence": "confirmed", "asset": {"kind": "url", "value": "https://www.example.com/", "host": "www.example.com", "path": "/", "exposure": "internet"}, "remediation": {"effort": "M"}, "status": "accepted-risk"}
+], "criticality": [
+  {"host": "api.example.com", "path_prefix": "/api/payments", "value": 1.5},
+  {"host": "www.example.com", "value": 0.7}
+]}

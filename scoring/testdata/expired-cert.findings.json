@@ -1,0 +1,3 @@
+{"findings": [
+  {"fingerprint": "tls-expired", "check_id": "tls.cert-expiry", "title": "Certificate expired", "category": "tls", "severity": "high", "confidence": "confirmed", "asset": {"kind": "domain", "value": "old.example.com", "host": "old.example.com", "exposure": "internal"}, "tags": ["expired-cert"], "remediation": {"effort": "S"}, "status": "open"}
+]}

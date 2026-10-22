@@ -1,0 +1,147 @@
+{
+  "report": {
+    "score": 69.9,
+    "grade": "D",
+    "categories": [
+      {
+        "category": "app",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "api",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "auth",
+        "score": 69.8,
+        "grade": "D",
+        "risk": 18,
+        "findings": 1,
+        "worst": "high"
+      },
+      {
+        "category": "tls",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "headers",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "exposure",
+        "score": 82.2,
+        "grade": "B",
+        "risk": 9.8,
+        "findings": 1,
+        "worst": "high"
+      },
+      {
+        "category": "network",
+        "score": 88,
+        "grade": "B",
+        "risk": 6.4,
+        "findings": 1,
+        "worst": "critical"
+      },
+      {
+        "category": "dns",
+        "score": 96.1,
+        "grade": "A",
+        "risk": 2,
+        "findings": 1,
+        "worst": "low"
+      },
+      {
+        "category": "host",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "code",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "config",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      }
+    ],
+    "uncapped": 92.9,
+    "caps": [
+      {
+        "grade": "D",
+        "reason": "publicly exposed secret",
+        "fingerprint": "exp-env",
+        "title": ".env file exposed"
+      }
+    ]
+  },
+  "fix_next": [
+    {
+      "fingerprint": "exp-env",
+      "check_id": "exposure.env",
+      "title": ".env file exposed",
+      "severity": "high",
+      "asset": "https://www.example.com/.env",
+      "effort": "S",
+      "points": 24.7,
+      "priority": 24.7
+    },
+    {
+      "fingerprint": "api-high",
+      "check_id": "auth.jwt-none",
+      "title": "JWT accepts alg none",
+      "severity": "high",
+      "asset": "POST /api/payments",
+      "effort": "M",
+      "points": 4.4,
+      "priority": 1.47
+    },
+    {
+      "fingerprint": "dns-dmarc",
+      "check_id": "dns.dmarc",
+      "title": "No DMARC record",
+      "severity": "low",
+      "asset": "example.com",
+      "effort": "S",
+      "points": 0.2,
+      "priority": 0.2
+    },
+    {
+      "fingerprint": "net-redis",
+      "check_id": "network.redis",
+      "title": "Redis reachable without auth",
+      "severity": "critical",
+      "asset": "10.0.0.5:6379",
+      "effort": "L",
+      "points": 0.9,
+      "priority": 0.11
+    }
+  ]
+}

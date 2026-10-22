@@ -1,0 +1,5 @@
+{"findings": [
+  {"fingerprint": "app-crit", "check_id": "app.injection", "title": "Confirmed injection in search", "category": "app", "severity": "critical", "confidence": "confirmed", "asset": {"kind": "url", "value": "https://shop.example.com/search", "host": "shop.example.com", "path": "/search", "exposure": "internet"}, "remediation": {"effort": "M"}, "status": "open"},
+  {"fingerprint": "h-csp", "check_id": "headers.csp", "title": "CSP missing", "category": "headers", "severity": "medium", "confidence": "confirmed", "asset": {"kind": "url", "value": "https://shop.example.com/", "host": "shop.example.com", "path": "/", "exposure": "internet"}, "remediation": {"effort": "M"}, "status": "open"},
+  {"fingerprint": "tls-weak", "check_id": "tls.weak-protocols", "title": "TLS 1.0 enabled", "category": "tls", "severity": "medium", "confidence": "confirmed", "asset": {"kind": "domain", "value": "shop.example.com", "host": "shop.example.com", "exposure": "internet"}, "remediation": {"effort": "S"}, "status": "open"}
+]}

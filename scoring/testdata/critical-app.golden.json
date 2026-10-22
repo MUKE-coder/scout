@@ -1,0 +1,137 @@
+{
+  "report": {
+    "score": 59.9,
+    "grade": "F",
+    "categories": [
+      {
+        "category": "app",
+        "score": 44.9,
+        "grade": "F",
+        "risk": 40,
+        "findings": 1,
+        "worst": "critical"
+      },
+      {
+        "category": "api",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "auth",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "tls",
+        "score": 85.2,
+        "grade": "B",
+        "risk": 8,
+        "findings": 1,
+        "worst": "medium"
+      },
+      {
+        "category": "headers",
+        "score": 85.2,
+        "grade": "B",
+        "risk": 8,
+        "findings": 1,
+        "worst": "medium"
+      },
+      {
+        "category": "exposure",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "network",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "dns",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "host",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "code",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "config",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      }
+    ],
+    "uncapped": 90.4,
+    "caps": [
+      {
+        "grade": "F",
+        "reason": "confirmed critical finding",
+        "fingerprint": "app-crit",
+        "title": "Confirmed injection in search"
+      }
+    ]
+  },
+  "fix_next": [
+    {
+      "fingerprint": "app-crit",
+      "check_id": "app.injection",
+      "title": "Confirmed injection in search",
+      "severity": "critical",
+      "asset": "https://shop.example.com/search",
+      "effort": "M",
+      "points": 38.3,
+      "priority": 12.77
+    },
+    {
+      "fingerprint": "tls-weak",
+      "check_id": "tls.weak-protocols",
+      "title": "TLS 1.0 enabled",
+      "severity": "medium",
+      "asset": "shop.example.com",
+      "effort": "S",
+      "points": 1,
+      "priority": 1
+    },
+    {
+      "fingerprint": "h-csp",
+      "check_id": "headers.csp",
+      "title": "CSP missing",
+      "severity": "medium",
+      "asset": "https://shop.example.com/",
+      "effort": "M",
+      "points": 0.7,
+      "priority": 0.23
+    }
+  ]
+}

@@ -54,7 +54,7 @@ Goal: findings become a grade and a prioritized to-do list.
 - [x] **"Fix next" ranking**: `points_regained_if_fixed / effort`.
 - [x] Remediation renderer: what/why + stack-specific how + effort + CWE/OWASP refs.
 - [x] Per-asset criticality config.
-- [ ] Golden-file tests pinning scores for known finding sets.
+- [x] Golden-file tests pinning scores for known finding sets.
 
 ## Phase 4 — CLI output & CI mode
 Goal: usable from a terminal and a pipeline before the UI exists.

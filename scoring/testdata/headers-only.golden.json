@@ -1,0 +1,49 @@
+{
+  "report": {
+    "score": 78.7,
+    "grade": "C",
+    "categories": [
+      {
+        "category": "headers",
+        "score": 78.7,
+        "grade": "C",
+        "risk": 12,
+        "findings": 3,
+        "worst": "medium"
+      }
+    ],
+    "uncapped": 78.7
+  },
+  "fix_next": [
+    {
+      "fingerprint": "h-csp",
+      "check_id": "headers.csp",
+      "title": "CSP missing",
+      "severity": "medium",
+      "asset": "https://shop.example.com/",
+      "effort": "M",
+      "points": 13.6,
+      "priority": 4.53
+    },
+    {
+      "fingerprint": "h-nosniff",
+      "check_id": "headers.nosniff",
+      "title": "nosniff missing",
+      "severity": "low",
+      "asset": "https://shop.example.com/",
+      "effort": "S",
+      "points": 3.2,
+      "priority": 3.2
+    },
+    {
+      "fingerprint": "h-referrer",
+      "check_id": "headers.referrer-policy",
+      "title": "Referrer-Policy missing",
+      "severity": "low",
+      "asset": "https://shop.example.com/",
+      "effort": "S",
+      "points": 3.2,
+      "priority": 3.2
+    }
+  ]
+}

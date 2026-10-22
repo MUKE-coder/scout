@@ -1,0 +1,98 @@
+{
+  "report": {
+    "score": 100,
+    "grade": "A",
+    "categories": [
+      {
+        "category": "app",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "api",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "auth",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "tls",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "headers",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "exposure",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "network",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "dns",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "host",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "code",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      },
+      {
+        "category": "config",
+        "score": 100,
+        "grade": "A",
+        "risk": 0,
+        "findings": 0,
+        "worst": "info"
+      }
+    ],
+    "uncapped": 100
+  },
+  "fix_next": null
+}
