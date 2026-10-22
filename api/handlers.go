@@ -339,6 +339,30 @@ func (s *Server) getFinding(c *gin.Context) {
 type statusRequest struct {
 	Fingerprints []string    `json:"fingerprints" binding:"required"`
 	Status       core.Status `json:"status" binding:"required"`
+	// Reason is required for accepted-risk and false-positive.
+	Reason string `json:"reason"`
+	// Until optionally expires an accepted risk (RFC 3339 or YYYY-MM-DD).
+	Until string `json:"until"`
+}
+
+// parseUntil accepts RFC 3339 or a date (end of that day, UTC) and requires
+// a future time.
+func parseUntil(s string, now time.Time) (*time.Time, error) {
+	if s == "" {
+		return nil, nil
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		d, derr := time.Parse("2006-01-02", s)
+		if derr != nil {
+			return nil, errors.New("until must be a date (YYYY-MM-DD) or RFC 3339 time")
+		}
+		t = d.Add(24*time.Hour - time.Second)
+	}
+	if !t.After(now) {
+		return nil, errors.New("until must be in the future")
+	}
+	return &t, nil
 }
 
 // setStatus updates findings' status in each target's latest scan, which is
@@ -355,6 +379,21 @@ func (s *Server) setStatus(c *gin.Context) {
 		fail(c, http.StatusBadRequest, "status must be open, fixed, accepted-risk or false-positive")
 		return
 	}
+	decision := req.Status == core.StatusAcceptedRisk || req.Status == core.StatusFalsePositive
+	req.Reason = strings.TrimSpace(req.Reason)
+	if decision && req.Reason == "" {
+		fail(c, http.StatusBadRequest, "a reason is required to accept a risk or mark a false positive")
+		return
+	}
+	until, err := parseUntil(req.Until, time.Now())
+	if err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if until != nil && req.Status != core.StatusAcceptedRisk {
+		fail(c, http.StatusBadRequest, "only an accepted risk can have an expiry")
+		return
+	}
 	ctx := c.Request.Context()
 	want := map[string]bool{}
 	for _, fp := range req.Fingerprints {
@@ -369,11 +408,16 @@ func (s *Server) setStatus(c *gin.Context) {
 	for _, sc := range scans {
 		changed := false
 		for i := range sc.Findings {
-			if want[sc.Findings[i].Fingerprint] {
-				sc.Findings[i].Status = req.Status
-				changed = true
-				updated++
+			f := &sc.Findings[i]
+			if !want[f.Fingerprint] {
+				continue
 			}
+			f.Status, f.StatusReason, f.StatusUntil, f.StatusBy = req.Status, "", nil, ""
+			if decision {
+				f.StatusReason, f.StatusUntil, f.StatusBy = req.Reason, until, c.GetString(ctxUserKey)
+			}
+			changed = true
+			updated++
 		}
 		if !changed {
 			continue

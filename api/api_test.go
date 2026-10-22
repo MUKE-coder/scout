@@ -182,11 +182,34 @@ func TestStatusAndVerify(t *testing.T) {
 	rows := decode[findingsResp](t, f.do(http.MethodGet, "/scout/api/findings", "")).Findings
 	fpA, fpB := rows[0].Fingerprint, rows[1].Fingerprint
 
-	// Bulk accept /b.
-	w := f.do(http.MethodPost, "/scout/api/findings/status", `{"fingerprints":["`+fpB+`"],"status":"accepted-risk"}`)
+	// Accepting a risk needs a reason; an expiry must be in the future.
+	if w := f.do(http.MethodPost, "/scout/api/findings/status", `{"fingerprints":["`+fpB+`"],"status":"accepted-risk"}`); w.Code != http.StatusBadRequest {
+		t.Fatalf("accept without reason: %d", w.Code)
+	}
+	if w := f.do(http.MethodPost, "/scout/api/findings/status", `{"fingerprints":["`+fpB+`"],"status":"accepted-risk","reason":"x","until":"2001-01-01"}`); w.Code != http.StatusBadRequest {
+		t.Fatalf("past expiry: %d", w.Code)
+	}
+	until := time.Now().Add(30 * 24 * time.Hour).Format("2006-01-02")
+	w := f.do(http.MethodPost, "/scout/api/findings/status",
+		`{"fingerprints":["`+fpB+`"],"status":"accepted-risk","reason":"Behind the VPN","until":"`+until+`"}`)
 	if w.Code != http.StatusOK || decode[map[string]int](t, w)["updated"] != 1 {
 		t.Fatalf("status: %d %s", w.Code, w.Body)
 	}
+	accepted := decode[struct {
+		Finding findingRow `json:"finding"`
+	}](t, f.do(http.MethodGet, "/scout/api/findings/"+fpB, "")).Finding
+	if accepted.StatusReason != "Behind the VPN" || accepted.StatusBy != "ops" || accepted.StatusUntil == nil {
+		t.Fatalf("decision not recorded: %+v", accepted)
+	}
+	// Reopening clears the decision.
+	f.do(http.MethodPost, "/scout/api/findings/status", `{"fingerprints":["`+fpB+`"],"status":"open"}`)
+	reopened := decode[struct {
+		Finding findingRow `json:"finding"`
+	}](t, f.do(http.MethodGet, "/scout/api/findings/"+fpB, "")).Finding
+	if reopened.StatusReason != "" || reopened.StatusUntil != nil {
+		t.Fatalf("reopen should clear the decision: %+v", reopened)
+	}
+	f.do(http.MethodPost, "/scout/api/findings/status", `{"fingerprints":["`+fpB+`"],"status":"accepted-risk","reason":"Behind the VPN"}`)
 	if rows := decode[findingsResp](t, f.do(http.MethodGet, "/scout/api/findings?status=accepted-risk", "")).Findings; len(rows) != 1 {
 		t.Fatalf("accepted rows = %d", len(rows))
 	}

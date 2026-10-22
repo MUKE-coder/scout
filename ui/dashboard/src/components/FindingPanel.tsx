@@ -8,6 +8,7 @@ import { capitalize, categoryLabel, dateTime, effortLabel, statusLabel } from ".
 import { Button, Spinner } from "./ui";
 import { ErrorNote } from "./EmptyState";
 import { Pill, SeverityBadge, SeverityDot } from "./Severity";
+import { StatusDialog, needsReason } from "./StatusDialog";
 
 interface Detail {
   finding: FindingRow;
@@ -140,6 +141,7 @@ function Body({ detail, onChanged }: { detail: Detail; onChanged: () => void }) 
 function Actions({ f, onChanged }: { f: FindingRow; onChanged: () => void }) {
   const [verifying, setVerifying] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<Status | null>(null);
 
   async function verify() {
     setVerifying(true);
@@ -156,6 +158,10 @@ function Actions({ f, onChanged }: { f: FindingRow; onChanged: () => void }) {
   }
 
   async function setStatus(status: Status) {
+    if (needsReason(status)) {
+      setDialog(status);
+      return;
+    }
     try {
       await api("/findings/status", { method: "POST", body: JSON.stringify({ fingerprints: [f.fingerprint], status }) });
       onChanged();
@@ -186,6 +192,24 @@ function Actions({ f, onChanged }: { f: FindingRow; onChanged: () => void }) {
         <span role="status" className="text-[13px] text-muted">
           {result}
         </span>
+      )}
+      {f.status_reason && (
+        <p className="w-full text-[13px] text-muted">
+          {f.status_by && <span className="text-text">{f.status_by}: </span>}
+          {f.status_reason}
+          {f.status_until && <span className="text-subtle"> · until {dateTime(f.status_until)}</span>}
+        </p>
+      )}
+      {dialog && (
+        <StatusDialog
+          status={dialog}
+          fingerprints={[f.fingerprint]}
+          onCancel={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            onChanged();
+          }}
+        />
       )}
     </div>
   );

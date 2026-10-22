@@ -7,6 +7,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/scoring"
 )
 
 // Diff is what changed between two scans, matched by fingerprint.
@@ -19,7 +20,8 @@ type Diff struct {
 	Unchanged []core.Finding `json:"unchanged"`
 }
 
-func isOpen(f core.Finding) bool { return f.Status == "" || f.Status == core.StatusOpen }
+// isOpen is the shared "needs attention" rule, including expired acceptances.
+func isOpen(f core.Finding) bool { return scoring.Counts(f) }
 
 // DiffScans compares scan a (before) with scan b (after). seenBefore
 // reports whether a fingerprint appeared in any scan older than a; a finding

@@ -91,8 +91,16 @@ type Finding struct {
 	OWASP       []string    `json:"owasp,omitempty"`
 	Remediation Remediation `json:"remediation"`
 	// Tags mark findings that scoring treats specially, such as TagExpiredCert.
-	Tags      []string  `json:"tags,omitempty"`
-	Status    Status    `json:"status"`
+	Tags   []string `json:"tags,omitempty"`
+	Status Status   `json:"status"`
+	// StatusReason explains an accepted-risk or false-positive decision, or
+	// notes that an acceptance expired.
+	StatusReason string `json:"status_reason,omitempty"`
+	// StatusUntil is when an accepted risk expires and the finding counts
+	// again. Nil means no expiry.
+	StatusUntil *time.Time `json:"status_until,omitempty"`
+	// StatusBy is who made the decision.
+	StatusBy  string    `json:"status_by,omitempty"`
 	FirstSeen time.Time `json:"first_seen"`
 	LastSeen  time.Time `json:"last_seen"`
 }
@@ -105,6 +113,23 @@ const (
 	// when the asset is internet-facing).
 	TagExposedSecret = "exposed-secret"
 )
+
+// IsOpenAt reports whether the finding needs attention at time now: it is
+// open, or it was an accepted risk whose acceptance has expired.
+func (f Finding) IsOpenAt(now time.Time) bool {
+	switch f.Status {
+	case "", StatusOpen:
+		return true
+	case StatusAcceptedRisk:
+		return f.AcceptanceExpired(now)
+	}
+	return false
+}
+
+// AcceptanceExpired reports whether an accepted risk's expiry has passed.
+func (f Finding) AcceptanceExpired(now time.Time) bool {
+	return f.Status == StatusAcceptedRisk && f.StatusUntil != nil && !now.Before(*f.StatusUntil)
+}
 
 // HasTag reports whether the finding carries tag.
 func (f Finding) HasTag(tag string) bool {

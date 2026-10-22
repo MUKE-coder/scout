@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -153,6 +154,39 @@ func TestRequestIDAndEphemeral(t *testing.T) {
 	}
 	if latest, _ := store.LatestScan(ctx, localTarget.Name); latest.ID != "fixed-id" {
 		t.Fatalf("ephemeral scan replaced the latest scan: %s", latest.ID)
+	}
+}
+
+func TestAcceptanceCarriesAndExpires(t *testing.T) {
+	store := storage.NewMemory(10)
+	day1 := time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC)
+	clock := day1
+	assets := []string{"/a"}
+	e := historyEngine(t, store, &clock, &assets)
+	ctx := context.Background()
+
+	first, _ := e.Run(ctx, Request{Target: localTarget})
+	until := day1.Add(48 * time.Hour)
+	first.Findings[0].Status = core.StatusAcceptedRisk
+	first.Findings[0].StatusReason = "WAF covers this"
+	first.Findings[0].StatusUntil = &until
+	first.Findings[0].StatusBy = "ops"
+	_ = store.SaveScan(ctx, first)
+
+	// Before expiry: the decision carries forward intact.
+	clock = day1.Add(24 * time.Hour)
+	second, _ := e.Run(ctx, Request{Target: localTarget})
+	f := second.Findings[0]
+	if f.Status != core.StatusAcceptedRisk || f.StatusReason != "WAF covers this" || f.StatusBy != "ops" || f.StatusUntil == nil {
+		t.Fatalf("acceptance not carried: %+v", f)
+	}
+
+	// After expiry: reopened with a note.
+	clock = day1.Add(72 * time.Hour)
+	third, _ := e.Run(ctx, Request{Target: localTarget})
+	f = third.Findings[0]
+	if f.Status != core.StatusOpen || !strings.Contains(f.StatusReason, "expired on 2026-10-03") || f.StatusUntil != nil {
+		t.Fatalf("expired acceptance should reopen: %+v", f)
 	}
 }
 

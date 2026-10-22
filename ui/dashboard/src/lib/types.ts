@@ -70,6 +70,9 @@ export interface Finding {
   remediation: Remediation;
   tags?: string[];
   status: Status;
+  status_reason?: string;
+  status_until?: string;
+  status_by?: string;
   first_seen: string;
   last_seen: string;
 }

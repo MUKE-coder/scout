@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/scoring"
 )
 
 // SARIF 2.1.0 types: only the fields GitHub Code Scanning reads.
@@ -101,7 +102,7 @@ func SARIF(w io.Writer, version string, results []Result) error {
 	var out []sarifResult
 	for _, r := range results {
 		for _, f := range SortFindings(r.Scan.Findings) {
-			if f.Status != "" && f.Status != core.StatusOpen {
+			if !scoring.Counts(f) {
 				continue
 			}
 			if existing, ok := rules[f.CheckID]; !ok || worseSeverity(f, existing) {

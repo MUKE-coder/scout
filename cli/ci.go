@@ -130,7 +130,7 @@ previous scan count. With no previous scan, every finding counts as new.`,
 func openFindings(fs []core.Finding) []core.Finding {
 	var out []core.Finding
 	for _, f := range fs {
-		if f.Status == "" || f.Status == core.StatusOpen {
+		if scoring.Counts(f) {
 			out = append(out, f)
 		}
 	}

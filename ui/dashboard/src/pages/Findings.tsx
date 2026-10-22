@@ -10,6 +10,7 @@ import { Button, Input, PageTitle, Spinner } from "../components/ui";
 import { EmptyState, ErrorNote } from "../components/EmptyState";
 import { Pill, SeverityDot } from "../components/Severity";
 import { FindingPanel } from "../components/FindingPanel";
+import { StatusDialog, needsReason } from "../components/StatusDialog";
 
 const CATEGORIES = ["app", "api", "auth", "tls", "headers", "exposure", "network", "dns", "host", "code", "config"];
 const FILTERS = ["severity", "category", "status", "change", "target", "q"] as const;
@@ -25,6 +26,7 @@ export function Findings() {
   const targets = useApi<{ findings: FindingRow[] }>("/findings").data;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<Status | null>(null);
 
   const rows = data?.findings ?? [];
   const targetNames = useMemo(() => [...new Set((targets?.findings ?? []).map((f) => f.target))].sort(), [targets]);
@@ -56,6 +58,10 @@ export function Findings() {
 
   async function bulk(status: Status) {
     setBulkError(null);
+    if (needsReason(status)) {
+      setDialog(status);
+      return;
+    }
     try {
       await api("/findings/status", { method: "POST", body: JSON.stringify({ fingerprints: [...selected], status }) });
       setSelected(new Set());
@@ -163,6 +169,18 @@ export function Findings() {
       )}
 
       {openFp && <FindingPanel fingerprint={openFp} onClose={() => openFinding(null)} onChanged={reload} />}
+      {dialog && (
+        <StatusDialog
+          status={dialog}
+          fingerprints={[...selected]}
+          onCancel={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            setSelected(new Set());
+            reload();
+          }}
+        />
+      )}
     </>
   );
 }

@@ -1,6 +1,10 @@
 package scoring
 
-import "github.com/MUKE-coder/scout/core"
+import (
+	"time"
+
+	"github.com/MUKE-coder/scout/core"
+)
 
 // SeverityBase is the base risk of each severity.
 var SeverityBase = map[core.Severity]float64{
@@ -46,8 +50,12 @@ func Risk(f core.Finding) float64 {
 		ExposureFactor(f.Asset.Exposure) * Criticality(f.Asset)
 }
 
-// Counts reports whether a finding contributes to the score: only open
-// findings do. Fixed, accepted-risk and false-positive findings are ignored.
+// Now is the clock used to expire accepted risks. Tests override it.
+var Now = time.Now
+
+// Counts reports whether a finding contributes to the score: open findings
+// and accepted risks whose expiry has passed. Fixed, false-positive and
+// still-accepted findings are ignored.
 func Counts(f core.Finding) bool {
-	return f.Status == "" || f.Status == core.StatusOpen
+	return f.IsOpenAt(Now())
 }

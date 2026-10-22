@@ -32,7 +32,9 @@ func dedupe(findings []core.Finding) []core.Finding {
 
 // mergeHistory stamps FirstSeen/LastSeen and carries user decisions forward
 // from the previous scan of the same target. A finding the user accepted or
-// marked false-positive keeps that status; anything else is open again.
+// marked false-positive keeps that status with its reason and expiry, unless
+// the acceptance has expired, which reopens it with a note. Anything else is
+// open again.
 func mergeHistory(findings []core.Finding, prev []core.Finding, now time.Time) {
 	byFP := make(map[string]core.Finding, len(prev))
 	for _, p := range prev {
@@ -50,8 +52,11 @@ func mergeHistory(findings []core.Finding, prev []core.Finding, now time.Time) {
 		if !p.FirstSeen.IsZero() {
 			f.FirstSeen = p.FirstSeen
 		}
-		if p.Status == core.StatusAcceptedRisk || p.Status == core.StatusFalsePositive {
-			f.Status = p.Status
+		switch {
+		case p.AcceptanceExpired(now):
+			f.StatusReason = "Accepted risk expired on " + p.StatusUntil.Format("2006-01-02") + " (was: " + p.StatusReason + ")"
+		case p.Status == core.StatusAcceptedRisk || p.Status == core.StatusFalsePositive:
+			f.Status, f.StatusReason, f.StatusUntil, f.StatusBy = p.Status, p.StatusReason, p.StatusUntil, p.StatusBy
 		}
 	}
 }
