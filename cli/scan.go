@@ -79,8 +79,11 @@ func openStore(cfg scout.Config) (storage.Store, error) {
 	return storage.OpenSQLite(cfg.DBPath)
 }
 
+// registry supplies the checks the CLI runs. Tests replace it.
+var registry = core.DefaultRegistry
+
 func newEngine(cfg scout.Config, store storage.Store) *engine.Engine {
-	return engine.New(core.DefaultRegistry, engine.Options{
+	return engine.New(registry, engine.Options{
 		Concurrency:  cfg.Concurrency,
 		CheckTimeout: cfg.CheckTimeout,
 		RateLimit:    cfg.RateLimit,
@@ -179,30 +182,4 @@ func writeSARIF(path string, results []report.Result) error {
 		return err
 	}
 	return file.Close()
-}
-
-func newCICmd() *cobra.Command {
-	var (
-		f       scanFlags
-		failOn  string
-		newOnly bool
-	)
-	cmd := &cobra.Command{
-		Use:     "ci",
-		Short:   "Scan in CI and fail the build on findings",
-		Example: `  scout ci --repo . --fail-on high --new-only --sarif out.sarif`,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			if _, err := core.ParseSeverity(failOn); err != nil {
-				return err
-			}
-			if _, err := f.config(); err != nil {
-				return err
-			}
-			return errNotImplemented("ci", 4)
-		},
-	}
-	f.bind(cmd)
-	cmd.Flags().StringVar(&failOn, "fail-on", "high", "fail when a finding is at or above this severity")
-	cmd.Flags().BoolVar(&newOnly, "new-only", false, "only consider findings new since the last scan")
-	return cmd
 }
