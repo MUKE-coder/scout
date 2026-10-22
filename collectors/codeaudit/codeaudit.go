@@ -25,6 +25,9 @@ func Checks() []core.Check {
 	return []core.Check{WeakCrypto{}, InsecureRandom{}, DangerousSink{}, SecretLogging{}}
 }
 
+// codeExts limits scanning to source files (not docs, data or lockfiles).
+var codeExts = []string{".go", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".py", ".rb", ".php", ".java", ".cs", ".rs", ".kt"}
+
 // rule is one source pattern worth flagging.
 type rule struct {
 	re   *regexp.Regexp
@@ -97,7 +100,7 @@ var weakCryptoRules = []rule{
 
 func (WeakCrypto) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
 	return scan(t, "code.weak-crypto", core.CategoryCode, core.SeverityMedium,
-		"Weak cryptographic algorithm", remWeakCrypto, []string{"CWE-327"}, []string{"A02:2021"}, weakCryptoRules)
+		"Weak cryptographic algorithm", remWeakCrypto, []string{"CWE-327"}, []string{"A02:2021"}, weakCryptoRules, codeExts...)
 }
 
 var remWeakCrypto = core.Remediation{
@@ -125,7 +128,7 @@ var insecureRandomRules = []rule{
 
 func (InsecureRandom) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
 	return scan(t, "code.insecure-random", core.CategoryCode, core.SeverityLow,
-		"Non-cryptographic randomness", remInsecureRandom, []string{"CWE-338"}, []string{"A02:2021"}, insecureRandomRules)
+		"Non-cryptographic randomness", remInsecureRandom, []string{"CWE-338"}, []string{"A02:2021"}, insecureRandomRules, codeExts...)
 }
 
 var remInsecureRandom = core.Remediation{
@@ -158,7 +161,7 @@ var dangerousSinkRules = []rule{
 
 func (DangerousSink) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
 	return scan(t, "code.dangerous-sink", core.CategoryCode, core.SeverityLow,
-		"Dangerous sink (review for injection)", remDangerousSink, []string{"CWE-94"}, []string{"A03:2021"}, dangerousSinkRules)
+		"Dangerous sink (review for injection)", remDangerousSink, []string{"CWE-94"}, []string{"A03:2021"}, dangerousSinkRules, codeExts...)
 }
 
 var remDangerousSink = core.Remediation{
@@ -186,7 +189,7 @@ var secretLoggingRules = []rule{
 
 func (SecretLogging) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
 	return scan(t, "code.secret-logging", core.CategoryCode, core.SeverityMedium,
-		"Secret may be written to logs", remSecretLogging, []string{"CWE-532"}, []string{"A09:2021"}, secretLoggingRules)
+		"Secret may be written to logs", remSecretLogging, []string{"CWE-532"}, []string{"A09:2021"}, secretLoggingRules, codeExts...)
 }
 
 var remSecretLogging = core.Remediation{
