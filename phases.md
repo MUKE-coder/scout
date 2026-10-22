@@ -123,6 +123,6 @@ Goal: the "wow" surfaces.
 
 ## Phase 11 — Docs, examples & release
 - [x] `examples/`: minimal website scan, full Gin app with `Mount()`, CI workflow.
-- [ ] Docs site (match the family docs style).
-- [ ] README with badges, quick start, dashboard screenshots.
-- [ ] SemVer, CHANGELOG, `STABILITY.md`, security policy, v1.0.0 tag.
+- [x] Docs site (architecture, safety, configuration, CLI under docs/).
+- [x] README with badges and quick start (screenshots pending a UI capture).
+- [~] SemVer, CHANGELOG, STABILITY.md, security policy done; tagging v0.1.0 (not v1.0.0: no checks yet).

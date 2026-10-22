@@ -1,3 +1,13 @@
-# docs
+# Scout documentation
 
-Scout documentation. See `project-description.md` at the repo root for the design overview.
+- [Architecture](architecture.md) — packages, data flow, the findings model.
+- [Safety model](safety.md) — modes, environment caps, ownership, the guard.
+- [Configuration](configuration.md) — `scout.yaml`, env vars, precedence.
+- [CLI](cli.md) — every command and its flags.
+
+See also the repository [README](../README.md),
+[CHANGELOG](../CHANGELOG.md), [SECURITY](../SECURITY.md) and
+[STABILITY](../STABILITY.md).
+
+> **Status:** the engine and surfaces below are complete; the security
+> checks that produce findings are not bundled yet. See the README.
