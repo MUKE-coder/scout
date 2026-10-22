@@ -22,7 +22,77 @@ func init() {
 
 // Checks returns the static-analysis checks.
 func Checks() []core.Check {
-	return []core.Check{WeakCrypto{}, InsecureRandom{}, DangerousSink{}, SecretLogging{}}
+	return []core.Check{WeakCrypto{}, InsecureRandom{}, DangerousSink{}, SecretLogging{}, UnpinnedDeps{}}
+}
+
+// UnpinnedDeps flags npm dependencies declared with a loose version range.
+// This is dependency hygiene (a supply-chain risk), not a CVE scan —
+// reachable-CVE detection (govulncheck/Trivy) is separate, future work.
+type UnpinnedDeps struct{}
+
+func (UnpinnedDeps) ID() string              { return "code.unpinned-deps" }
+func (UnpinnedDeps) Category() core.Category { return core.CategoryCode }
+func (UnpinnedDeps) Mode() core.Mode         { return core.ModePassive }
+func (UnpinnedDeps) Description() string     { return "A dependency uses a loose, unpinned version range" }
+func (UnpinnedDeps) OWASP() []string         { return []string{"A06:2021"} }
+func (UnpinnedDeps) ASVS() []string          { return []string{"V14.2.1"} }
+
+// looseDep matches a "name": "<loose spec>" line in package.json.
+var looseDep = regexp.MustCompile(`"[^"]+"\s*:\s*"(\^|~|>=?|<=?|\*|latest|[0-9]+\.x|[^"]*\|\|)[^"]*"`)
+
+func (UnpinnedDeps) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
+	root := repo.Base(t.Repo)
+	if root == "" {
+		return nil, nil
+	}
+	var out []core.Finding
+	err := repo.Walk(root, func(f repo.File) error {
+		if base(f.Rel) != "package.json" {
+			return nil
+		}
+		inDeps := false
+		for i, line := range repo.Lines(f.Data) {
+			lt := strings.TrimSpace(line)
+			switch {
+			case strings.HasPrefix(lt, `"dependencies"`) || strings.HasPrefix(lt, `"devDependencies"`) || strings.HasPrefix(lt, `"peerDependencies"`) || strings.HasPrefix(lt, `"optionalDependencies"`):
+				inDeps = true
+				continue
+			case lt == "}" || lt == "},":
+				inDeps = false
+				continue
+			}
+			if !inDeps || !looseDep.MatchString(line) {
+				continue
+			}
+			out = append(out, core.Finding{
+				Title:      "Unpinned dependency version in " + f.Rel,
+				Category:   core.CategoryCode,
+				Severity:   core.SeverityLow,
+				Confidence: core.ConfidenceConfirmed,
+				Asset:      core.Asset{Kind: core.AssetFile, Value: f.Rel + ":" + itoa(i+1), File: f.Rel, Line: i + 1, Criticality: t.Criticality},
+				Location:   "unpinned-dep",
+				Evidence:   core.Evidence{ConfigLine: strings.TrimSpace(trunc(line))},
+				CWE:        []string{"CWE-1104"},
+				OWASP:      []string{"A06:2021"},
+				Remediation: core.Remediation{
+					What:       "A dependency is declared with a loose version range (^, ~, *, latest, >=), so builds can silently pull in a different, unreviewed version.",
+					Why:        "Unpinned versions make builds non-reproducible and are a supply-chain risk: a compromised or buggy minor/patch release is installed automatically.",
+					How:        []core.Fix{{Stack: "generic", Language: "text", Code: "Pin exact versions and commit a lockfile; update deliberately via a reviewed PR. Run a reachable-CVE scanner (govulncheck/osv-scanner/Trivy) in CI."}},
+					Effort:     core.EffortS,
+					References: []string{"https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/"},
+				},
+			})
+		}
+		return nil
+	})
+	return out, err
+}
+
+func base(rel string) string {
+	if i := strings.LastIndexByte(rel, '/'); i >= 0 {
+		return rel[i+1:]
+	}
+	return rel
 }
 
 // codeExts limits scanning to source files (not docs, data or lockfiles).

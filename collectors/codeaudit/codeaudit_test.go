@@ -89,6 +89,30 @@ func TestInsecureRandomAndComments(t *testing.T) {
 	}
 }
 
+func TestUnpinnedDeps(t *testing.T) {
+	dir := repoWith(t, map[string]string{
+		"package.json": `{
+  "dependencies": {
+    "next": "16.4.2",
+    "react": "^19.3.1",
+    "lodash": "*",
+    "left-pad": "latest"
+  },
+  "version": "^1.0.0"
+}`,
+	})
+	got := run(t, UnpinnedDeps{}, dir)
+	lines := map[int]bool{}
+	for _, f := range got {
+		lines[f.Asset.Line] = true
+	}
+	// react(^), lodash(*), left-pad(latest) are loose; next (exact) and the
+	// top-level "version" (outside a deps block) are not.
+	if len(got) != 3 {
+		t.Fatalf("want 3 loose deps, got %d: %+v", len(got), got)
+	}
+}
+
 func TestNoRepoNoFindings(t *testing.T) {
 	for _, c := range Checks() {
 		if got, err := c.Run(context.Background(), core.Target{URL: "https://x", Environment: core.EnvDev}); err != nil || got != nil {

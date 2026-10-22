@@ -47,6 +47,14 @@ func Do(ctx context.Context, method, rawURL string, header http.Header) (*Page, 
 	}
 	req.Header.Set("User-Agent", "Scout/1 (+https://github.com/MUKE-coder/scout)")
 	for k, vs := range header {
+		// Go ignores a "Host" header value; it must be set on req.Host. Honor
+		// it so checks (e.g. host-header injection) can override the Host.
+		if http.CanonicalHeaderKey(k) == "Host" {
+			if len(vs) > 0 {
+				req.Host = vs[0]
+			}
+			continue
+		}
 		for _, v := range vs {
 			req.Header.Add(k, v)
 		}
