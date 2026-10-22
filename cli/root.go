@@ -2,12 +2,12 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/MUKE-coder/scout"
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/engine"
 )
 
 // errNotImplemented marks commands whose behaviour lands in a later phase.
@@ -39,6 +39,7 @@ type scanFlags struct {
 	mode    string
 	env     string
 	dryRun  bool
+	optIn   bool
 	json    bool
 	sarif   string
 }
@@ -49,6 +50,7 @@ func (f *scanFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&f.mode, "mode", "m", "safe", "scan mode: passive, safe, active, intrusive")
 	cmd.Flags().StringVarP(&f.env, "env", "e", "dev", "environment: dev, staging, prod (caps the mode)")
 	cmd.Flags().BoolVar(&f.dryRun, "dry-run", false, "print what would run and run nothing")
+	cmd.Flags().BoolVar(&f.optIn, "allow-active", false, "per-target opt-in: allows active in prod and intrusive in staging")
 	cmd.Flags().BoolVar(&f.json, "json", false, "print results as JSON")
 	cmd.Flags().StringVar(&f.sarif, "sarif", "", "write SARIF to this file")
 }
@@ -74,6 +76,9 @@ func (f *scanFlags) config() (scout.Config, error) {
 	if f.repo != "" {
 		cfg.Targets = append(cfg.Targets, core.Target{Name: f.repo, Repo: f.repo, Environment: env})
 	}
+	for i := range cfg.Targets {
+		cfg.Targets[i].AllowActive = f.optIn
+	}
 	if len(cfg.Targets) == 0 {
 		return cfg, fmt.Errorf("nothing to scan: pass --target and/or --repo")
 	}
@@ -92,16 +97,34 @@ func newScanCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if cfg.EffectiveMode() < cfg.Mode {
-				fmt.Fprintf(cmd.ErrOrStderr(), "note: %s caps mode %s -> %s\n", cfg.Environment, cfg.Mode, cfg.EffectiveMode())
+			eng := engine.New(core.DefaultRegistry, engine.Options{
+				Concurrency:  cfg.Concurrency,
+				CheckTimeout: cfg.CheckTimeout,
+				RateLimit:    cfg.RateLimit,
+				Scope:        cfg.Scope,
+			})
+			out := cmd.OutOrStdout()
+			for _, t := range cfg.Targets {
+				req := engine.Request{Target: t, Mode: cfg.Mode}
+				if f.dryRun {
+					p, err := eng.Plan(req)
+					if err != nil {
+						return err
+					}
+					if err := p.Render(out); err != nil {
+						return err
+					}
+					fmt.Fprintln(out)
+					continue
+				}
+				res, err := eng.Run(cmd.Context(), req)
+				if err != nil {
+					return err
+				}
+				fmt.Fprintf(out, "%s: mode %s, %d findings, %d skipped, %d errors\n",
+					t.Name, res.Mode, len(res.Findings), len(res.Skipped), len(res.Errors))
 			}
-			names := make([]string, len(cfg.Targets))
-			for i, t := range cfg.Targets {
-				names[i] = t.Name
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "scan: env=%s mode=%s targets=%s\n",
-				cfg.Environment, cfg.EffectiveMode(), strings.Join(names, ", "))
-			return errNotImplemented("scan", 1)
+			return nil
 		},
 	}
 	f.bind(cmd)

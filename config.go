@@ -9,11 +9,7 @@ import (
 
 // Scope limits what a scan may touch. Empty Hosts means "only the target's
 // own host"; Scout never widens scope implicitly.
-type Scope struct {
-	Hosts        []string `json:"hosts,omitempty" yaml:"hosts"`
-	IncludePaths []string `json:"include_paths,omitempty" yaml:"include_paths"`
-	ExcludePaths []string `json:"exclude_paths,omitempty" yaml:"exclude_paths"`
-}
+type Scope = core.Scope
 
 // Config is the full Scout configuration. Build it directly or with options.
 type Config struct {

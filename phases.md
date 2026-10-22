@@ -26,7 +26,7 @@ Goal: the scan loop runs checks safely with mode caps. This is the backbone ever
 - [x] Scan engine: worker pool, context cancellation, per-check timeout, panic recovery per check (one check can never crash a scan).
 - [x] **Mode enforcement**: environment (`dev|staging|prod`) → `MaxMode`; engine skips any check whose `Mode()` exceeds it.
 - [x] Scope allowlist (hosts/paths), rate limiter, scan window, global kill switch.
-- [ ] **Dry-run / plan mode**: print which checks would run at which mode against which targets, and run nothing.
+- [x] **Dry-run / plan mode**: print which checks would run at which mode against which targets, and run nothing.
 - [ ] Signed self-test header (`X-Scout-Scan: <hmac>`) on all outbound scan requests.
 - [ ] **Target ownership verification**: DNS TXT record or `/.well-known/scout-verify.txt`; required before Active mode on any non-local host.
 - [ ] Findings pipeline: dedupe by fingerprint, merge FirstSeen/LastSeen, persist, emit to event bus.

@@ -25,13 +25,27 @@ func TestVersion(t *testing.T) {
 	}
 }
 
-func TestScanParsesFlags(t *testing.T) {
-	out, err := run("scan", "--target", "https://example.com", "--mode", "active", "--env", "prod")
-	if err == nil || !strings.Contains(err.Error(), "not implemented") {
-		t.Fatalf("expected not-implemented stub, got %v", err)
+func TestScanDryRun(t *testing.T) {
+	out, err := run("scan", "--target", "https://example.com", "--mode", "active", "--env", "prod", "--dry-run")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(out, "caps mode active -> safe") || !strings.Contains(out, "mode=safe") {
-		t.Fatalf("prod should cap active to safe, got %q", out)
+	if !strings.Contains(out, "effective safe") || !strings.Contains(out, "Nothing was sent") {
+		t.Fatalf("prod dry-run should cap active to safe, got %q", out)
+	}
+	out, _ = run("scan", "--target", "https://example.com", "--mode", "active", "--env", "prod", "--allow-active", "--dry-run")
+	if !strings.Contains(out, "effective active") {
+		t.Fatalf("--allow-active should permit active in prod, got %q", out)
+	}
+}
+
+func TestScanRunsEngine(t *testing.T) {
+	out, err := run("scan", "--target", "http://localhost:1", "--mode", "safe")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "mode safe") {
+		t.Fatalf("scan summary missing: %q", out)
 	}
 }
 
