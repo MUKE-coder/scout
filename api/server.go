@@ -50,6 +50,8 @@ type Deps struct {
 	Schedules func() any
 	// AI is the optional AI client; nil means AI features are off.
 	AI *ai.Client
+	// Routes is the app's route table exposed by scout.Mount.
+	Routes []core.Route
 }
 
 // Server serves /scout/api/* and /scout/ws/live.
@@ -104,6 +106,7 @@ func (s *Server) Register(g *gin.RouterGroup) {
 	a.POST("/resume", s.resume)
 	a.GET("/settings", s.settings)
 	a.GET("/schedules", s.schedules)
+	a.GET("/routes", s.routes)
 	a.GET("/export", s.export)
 
 	g.GET("/ws/live", s.d.Auth.Middleware(), s.live)

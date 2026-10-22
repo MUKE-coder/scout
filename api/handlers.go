@@ -575,6 +575,15 @@ func (s *Server) settings(c *gin.Context) {
 	c.JSON(http.StatusOK, s.d.Settings)
 }
 
+// routes returns the app route table scout.Mount exposed to the scanner.
+func (s *Server) routes(c *gin.Context) {
+	list := s.d.Routes
+	if list == nil {
+		list = []core.Route{}
+	}
+	c.JSON(http.StatusOK, gin.H{"routes": list})
+}
+
 func (s *Server) schedules(c *gin.Context) {
 	var list any = []any{}
 	if s.d.Schedules != nil {

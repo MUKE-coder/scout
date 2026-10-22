@@ -19,7 +19,12 @@ type Config struct {
 	// Mode is the requested mode. It is always capped by the environment.
 	Mode    core.Mode     `json:"mode" yaml:"mode"`
 	Targets []core.Target `json:"targets,omitempty" yaml:"targets"`
-	Scope   Scope         `json:"scope" yaml:"scope"`
+	// Routes is the app's route table, handed to the scanner by scout.Mount
+	// (via gin introspection or WithRoutes). It is attached to configured
+	// targets that have none, so the route-table checks (unprotected routes)
+	// run with no attack traffic. Set programmatically, not from YAML.
+	Routes []core.Route `json:"-" yaml:"-"`
+	Scope  Scope        `json:"scope" yaml:"scope"`
 	// Criticality weights findings by asset (payments API 1.5, marketing
 	// site 0.7). First matching rule wins.
 	Criticality []scoring.CriticalityRule `json:"criticality,omitempty" yaml:"criticality"`
@@ -105,6 +110,16 @@ func WithScope(s Scope) Option { return func(c *Config) { c.Scope = s } }
 
 // WithDB sets the SQLite file path.
 func WithDB(path string) Option { return func(c *Config) { c.DBPath = path } }
+
+// WithRoutes hands Scout the app's route table. Prefer this when your
+// framework knows each route's authorization middleware (roles, permissions):
+// it is strictly richer than what gin introspection can recover, and the
+// "route has no auth middleware" check depends on the Middleware field.
+//
+//	scout.Mount(r, cfg, scout.WithRoutes(myRouteTable...))
+func WithRoutes(routes ...core.Route) Option {
+	return func(c *Config) { c.Routes = append(c.Routes, routes...) }
+}
 
 // NewConfig builds a config from defaults plus options, then validates it.
 func NewConfig(opts ...Option) (Config, error) {

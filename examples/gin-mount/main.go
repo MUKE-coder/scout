@@ -27,8 +27,14 @@ func main() {
 	api.POST("/todos", func(c *gin.Context) { c.Status(http.StatusCreated) })
 
 	// One line mounts Scout at /scout: dashboard, API, health and the live
-	// WebSocket. It also exposes this router's route table to the scanner,
-	// so Scout can flag unprotected routes before sending any traffic.
+	// WebSocket. Called after the routes above are defined, Mount also reads
+	// this router's route table (method + path) and hands it to the scanner.
+	//
+	// To flag unprotected routes before any request is sent, pass a table
+	// that includes each route's auth middleware with scout.WithRoutes — your
+	// framework usually knows this better than Gin introspection can:
+	//
+	//	scout.Mount(r, cfg, scout.WithRoutes(myRouteTableWithMiddleware...))
 	scout.Mount(r, scout.Config{AppName: "Todo API"})
 
 	_ = r.Run(":8080")

@@ -328,6 +328,17 @@ func TestExportCSV(t *testing.T) {
 	}
 }
 
+func TestRoutesEndpoint(t *testing.T) {
+	routes := []core.Route{{Method: "GET", Path: "/admin", Middleware: []string{"Logger"}}}
+	f := newFixture(t, func(d *Deps) { d.Routes = routes })
+	got := decode[struct {
+		Routes []core.Route `json:"routes"`
+	}](t, f.do(http.MethodGet, "/scout/api/routes", ""))
+	if len(got.Routes) != 1 || got.Routes[0].Path != "/admin" || got.Routes[0].Middleware[0] != "Logger" {
+		t.Fatalf("routes = %+v", got.Routes)
+	}
+}
+
 func TestEndpointsRequireAuth(t *testing.T) {
 	f := newFixture(t)
 	f.token = ""

@@ -81,6 +81,48 @@ func TestMountedSchedules(t *testing.T) {
 	}
 }
 
+func TestMountResolvesRoutes(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	// WithRoutes: an explicit middleware-aware table is attached to the
+	// target that has none, and exposed at /scout/api/routes.
+	r := gin.New()
+	routes := []core.Route{
+		{Method: "GET", Path: "/admin/users", Middleware: []string{"Logger"}},
+		{Method: "GET", Path: "/admin/stats", Middleware: []string{"Logger", "JWTAuth"}},
+	}
+	s := Mount(r, Config{
+		AppName: "x",
+		Targets: []core.Target{{Name: "app", URL: "http://localhost:8080", Environment: core.EnvDev}},
+	}, WithRoutes(routes...))
+	defer s.Close(time.Second)
+
+	if len(s.Routes()) != 2 || len(s.cfg.Targets[0].Routes) != 2 {
+		t.Fatalf("WithRoutes not attached: scout=%d target=%d", len(s.Routes()), len(s.cfg.Targets[0].Routes))
+	}
+	if s.cfg.Targets[0].Routes[0].Middleware[0] != "Logger" {
+		t.Fatal("middleware chain lost")
+	}
+
+	// gin introspection fallback: with no WithRoutes, the engine's own routes
+	// are recovered (method/path), skipping Scout's /scout/* routes.
+	r2 := gin.New()
+	r2.GET("/api/todos", func(c *gin.Context) {})
+	r2.POST("/api/todos", func(c *gin.Context) {})
+	s2 := Mount(r2, Config{AppName: "y", Targets: []core.Target{{Name: "app", URL: "http://localhost:9", Environment: core.EnvDev}}})
+	defer s2.Close(time.Second)
+	got := map[string]bool{}
+	for _, rt := range s2.Routes() {
+		got[rt.Method+" "+rt.Path] = true
+		if strings.HasPrefix(rt.Path, "/scout") {
+			t.Errorf("introspection leaked a Scout route: %s", rt.Path)
+		}
+	}
+	if !got["GET /api/todos"] || !got["POST /api/todos"] {
+		t.Fatalf("gin introspection missed routes: %v", got)
+	}
+}
+
 func TestMountKeepsDefaultsForPartialConfig(t *testing.T) {
 	s, err := New(Config{AppName: "x"})
 	if err != nil {

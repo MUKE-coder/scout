@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -37,6 +38,7 @@ type Scout struct {
 	bus       *engine.Bus
 	kill      *engine.KillSwitch
 	ai        *ai.Client
+	routes    []core.Route
 	scheduler *scheduler
 	lifecycle *Lifecycle
 }
@@ -137,6 +139,10 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 
 // Register adds the /scout route group to r.
 func (s *Scout) Register(r gin.IRouter) {
+	// Resolve the app's route table before building settings, so configured
+	// targets carry it into in-process scans and the route-table checks run.
+	s.resolveRoutes(r)
+
 	g := r.Group(BasePath)
 	g.GET("/api/health", s.handleHealth)
 	api.New(api.Deps{
@@ -145,6 +151,7 @@ func (s *Scout) Register(r gin.IRouter) {
 		Engine:   s.engine,
 		Bus:      s.bus,
 		Kill:     s.kill,
+		Routes:   s.routes,
 		Settings: s.settings(),
 		Scoring:  scoring.Options{Criticality: s.cfg.Criticality},
 		Go:       s.lifecycle.Go,
@@ -156,8 +163,41 @@ func (s *Scout) Register(r gin.IRouter) {
 	}).Register(g)
 
 	registerDashboard(g)
-	s.log.Info("scout mounted", "base", BasePath, "env", s.cfg.Environment, "mode", s.cfg.EffectiveMode())
+	s.log.Info("scout mounted", "base", BasePath, "env", s.cfg.Environment,
+		"mode", s.cfg.EffectiveMode(), "routes", len(s.routes))
 }
+
+// resolveRoutes determines the app's route table and attaches it to
+// configured targets that have none. It prefers routes supplied via
+// WithRoutes (which can include the authorization middleware chain); if none
+// were given and r is a *gin.Engine, it introspects method/path/handler
+// (gin exposes no middleware chain, so the unprotected-route check needs
+// WithRoutes to have middleware to inspect).
+//
+// Call scout.Mount after your routes are defined, or gin introspection sees
+// an incomplete table.
+func (s *Scout) resolveRoutes(r gin.IRouter) {
+	routes := s.cfg.Routes
+	if len(routes) == 0 {
+		if gi, ok := r.(interface{ Routes() gin.RoutesInfo }); ok {
+			for _, ri := range gi.Routes() {
+				if strings.HasPrefix(ri.Path, BasePath) {
+					continue // skip Scout's own routes
+				}
+				routes = append(routes, core.Route{Method: ri.Method, Path: ri.Path, Handler: ri.Handler})
+			}
+		}
+	}
+	s.routes = routes
+	for i := range s.cfg.Targets {
+		if len(s.cfg.Targets[i].Routes) == 0 {
+			s.cfg.Targets[i].Routes = routes
+		}
+	}
+}
+
+// Routes returns the resolved app route table (populated by Register).
+func (s *Scout) Routes() []core.Route { return s.routes }
 
 func (s *Scout) handleHealth(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -210,6 +250,9 @@ func mergeConfig(dst *Config, src Config) {
 	}
 	if src.Mode != 0 {
 		dst.Mode = src.Mode
+	}
+	if len(src.Routes) > 0 {
+		dst.Routes = src.Routes
 	}
 	if len(src.Targets) > 0 {
 		dst.Targets = src.Targets

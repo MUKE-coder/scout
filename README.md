@@ -154,6 +154,22 @@ Now `/scout/ui/` is the dashboard, `/scout/api/` the REST API, and
 `SCOUT_USERNAME` / `SCOUT_PASSWORD`). Full example:
 [examples/gin-mount](examples/gin-mount/).
 
+**Route-table checks.** Called after your routes are defined, `Mount`
+introspects the Gin engine for its method/path table. To also flag
+**unprotected routes before any request is sent**, hand Scout a table that
+includes each route's auth middleware — your framework usually knows this
+better than Gin's introspection can:
+
+```go
+scout.Mount(r, cfg, scout.WithRoutes(
+    core.Route{Method: "GET", Path: "/admin", Middleware: []string{"Logger"}},      // flagged: no auth
+    core.Route{Method: "GET", Path: "/account", Middleware: []string{"JWTAuth"}},   // ok
+))
+```
+
+The resolved table is attached to your configured targets and served at
+`/scout/api/routes`.
+
 ### 3. Gate a CI pipeline
 
 Fail a build when a scan turns up new high/critical issues, and upload results
