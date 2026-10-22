@@ -125,4 +125,4 @@ Goal: the "wow" surfaces.
 - [x] `examples/`: minimal website scan, full Gin app with `Mount()`, CI workflow.
 - [x] Docs site (architecture, safety, configuration, CLI under docs/).
 - [x] README with badges and quick start (screenshots pending a UI capture).
-- [~] SemVer, CHANGELOG, STABILITY.md, security policy done; tagging v0.1.0 (not v1.0.0: no checks yet).
+- [x] SemVer, CHANGELOG, STABILITY.md, security policy; released v0.1.0 (v1.0.0 awaits collectors).
