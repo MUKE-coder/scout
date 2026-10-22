@@ -16,7 +16,7 @@ Goal: the skeleton compiles, the Mount pattern and CLI shell exist, nothing scan
 - [x] `scout.Config` + functional options (`WithTarget`, `WithMode`, `WithScope`, `WithConfig`).
 - [x] `storage` interface with two backends: in-memory ring buffer + pure-Go SQLite (`glebarez/sqlite`), auto-migrated schema.
 - [ ] CLI shell with `cobra`: `scan`, `serve`, `ci`, `diff`, `version` (stubs that parse flags).
-- [ ] `scout.Mount(router, cfg)` stub that registers the `/scout` route group.
+- [x] `scout.Mount(router, cfg)` stub that registers the `/scout` route group.
 - [x] Structured logging, graceful shutdown (`context.Context` + `sync.WaitGroup`), `scout.Version`.
 - [ ] CI: GitHub Actions — build, `go vet`, `gosec`, unit tests.
 
