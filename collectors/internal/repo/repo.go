@@ -46,7 +46,8 @@ func Walk(root string, fn func(File) error) error {
 		if err != nil || info.Size() == 0 || info.Size() > MaxFileSize {
 			return nil
 		}
-		data, err := os.ReadFile(path) // #nosec G304 -- walking a user-supplied repo root is the whole point
+		// #nosec G304 G122 -- reading a user-supplied repo tree is the point; symlink TOCTOU is not a concern for a local read-only scan
+		data, err := os.ReadFile(path)
 		if err != nil || isBinary(data) {
 			return nil
 		}
