@@ -119,7 +119,7 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	}
 	scanID := NewScanID()
 	client := e.client(req.Target, scanID)
-	ctx = core.WithHTTPClient(ctx, client)
+	ctx = core.WithScanCache(core.WithHTTPClient(ctx, client))
 	policy := e.policy(ctx, req, client)
 	res := core.ScanResult{
 		ID:        scanID,
