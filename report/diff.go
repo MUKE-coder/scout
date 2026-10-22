@@ -85,7 +85,7 @@ func PrettyDiff(w io.Writer, d Diff, color bool) error {
 		for _, f := range fs {
 			fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\n", p.paint(sevColor[f.Severity], f.Severity.String()), f.Category, f.Title, location(f))
 		}
-		tw.Flush()
+		_ = tw.Flush() // writes to a strings.Builder, which cannot fail
 	}
 	section("New", d.New)
 	section("Regressed", d.Regressed)

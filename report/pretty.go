@@ -81,7 +81,7 @@ func Pretty(w io.Writer, r Result, opts PrettyOptions) error {
 		}
 		fmt.Fprintf(tw, "  %s\t%5.1f\t%s\t%s\t%s\n", c.Category, c.Score, c.Grade, bar(c.Score, 20), worst)
 	}
-	tw.Flush()
+	_ = tw.Flush() // writes to a strings.Builder, which cannot fail
 	b.WriteString("\n")
 
 	// Fix next.
@@ -95,7 +95,7 @@ func Pretty(w io.Writer, r Result, opts PrettyOptions) error {
 			fmt.Fprintf(tw, "  %d.\t+%.1f pts\t%s\t%s\t%s\n", i+1, it.Points, it.Effort,
 				p.paint(sevColor[it.Severity], it.Title), p.paint(dim, it.Asset))
 		}
-		tw.Flush()
+		_ = tw.Flush() // writes to a strings.Builder, which cannot fail
 		b.WriteString("\n")
 	}
 
@@ -110,7 +110,7 @@ func Pretty(w io.Writer, r Result, opts PrettyOptions) error {
 			fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\t%s\n", p.paint(sevColor[f.Severity], f.Severity.String()),
 				f.Category, f.Status, f.Title, location(f))
 		}
-		tw.Flush()
+		_ = tw.Flush() // writes to a strings.Builder, which cannot fail
 	}
 
 	// Skipped and errors, briefly.

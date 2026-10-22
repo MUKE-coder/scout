@@ -215,7 +215,7 @@ func writeSARIF(path string, results []report.Result) error {
 		return err
 	}
 	if err := report.SARIF(file, scout.Version, results); err != nil {
-		file.Close()
+		_ = file.Close() // the SARIF error is the one worth returning
 		return err
 	}
 	return file.Close()
