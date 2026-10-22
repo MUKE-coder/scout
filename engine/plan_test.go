@@ -21,7 +21,7 @@ func TestPlanRunsNothing(t *testing.T) {
 		check("b.active", core.ModeActive, count),
 	)
 	target := core.Target{Name: "prod-site", URL: "https://example.com", Environment: core.EnvProd}
-	p, err := e.Plan(Request{Target: target, Mode: core.ModeActive})
+	p, err := e.Plan(context.Background(), Request{Target: target, Mode: core.ModeActive})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestPlanMatchesRun(t *testing.T) {
 		for _, optIn := range []bool{false, true} {
 			e := newEngine(t, Options{}, checks...)
 			req := Request{Target: core.Target{Name: "t", URL: "http://localhost", Environment: env, AllowActive: optIn}, Mode: core.ModeIntrusive}
-			p, _ := e.Plan(req)
+			p, _ := e.Plan(context.Background(), req)
 			res, err := e.Run(context.Background(), req)
 			if err != nil {
 				t.Fatal(err)
@@ -72,13 +72,13 @@ func TestPlanRender(t *testing.T) {
 		check("headers.csp", core.ModePassive, nil),
 		check("app.inject", core.ModeActive, nil),
 	)
-	p, _ := e.Plan(Request{Target: core.Target{Name: "site", URL: "https://example.com", Environment: core.EnvProd}, Mode: core.ModeActive})
+	p, _ := e.Plan(context.Background(), Request{Target: core.Target{Name: "site", URL: "https://example.com", Environment: core.EnvProd}, Mode: core.ModeActive})
 	var buf bytes.Buffer
 	if err := p.Render(&buf); err != nil {
 		t.Fatal(err)
 	}
 	out := buf.String()
-	for _, want := range []string{"effective safe", "1 would run, 1 skipped", "Nothing was sent", "run     headers.csp", "skip    app.inject"} {
+	for _, want := range []string{"effective safe", "1 would run, 1 skipped", "No checks were run", "run     headers.csp", "skip    app.inject"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("render missing %q:\n%s", want, out)
 		}

@@ -28,7 +28,7 @@ func NewRootCmd() *cobra.Command {
 	root.PersistentFlags().String("log-format", "text", "log format: text or json")
 	root.PersistentFlags().String("config", "", "path to scout.yaml")
 
-	root.AddCommand(newScanCmd(), newServeCmd(), newCICmd(), newDiffCmd(), newVersionCmd())
+	root.AddCommand(newScanCmd(), newServeCmd(), newCICmd(), newDiffCmd(), newOwnershipCmd(), newVersionCmd())
 	return root
 }
 
@@ -108,7 +108,7 @@ func newScanCmd() *cobra.Command {
 			for _, t := range cfg.Targets {
 				req := engine.Request{Target: t, Mode: cfg.Mode}
 				if f.dryRun {
-					p, err := eng.Plan(req)
+					p, err := eng.Plan(cmd.Context(), req)
 					if err != nil {
 						return err
 					}
@@ -184,6 +184,36 @@ func newDiffCmd() *cobra.Command {
 			return errNotImplemented("diff", 4)
 		},
 	}
+}
+
+func newOwnershipCmd() *cobra.Command {
+	var target string
+	cmd := &cobra.Command{
+		Use:   "ownership",
+		Short: "Print the token that proves you own a target (required for active scans)",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			t := core.Target{Name: target, URL: target, Environment: core.EnvProd}
+			if err := t.Validate(); err != nil {
+				return err
+			}
+			out := cmd.OutOrStdout()
+			if t.IsLocal() {
+				fmt.Fprintf(out, "%s is local: no ownership proof is needed.\n", t.Host())
+				return nil
+			}
+			host := t.Host()
+			token := engine.OwnershipToken(nil, host)
+			fmt.Fprintf(out, "Ownership token for %s:\n\n  %s\n\n", host, token)
+			fmt.Fprintf(out, "Publish it in one of these places before running an active scan:\n")
+			fmt.Fprintf(out, "  DNS TXT on _scout-verify.%s   %s%s\n", host, engine.TXTPrefix, token)
+			fmt.Fprintf(out, "  DNS TXT on %s                 %s%s\n", host, engine.TXTPrefix, token)
+			fmt.Fprintf(out, "  File   %s://%s%s   containing the token\n", "https", host, engine.WellKnownPath)
+			return nil
+		},
+	}
+	cmd.Flags().StringVarP(&target, "target", "t", "", "target URL")
+	_ = cmd.MarkFlagRequired("target")
+	return cmd
 }
 
 func newVersionCmd() *cobra.Command {

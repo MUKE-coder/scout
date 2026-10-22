@@ -30,10 +30,11 @@ func TestScanDryRun(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "effective safe") || !strings.Contains(out, "Nothing was sent") {
+	if !strings.Contains(out, "effective safe") || !strings.Contains(out, "No checks were run") {
 		t.Fatalf("prod dry-run should cap active to safe, got %q", out)
 	}
-	out, _ = run("scan", "--target", "https://example.com", "--mode", "active", "--env", "prod", "--allow-active", "--dry-run")
+	// A local target needs no ownership proof, so the opt-in alone allows active.
+	out, _ = run("scan", "--target", "http://localhost:1", "--mode", "active", "--env", "prod", "--allow-active", "--dry-run")
 	if !strings.Contains(out, "effective active") {
 		t.Fatalf("--allow-active should permit active in prod, got %q", out)
 	}
@@ -75,6 +76,20 @@ func TestDashboardURL(t *testing.T) {
 		if got := dashboardURL(in); got != want {
 			t.Errorf("dashboardURL(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestOwnershipToken(t *testing.T) {
+	out, err := run("ownership", "-t", "https://shop.example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "_scout-verify.shop.example.com") || !strings.Contains(out, "/.well-known/scout-verify.txt") {
+		t.Fatalf("missing instructions: %q", out)
+	}
+	out, _ = run("ownership", "-t", "http://localhost:8080")
+	if !strings.Contains(out, "no ownership proof is needed") {
+		t.Fatalf("local target: %q", out)
 	}
 }
 

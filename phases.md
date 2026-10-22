@@ -28,7 +28,7 @@ Goal: the scan loop runs checks safely with mode caps. This is the backbone ever
 - [x] Scope allowlist (hosts/paths), rate limiter, scan window, global kill switch.
 - [x] **Dry-run / plan mode**: print which checks would run at which mode against which targets, and run nothing.
 - [x] Signed self-test header (`X-Scout-Scan: <hmac>`) on all outbound scan requests.
-- [ ] **Target ownership verification**: DNS TXT record or `/.well-known/scout-verify.txt`; required before Active mode on any non-local host.
+- [x] **Target ownership verification**: DNS TXT record or `/.well-known/scout-verify.txt`; required before Active mode on any non-local host.
 - [ ] Findings pipeline: dedupe by fingerprint, merge FirstSeen/LastSeen, persist, emit to event bus.
 - [ ] Unit tests for mode capping, scope enforcement, fingerprint stability.
 

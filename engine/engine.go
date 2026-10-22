@@ -47,6 +47,9 @@ type Options struct {
 	// SigningKey signs the X-Scout-Scan header. Empty generates a random
 	// key per engine, which Sentinel cannot verify; set it to share one.
 	SigningKey []byte
+	// Verifier proves target ownership before Active mode on non-local
+	// hosts. Nil uses DNS and the well-known file, keyed by SigningKey.
+	Verifier *Verifier
 }
 
 // Engine runs scans. It is safe for concurrent use.
@@ -66,6 +69,11 @@ func New(reg *core.Registry, opts Options) *Engine {
 	}
 	if opts.Now == nil {
 		opts.Now = time.Now
+	}
+	if opts.Verifier == nil {
+		// Use the caller's key only: a random per-run key would make the
+		// ownership token change on every run.
+		opts.Verifier = NewVerifier(opts.SigningKey)
 	}
 	if len(opts.SigningKey) == 0 {
 		opts.SigningKey = selftest.NewKey()
@@ -103,8 +111,9 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 		return core.ScanResult{}, ErrOutsideWindow
 	}
 	scanID := NewScanID()
-	ctx = core.WithHTTPClient(ctx, e.client(req.Target, scanID))
-	policy := NewPolicy(req.Target, req.Mode)
+	client := e.client(req.Target, scanID)
+	ctx = core.WithHTTPClient(ctx, client)
+	policy := e.policy(ctx, req, client)
 	res := core.ScanResult{
 		ID:        scanID,
 		Target:    req.Target,
@@ -136,6 +145,19 @@ func (e *Engine) client(t core.Target, scanID string) *http.Client {
 	}
 	signer := &selftest.Transport{Base: e.opts.Transport, Key: e.opts.SigningKey, ScanID: scanID, Now: e.opts.Now}
 	return &http.Client{Transport: newGuardTransport(signer, scope, e.opts.RateLimit, e.opts.Window, e.opts.Kill)}
+}
+
+// policy caps the requested mode by environment and opt-in, then requires
+// proven ownership before Active or Intrusive mode on a non-local host.
+// Run and Plan both use it, so a plan always matches the real scan.
+func (e *Engine) policy(ctx context.Context, req Request, client *http.Client) Policy {
+	p := NewPolicy(req.Target, req.Mode)
+	if p.Effective >= core.ModeActive && !req.Target.IsLocal() {
+		if _, err := e.opts.Verifier.Verify(ctx, req.Target, client); err != nil {
+			p.lower(core.ModeSafe, err.Error())
+		}
+	}
+	return p
 }
 
 // decide applies the policy to every selected check.

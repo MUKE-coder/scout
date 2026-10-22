@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"text/tabwriter"
@@ -27,13 +28,14 @@ type Plan struct {
 	Entries   []PlanEntry `json:"entries"`
 }
 
-// Plan returns what Run would do for req, without running any check or
-// sending any request.
-func (e *Engine) Plan(req Request) (Plan, error) {
+// Plan returns what Run would do for req without running any check. The
+// only traffic it may send is the read-only ownership lookup (DNS TXT or the
+// well-known file) that Run would also make before Active mode.
+func (e *Engine) Plan(ctx context.Context, req Request) (Plan, error) {
 	if err := req.Target.Validate(); err != nil {
 		return Plan{}, err
 	}
-	policy := NewPolicy(req.Target, req.Mode)
+	policy := e.policy(ctx, req, e.client(req.Target, "plan-"+NewScanID()))
 	p := Plan{Target: req.Target, Requested: policy.Requested, Effective: policy.Effective, CapReason: policy.CapReason}
 	for _, d := range e.decide(policy, req.Checks) {
 		entry := PlanEntry{
@@ -65,7 +67,7 @@ func (p Plan) Render(w io.Writer) error {
 	run, skipped := p.Counts()
 	fmt.Fprintf(w, "Plan for %s (%s)\n", p.Target.Name, p.Target.Environment)
 	fmt.Fprintf(w, "Mode: requested %s, effective %s (%s)\n", p.Requested, p.Effective, p.CapReason)
-	fmt.Fprintf(w, "Checks: %d would run, %d skipped. Nothing was sent.\n\n", run, skipped)
+	fmt.Fprintf(w, "Checks: %d would run, %d skipped. No checks were run.\n\n", run, skipped)
 	if len(p.Entries) == 0 {
 		_, err := fmt.Fprintln(w, "No checks registered.")
 		return err
