@@ -34,7 +34,9 @@ func TestCombinedScore(t *testing.T) {
 }
 
 // sibling is a fake Pulse/Sentinel: a health endpoint and a capture endpoint.
-func sibling(t *testing.T, healthStatus int) (*httptest.Server, *[]string) {
+// It returns a locked snapshot accessor so tests never read the slice while
+// the handler writes it (the race detector enforces this).
+func sibling(t *testing.T, healthStatus int) (*httptest.Server, func() []string) {
 	t.Helper()
 	var bodies []string
 	var mu sync.Mutex
@@ -50,7 +52,11 @@ func sibling(t *testing.T, healthStatus int) (*httptest.Server, *[]string) {
 		w.WriteHeader(http.StatusAccepted)
 	}))
 	t.Cleanup(srv.Close)
-	return srv, &bodies
+	return srv, func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), bodies...)
+	}
 }
 
 func sampleScan() core.ScanResult {
@@ -72,7 +78,7 @@ func TestPulseRegisterAndDetect(t *testing.T) {
 		t.Fatal(err)
 	}
 	var run pulseTestRun
-	_ = json.Unmarshal([]byte((*bodies)[0]), &run)
+	_ = json.Unmarshal([]byte(bodies()[0]), &run)
 	if run.Source != "scout" || run.Kind != "security-scan" || run.ScanID != "scan1" || run.Grade != "C" {
 		t.Fatalf("test-run payload = %+v", run)
 	}
@@ -88,7 +94,7 @@ func TestSentinelPushAndDetect(t *testing.T) {
 		t.Fatal(err)
 	}
 	var score sentinelScore
-	_ = json.Unmarshal([]byte((*bodies)[0]), &score)
+	_ = json.Unmarshal([]byte(bodies()[0]), &score)
 	if score.Source != "scout" || score.Exposure != 72.5 || score.Target != "shop" {
 		t.Fatalf("score payload = %+v", score)
 	}
@@ -120,15 +126,15 @@ func TestDispatcherForwardsFinishedScans(t *testing.T) {
 
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
-		if n := len(*bodies); n >= 2 {
+		if n := len(bodies()); n >= 2 {
 			break
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
 	cancel()
 	<-done
-	if len(*bodies) != 2 { // one Pulse + one Sentinel, for the stored scan only
-		t.Fatalf("forwarded %d payloads, want 2", len(*bodies))
+	if len(bodies()) != 2 { // one Pulse + one Sentinel, for the stored scan only
+		t.Fatalf("forwarded %d payloads, want 2", len(bodies()))
 	}
 }
 
