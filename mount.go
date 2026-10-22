@@ -11,6 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/MUKE-coder/scout/api"
+	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/engine"
+	"github.com/MUKE-coder/scout/scoring"
 	"github.com/MUKE-coder/scout/selftest"
 	"github.com/MUKE-coder/scout/storage"
 )
@@ -29,6 +32,9 @@ type Scout struct {
 	log       *slog.Logger
 	store     storage.Store
 	auth      *api.Auth
+	engine    *engine.Engine
+	bus       *engine.Bus
+	kill      *engine.KillSwitch
 	lifecycle *Lifecycle
 }
 
@@ -74,11 +80,32 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 		secret = selftest.NewKey()
 		log.Warn("no jwt_secret configured: using a random one, so dashboard sessions end when Scout restarts")
 	}
+	window, err := c.Window.EngineWindow()
+	if err != nil {
+		return nil, err
+	}
+	bus, kill := engine.NewBus(), engine.NewKillSwitch()
+	eng := engine.New(core.DefaultRegistry, engine.Options{
+		Concurrency:  c.Concurrency,
+		CheckTimeout: c.CheckTimeout,
+		RateLimit:    c.RateLimit,
+		Scope:        c.Scope,
+		Window:       window,
+		Kill:         kill,
+		SigningKey:   []byte(c.SigningKey),
+		Store:        store,
+		Bus:          bus,
+		Scoring:      scoring.Options{Criticality: c.Criticality},
+		Logger:       log,
+	})
 	return &Scout{
 		cfg:       c,
 		log:       log,
 		store:     store,
 		auth:      api.NewAuth(secret, c.Username, c.Password),
+		engine:    eng,
+		bus:       bus,
+		kill:      kill,
 		lifecycle: NewLifecycle(context.Background()),
 	}, nil
 }
@@ -87,7 +114,17 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 func (s *Scout) Register(r gin.IRouter) {
 	g := r.Group(BasePath)
 	g.GET("/api/health", s.handleHealth)
-	api.New(api.Deps{Auth: s.auth, Logger: s.log}).Register(g)
+	api.New(api.Deps{
+		Auth:     s.auth,
+		Store:    s.store,
+		Engine:   s.engine,
+		Bus:      s.bus,
+		Kill:     s.kill,
+		Settings: s.settings(),
+		Scoring:  scoring.Options{Criticality: s.cfg.Criticality},
+		Go:       s.lifecycle.Go,
+		Logger:   s.log,
+	}).Register(g)
 
 	registerDashboard(g)
 	s.log.Info("scout mounted", "base", BasePath, "env", s.cfg.Environment, "mode", s.cfg.EffectiveMode())
@@ -101,6 +138,21 @@ func (s *Scout) handleHealth(c *gin.Context) {
 		"environment": s.cfg.Environment,
 		"mode":        s.cfg.EffectiveMode(),
 	})
+}
+
+// settings is the secret-free view of the config for the dashboard.
+func (s *Scout) settings() api.Settings {
+	var window any
+	if s.cfg.Window != nil {
+		window = s.cfg.Window
+	}
+	return api.Settings{
+		AppName: s.cfg.AppName, Environment: s.cfg.Environment, Mode: s.cfg.Mode,
+		Targets: s.cfg.Targets, Scope: s.cfg.Scope, Criticality: s.cfg.Criticality,
+		RateLimit: s.cfg.RateLimit, Concurrency: s.cfg.Concurrency,
+		CheckTimeout: s.cfg.CheckTimeout, Retention: s.cfg.Retention,
+		Window: window, Version: Version,
+	}
 }
 
 // Config returns the effective configuration.

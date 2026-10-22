@@ -103,6 +103,12 @@ type Request struct {
 	// Checks restricts the scan to these check IDs (used by "verify fix").
 	// Empty means every registered check.
 	Checks []string
+	// ID is the scan ID to use; empty generates one. Lets callers that run
+	// scans in the background return the ID immediately.
+	ID string
+	// Ephemeral runs without loading history or persisting the result, for
+	// one-off re-checks such as "verify fix".
+	Ephemeral bool
 }
 
 // ErrCheckTimeout is recorded when a check exceeds its timeout.
@@ -120,7 +126,10 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	if !e.opts.Window.Allows(e.opts.Now()) {
 		return core.ScanResult{}, ErrOutsideWindow
 	}
-	scanID := NewScanID()
+	scanID := req.ID
+	if scanID == "" {
+		scanID = NewScanID()
+	}
 	client := e.client(req.Target, scanID)
 	ctx = core.WithScanCache(core.WithHTTPClient(ctx, client))
 	policy := e.policy(ctx, req, client)
@@ -143,7 +152,7 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	e.opts.Bus.Publish(Event{Type: EventScanStarted, ScanID: res.ID, Time: res.StartedAt, Total: len(run)})
 	res.Findings, res.Errors = e.runChecks(ctx, res.ID, req.Target, run)
 	res.FinishedAt = e.opts.Now()
-	e.finish(ctx, &res, categoriesOf(run))
+	e.finish(ctx, &res, categoriesOf(run), !req.Ephemeral)
 	return res, nil
 }
 

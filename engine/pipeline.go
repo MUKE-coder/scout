@@ -59,11 +59,11 @@ func mergeHistory(findings []core.Finding, prev []core.Finding, now time.Time) {
 // finish runs the findings pipeline: dedupe, merge history, score, persist,
 // emit. Storage problems are recorded on the result rather than failing the
 // scan.
-func (e *Engine) finish(ctx context.Context, res *core.ScanResult, assessed []core.Category) {
+func (e *Engine) finish(ctx context.Context, res *core.ScanResult, assessed []core.Category, persist bool) {
 	res.Findings = dedupe(res.Findings)
 
 	var prev []core.Finding
-	if e.opts.Store != nil {
+	if e.opts.Store != nil && persist {
 		last, err := e.opts.Store.LatestScan(ctx, res.Target.Name)
 		switch {
 		case err == nil:
@@ -80,7 +80,7 @@ func (e *Engine) finish(ctx context.Context, res *core.ScanResult, assessed []co
 	report := scoring.Score(res.Findings, opts)
 	res.Score, res.Grade = report.Score, report.Grade
 
-	if e.opts.Store != nil {
+	if e.opts.Store != nil && persist {
 		// Persist even if the scan was cancelled: partial results are real.
 		if err := e.opts.Store.SaveScan(context.WithoutCancel(ctx), *res); err != nil {
 			e.log.Error("persist scan", "scan", res.ID, "err", err)

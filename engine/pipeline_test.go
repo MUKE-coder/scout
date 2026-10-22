@@ -138,6 +138,24 @@ func TestScoreUsesOnlyAssessedCategories(t *testing.T) {
 	}
 }
 
+func TestRequestIDAndEphemeral(t *testing.T) {
+	store := storage.NewMemory(10)
+	e := newEngine(t, Options{Store: store}, check("a", core.ModePassive, returns("x")))
+	ctx := context.Background()
+
+	res, _ := e.Run(ctx, Request{Target: localTarget, ID: "fixed-id"})
+	if res.ID != "fixed-id" {
+		t.Fatalf("ID = %s", res.ID)
+	}
+	eph, _ := e.Run(ctx, Request{Target: localTarget, Ephemeral: true})
+	if _, err := store.GetScan(ctx, eph.ID); err == nil {
+		t.Fatal("ephemeral scan was persisted")
+	}
+	if latest, _ := store.LatestScan(ctx, localTarget.Name); latest.ID != "fixed-id" {
+		t.Fatalf("ephemeral scan replaced the latest scan: %s", latest.ID)
+	}
+}
+
 func TestEventsPublished(t *testing.T) {
 	bus := NewBus()
 	events, unsubscribe := bus.Subscribe(100)
