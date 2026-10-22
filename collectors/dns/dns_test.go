@@ -198,6 +198,8 @@ func TestNonDomainTargetNoFindings(t *testing.T) {
 	for _, tgt := range []core.Target{
 		{URL: "https://127.0.0.1:8443", Environment: core.EnvDev},
 		{Repo: ".", Environment: core.EnvDev},
+		{URL: "http://localhost:8080", Environment: core.EnvDev},     // single-label, not in DNS
+		{URL: "http://api.localhost:8080", Environment: core.EnvDev}, // *.localhost
 	} {
 		ctx := core.WithScanCache(context.Background())
 		for _, c := range []core.Check{SPF{}, DMARC{}, DKIM{}, CAA{}, DanglingCNAME{}, SubdomainTakeover{}} {

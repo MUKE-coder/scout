@@ -80,11 +80,17 @@ func domain(t core.Target) string {
 	if err != nil {
 		return ""
 	}
-	h := u.Hostname()
+	h := strings.TrimSuffix(u.Hostname(), ".")
 	if h == "" || net.ParseIP(h) != nil {
 		return "" // DNS posture checks don't apply to a bare IP
 	}
-	return strings.TrimSuffix(h, ".")
+	// DNS posture checks only make sense for a real registrable domain.
+	// Skip single-label and *.localhost hosts (e.g. "localhost"), which are
+	// not in the DNS and otherwise error with a lookup-syntax failure.
+	if !strings.Contains(h, ".") || h == "localhost" || strings.HasSuffix(h, ".localhost") {
+		return ""
+	}
+	return h
 }
 
 func asset(t core.Target, dom string) core.Asset {
