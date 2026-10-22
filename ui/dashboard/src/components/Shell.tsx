@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
+import { LiveProvider, useLive } from "../lib/live";
 import { Activity, LayoutDashboard, ListChecks, LogOut, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { setToken } from "../lib/api";
@@ -13,8 +14,37 @@ const nav = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
+// Top-bar pill shown while a scan is live; links to the Live page.
+function ScanStatusPill() {
+  const { scans, killed } = useLive();
+  const running = scans.filter((s) => !s.finished);
+  if (killed) {
+    return (
+      <Link to="/live" className="inline-flex h-[22px] items-center rounded-md bg-critical/12 px-2 text-[12px] font-medium text-critical-fg">
+        Kill switch on
+      </Link>
+    );
+  }
+  if (running.length === 0) return null;
+  const s = running[0];
+  return (
+    <Link to="/live" className="inline-flex h-[22px] items-center gap-2 rounded-md bg-accent-subtle px-2 text-[12px] font-medium text-text">
+      <span className="size-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
+      Scanning <span className="tabular">{s.done}/{s.total}</span>
+    </Link>
+  );
+}
+
 // App shell: 240px sidebar, 56px top bar, one scrollable main area.
 export function Shell() {
+  return (
+    <LiveProvider>
+      <ShellLayout />
+    </LiveProvider>
+  );
+}
+
+function ShellLayout() {
   const [theme, toggleTheme] = useTheme();
   const settings = useApi<Settings>("/settings");
   return (
@@ -67,7 +97,10 @@ export function Shell() {
             {settings.data?.app_name}
             {settings.data && <span className="text-subtle"> · {settings.data.environment}</span>}
           </span>
-          <NewScanButton targets={settings.data?.targets ?? []} />
+          <div className="flex items-center gap-3">
+            <ScanStatusPill />
+            <NewScanButton targets={settings.data?.targets ?? []} />
+          </div>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-[1280px] px-4 py-8 md:px-8">
