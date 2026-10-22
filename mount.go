@@ -10,6 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/MUKE-coder/scout/api"
+	"github.com/MUKE-coder/scout/selftest"
 	"github.com/MUKE-coder/scout/storage"
 )
 
@@ -26,6 +28,7 @@ type Scout struct {
 	cfg       Config
 	log       *slog.Logger
 	store     storage.Store
+	auth      *api.Auth
 	lifecycle *Lifecycle
 }
 
@@ -64,10 +67,18 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 		}
 	}
 	log, _ := NewLogger(os.Stderr, "info", "text")
+	log = log.With("app", c.AppName)
+
+	secret := []byte(c.JWTSecret)
+	if len(secret) == 0 {
+		secret = selftest.NewKey()
+		log.Warn("no jwt_secret configured: using a random one, so dashboard sessions end when Scout restarts")
+	}
 	return &Scout{
 		cfg:       c,
-		log:       log.With("app", c.AppName),
+		log:       log,
 		store:     store,
+		auth:      api.NewAuth(secret, c.Username, c.Password),
 		lifecycle: NewLifecycle(context.Background()),
 	}, nil
 }
@@ -75,8 +86,8 @@ func New(cfg Config, opts ...Option) (*Scout, error) {
 // Register adds the /scout route group to r.
 func (s *Scout) Register(r gin.IRouter) {
 	g := r.Group(BasePath)
-	api := g.Group("/api")
-	api.GET("/health", s.handleHealth)
+	g.GET("/api/health", s.handleHealth)
+	api.New(api.Deps{Auth: s.auth, Logger: s.log}).Register(g)
 
 	registerDashboard(g)
 	s.log.Info("scout mounted", "base", BasePath, "env", s.cfg.Environment, "mode", s.cfg.EffectiveMode())

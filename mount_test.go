@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,6 +36,27 @@ func TestMountRegistersScoutGroup(t *testing.T) {
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/scout/ui/", nil))
 	if w.Code != http.StatusOK {
 		t.Fatalf("ui status = %d", w.Code)
+	}
+}
+
+func TestMountedLoginFlow(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	s := Mount(r, Config{AppName: "x", Username: "ops", Password: "long-random-password"})
+	defer s.Close(time.Second)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/scout/api/me", nil))
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated /me = %d", w.Code)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/scout/api/auth/login",
+		strings.NewReader(`{"username":"ops","password":"long-random-password"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"token"`) {
+		t.Fatalf("login = %d %s", w.Code, w.Body)
 	}
 }
 

@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router";
-import { Activity, LayoutDashboard, ListChecks, Moon, Settings, Sun } from "lucide-react";
+import { Activity, LayoutDashboard, ListChecks, LogOut, Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme";
+import { setToken } from "../lib/api";
 
 const nav = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
@@ -36,7 +37,15 @@ export function Shell() {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-border p-3">
+        <div className="flex flex-col gap-1 border-t border-border p-3">
+          <button
+            type="button"
+            onClick={() => setToken(null)}
+            className="flex h-9 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-text"
+          >
+            <LogOut size={16} strokeWidth={1.5} aria-hidden />
+            Sign out
+          </button>
           <button
             type="button"
             onClick={toggleTheme}

@@ -1,8 +1,12 @@
 import { Navigate, Route, Routes } from "react-router";
 import { Shell } from "./components/Shell";
 import { Placeholder } from "./pages/Placeholder";
+import { Login } from "./pages/Login";
+import { useAuthed } from "./lib/auth";
 
 export function App() {
+  const authed = useAuthed();
+  if (!authed) return <Login />;
   return (
     <Routes>
       <Route element={<Shell />}>

@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.47.0
 	golang.org/x/time v0.16.0

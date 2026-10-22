@@ -69,7 +69,7 @@ Goal: usable from a terminal and a pipeline before the UI exists.
 Goal: the product people see. Follow `style-guide.md` exactly.
 
 - [x] `ui/dashboard` scaffold: React 19 + Vite + Tailwind 4 + Recharts + Geist. Commit `ui/dist/`, embed via `//go:embed`.
-- [ ] JWT auth; default creds refused outside dev; login rate limit.
+- [x] JWT auth; default creds refused outside dev; login rate limit.
 - [ ] REST API under `/scout/api/` + WebSocket `/scout/ws/live`.
 - [ ] **Overview**: grade ring, 30-day trend, category subscore bars, Fix-next top 5, env cards (dev/staging/prod).
 - [ ] **Findings**: filterable table (severity, category, asset, status, new/regressed), bulk actions.
