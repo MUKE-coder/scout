@@ -56,6 +56,8 @@ go run ./cmd/scout scan --repo ./lab --mode safe --env dev
 | `/search`, dangerous sinks | `eval` / `exec` / raw HTML in source | `code.dangerous-sink` (`--repo`) |
 | `/api/debug` | Stack trace returned to client | `app.info-disclosure` |
 | `/api/graphql` | Introspection enabled | `api.graphql-introspection` |
+| `/api/v1/users` + `/api/v2/users` | Deprecated API version still live | `api.improper-asset-mgmt` |
+| `/api/reset` | Reset link built from the Host header | `app.host-header` |
 
 ### Also present as targets (detected once you implement the active probe)
 
