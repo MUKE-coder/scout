@@ -24,7 +24,7 @@ Goal: the skeleton compiles, the Mount pattern and CLI shell exist, nothing scan
 Goal: the scan loop runs checks safely with mode caps. This is the backbone everything hangs off.
 
 - [x] Scan engine: worker pool, context cancellation, per-check timeout, panic recovery per check (one check can never crash a scan).
-- [ ] **Mode enforcement**: environment (`dev|staging|prod`) → `MaxMode`; engine skips any check whose `Mode()` exceeds it.
+- [x] **Mode enforcement**: environment (`dev|staging|prod`) → `MaxMode`; engine skips any check whose `Mode()` exceeds it.
 - [ ] Scope allowlist (hosts/paths), rate limiter, scan window, global kill switch.
 - [ ] **Dry-run / plan mode**: print which checks would run at which mode against which targets, and run nothing.
 - [ ] Signed self-test header (`X-Scout-Scan: <hmac>`) on all outbound scan requests.

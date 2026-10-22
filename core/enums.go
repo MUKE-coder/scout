@@ -138,17 +138,30 @@ func ParseEnvironment(v string) (Environment, error) {
 	return "", fmt.Errorf("unknown environment %q (want dev, staging or prod)", v)
 }
 
-// MaxMode is the most aggressive mode an environment permits by default.
-// Prod allows Active only with an explicit per-target opt-in, and never
-// Intrusive; staging allows Intrusive only with an opt-in.
-func (e Environment) MaxMode() Mode {
+// MaxMode is the most aggressive mode an environment permits without any
+// per-target opt-in.
+func (e Environment) MaxMode() Mode { return e.Cap(false) }
+
+// Cap is the most aggressive mode an environment permits. optIn is the
+// explicit per-target opt-in (Target.AllowActive):
+//
+//	dev      Intrusive
+//	staging  Active     (Intrusive with opt-in)
+//	prod     Safe       (Active with opt-in; never Intrusive)
+func (e Environment) Cap(optIn bool) Mode {
 	switch e {
 	case EnvDev:
 		return ModeIntrusive
 	case EnvStaging:
+		if optIn {
+			return ModeIntrusive
+		}
 		return ModeActive
 	default:
-		// Unknown environments are treated as prod: fail safe.
+		// Prod, and unknown environments treated as prod: fail safe.
+		if optIn {
+			return ModeActive
+		}
 		return ModeSafe
 	}
 }

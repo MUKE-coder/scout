@@ -76,16 +76,36 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	if err := req.Target.Validate(); err != nil {
 		return core.ScanResult{}, err
 	}
+	policy := NewPolicy(req.Target, req.Mode)
 	res := core.ScanResult{
 		ID:        NewScanID(),
 		Target:    req.Target,
-		Mode:      req.Mode,
+		Mode:      policy.Effective,
 		StartedAt: e.opts.Now(),
 	}
-	checks := e.selectChecks(req.Checks)
-	res.Findings, res.Errors = e.runChecks(ctx, req.Target, checks)
+	var run []core.Check
+	for _, d := range e.decide(policy, req.Checks) {
+		if d.Run {
+			run = append(run, d.Check)
+			continue
+		}
+		res.Skipped = append(res.Skipped, core.SkippedCheck{CheckID: d.Check.ID(), Mode: d.Check.Mode(), Reason: d.Reason})
+	}
+	e.log.Info("scan starting", "scan", res.ID, "target", req.Target.Name,
+		"mode", policy.Effective, "run", len(run), "skipped", len(res.Skipped))
+	res.Findings, res.Errors = e.runChecks(ctx, req.Target, run)
 	res.FinishedAt = e.opts.Now()
 	return res, nil
+}
+
+// decide applies the policy to every selected check.
+func (e *Engine) decide(p Policy, ids []string) []Decision {
+	checks := e.selectChecks(ids)
+	out := make([]Decision, len(checks))
+	for i, c := range checks {
+		out[i] = p.Decide(c)
+	}
+	return out
 }
 
 // selectChecks returns the registered checks, restricted to ids if given.

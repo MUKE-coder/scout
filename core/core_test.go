@@ -53,6 +53,26 @@ func TestEnvironmentMaxMode(t *testing.T) {
 	}
 }
 
+func TestEnvironmentCapWithOptIn(t *testing.T) {
+	cases := []struct {
+		env   Environment
+		optIn bool
+		want  Mode
+	}{
+		{EnvDev, false, ModeIntrusive},
+		{EnvStaging, false, ModeActive},
+		{EnvStaging, true, ModeIntrusive},
+		{EnvProd, false, ModeSafe},
+		{EnvProd, true, ModeActive}, // never Intrusive in prod
+		{"unknown", true, ModeActive},
+	}
+	for _, c := range cases {
+		if got := c.env.Cap(c.optIn); got != c.want {
+			t.Errorf("%s optIn=%v: Cap = %v, want %v", c.env, c.optIn, got, c.want)
+		}
+	}
+}
+
 func TestFingerprintStable(t *testing.T) {
 	a := Asset{Kind: AssetURL, Value: "https://example.com/", Host: "example.com"}
 	f1 := Finding{CheckID: "headers.csp", Asset: a, Severity: SeverityLow, Evidence: Evidence{Response: "one"}}
