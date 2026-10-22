@@ -127,6 +127,9 @@ func mergeConfig(dst *Config, src Config) {
 	if len(src.Scope.Hosts)+len(src.Scope.IncludePaths)+len(src.Scope.ExcludePaths) > 0 {
 		dst.Scope = src.Scope
 	}
+	if len(src.Criticality) > 0 {
+		dst.Criticality = src.Criticality
+	}
 	if src.RateLimit != 0 {
 		dst.RateLimit = src.RateLimit
 	}

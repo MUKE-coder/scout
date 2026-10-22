@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/scoring"
 )
 
 // Scope limits what a scan may touch. Empty Hosts means "only the target's
@@ -19,6 +20,9 @@ type Config struct {
 	Mode    core.Mode     `json:"mode" yaml:"mode"`
 	Targets []core.Target `json:"targets,omitempty" yaml:"targets"`
 	Scope   Scope         `json:"scope" yaml:"scope"`
+	// Criticality weights findings by asset (payments API 1.5, marketing
+	// site 0.7). First matching rule wins.
+	Criticality []scoring.CriticalityRule `json:"criticality,omitempty" yaml:"criticality"`
 
 	// RateLimit is the max outbound requests per second per target.
 	RateLimit int `json:"rate_limit" yaml:"rate_limit"`

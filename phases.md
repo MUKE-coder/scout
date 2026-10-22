@@ -53,7 +53,7 @@ Goal: findings become a grade and a prioritized to-do list.
 - [x] Letter grades (A/B/C/D/F) + per-category subscores.
 - [x] **"Fix next" ranking**: `points_regained_if_fixed / effort`.
 - [ ] Remediation renderer: what/why + stack-specific how + effort + CWE/OWASP refs.
-- [ ] Per-asset criticality config.
+- [x] Per-asset criticality config.
 - [ ] Golden-file tests pinning scores for known finding sets.
 
 ## Phase 4 — CLI output & CI mode

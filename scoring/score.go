@@ -40,6 +40,8 @@ type Options struct {
 	// does not get a free 100 for it. Nil means every category with findings
 	// plus every weighted category.
 	Assessed []core.Category
+	// Criticality rules apply to assets without their own Criticality.
+	Criticality []CriticalityRule
 }
 
 func (o Options) k() float64 {
@@ -154,7 +156,7 @@ func Score(findings []core.Finding, opts Options) Report {
 		if !Counts(f) {
 			continue
 		}
-		risk[f.Category] += Risk(f)
+		risk[f.Category] += opts.risk(f)
 		count[f.Category]++
 		if f.Severity > worst[f.Category] {
 			worst[f.Category] = f.Severity
