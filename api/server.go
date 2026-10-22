@@ -84,6 +84,7 @@ func (s *Server) Register(g *gin.RouterGroup) {
 	a.GET("/scans", s.listScans)
 	a.GET("/scans/running", s.runningScans)
 	a.GET("/scans/:id", s.getScan)
+	a.GET("/diff", s.diff)
 	a.POST("/scans", s.startScan)
 	a.GET("/findings", s.listFindings)
 	a.GET("/findings/:fingerprint", s.getFinding)

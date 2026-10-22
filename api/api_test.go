@@ -157,6 +157,29 @@ func TestScanFindingsAndChanges(t *testing.T) {
 	}
 }
 
+func TestDiffEndpoint(t *testing.T) {
+	f := newFixture(t)
+	f.set(finding("/a", core.SeverityHigh), finding("/b", core.SeverityLow))
+	first := f.scan(t)
+	f.set(finding("/a", core.SeverityHigh), finding("/c", core.SeverityMedium))
+	second := f.scan(t)
+
+	// Arguments in either order are compared older -> newer.
+	w := f.do(http.MethodGet, "/scout/api/diff?from="+second+"&to="+first, "")
+	got := decode[struct {
+		Diff struct {
+			New, Fixed, Unchanged, Regressed []core.Finding
+		} `json:"diff"`
+		SameTarget bool `json:"same_target"`
+	}](t, w)
+	if len(got.Diff.New) != 1 || len(got.Diff.Fixed) != 1 || len(got.Diff.Unchanged) != 1 || !got.SameTarget {
+		t.Fatalf("diff = %s", w.Body)
+	}
+	if w := f.do(http.MethodGet, "/scout/api/diff?from=nope&to="+first, ""); w.Code != http.StatusNotFound {
+		t.Fatalf("unknown scan: %d", w.Code)
+	}
+}
+
 func TestOverview(t *testing.T) {
 	f := newFixture(t)
 	f.set(finding("/a", core.SeverityCritical))

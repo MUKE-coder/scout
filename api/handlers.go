@@ -171,6 +171,25 @@ func (s *Server) getScan(c *gin.Context) {
 	c.JSON(http.StatusOK, report.Build(sc, s.d.Scoring))
 }
 
+// diff compares two stored scans (?from=&to=), always older -> newer.
+func (s *Server) diff(c *gin.Context) {
+	ctx := c.Request.Context()
+	a, errA := s.d.Store.GetScan(ctx, c.Query("from"))
+	b, errB := s.d.Store.GetScan(ctx, c.Query("to"))
+	if errA != nil || errB != nil {
+		fail(c, http.StatusNotFound, "both from and to must be existing scan IDs")
+		return
+	}
+	if a.StartedAt.After(b.StartedAt) {
+		a, b = b, a
+	}
+	d := report.DiffScans(a, b, s.seenBefore(ctx, a.StartedAt))
+	c.JSON(http.StatusOK, gin.H{
+		"from": a, "to": b, "diff": d,
+		"same_target": a.Target.Name == b.Target.Name,
+	})
+}
+
 type startScanRequest struct {
 	Target string `json:"target" binding:"required"` // a configured target name or URL
 	Mode   string `json:"mode"`

@@ -116,7 +116,7 @@ Goal: the family moat.
 Goal: the "wow" surfaces.
 
 - [ ] **Attack-surface map**: interactive graph domain → hosts → ports/services → routes, nodes colored by worst severity.
-- [ ] **Scan diff view** in the dashboard.
+- [x] **Scan diff view** in the dashboard.
 - [ ] **Compliance view**: OWASP Top 10 / ASVS coverage heatmap.
 - [ ] **Reports**: PDF/HTML export for clients/audits.
 - [ ] Optional AI: explain-in-context, draft fix PR, stakeholder summary (with redaction).
