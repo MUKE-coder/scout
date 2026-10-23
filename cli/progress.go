@@ -34,17 +34,18 @@ var spinnerFrames = []rune("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
 // checks run. It subscribes to the engine's event bus. On a non-terminal
 // writer (pipes, CI) it does nothing, so logs stay clean.
 type progressReporter struct {
-	w       io.Writer
-	color   bool
-	unsub   func()
-	ch      <-chan engine.Event
-	stopCh  chan struct{}
-	wg      sync.WaitGroup
-	mu      sync.Mutex
-	target  string
-	total   int
-	done    int
-	started bool
+	w        io.Writer
+	color    bool
+	unsub    func()
+	ch       <-chan engine.Event
+	stopCh   chan struct{}
+	stopOnce sync.Once
+	wg       sync.WaitGroup
+	mu       sync.Mutex
+	target   string
+	total    int
+	done     int
+	started  bool
 }
 
 // startProgress wires a reporter to the bus and starts rendering. It returns a
@@ -132,15 +133,18 @@ func (p *progressReporter) render(spin rune) {
 	fmt.Fprintf(p.w, "\r%-78s\r%s", "", line)
 }
 
-// stop ends rendering and clears the status line.
+// stop ends rendering and clears the status line. It is safe to call more than
+// once (the scan path calls it explicitly and again via defer).
 func (p *progressReporter) stop() {
 	if p.unsub == nil {
 		return
 	}
-	close(p.stopCh)
-	p.unsub()
-	p.wg.Wait()
-	fmt.Fprintf(p.w, "\r%-78s\r", "") // clear the line
+	p.stopOnce.Do(func() {
+		close(p.stopCh)
+		p.unsub()
+		p.wg.Wait()
+		fmt.Fprintf(p.w, "\r%-78s\r", "") // clear the line
+	})
 }
 
 // progressWriter is where the live status line goes: stderr, so stdout keeps
