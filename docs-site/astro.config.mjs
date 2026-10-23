@@ -59,6 +59,7 @@ export default defineConfig({
             { label: "IDOR & test identities", slug: "usage/idor" },
             { label: "Gate your CI", slug: "usage/ci" },
             { label: "Dashboard & scheduled scans", slug: "usage/dashboard" },
+            { label: "Dashboard tour", slug: "usage/dashboard-tour" },
             { label: "Embed in a Go app (Mount)", slug: "usage/library" },
             { label: "Output: JSON, SARIF, reports", slug: "usage/output" },
             { label: "Scan history & diff", slug: "usage/history" },

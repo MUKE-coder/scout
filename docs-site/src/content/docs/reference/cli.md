@@ -17,6 +17,16 @@ scout — Point it at your app. See every way in.
 | `--config <path>` | Path to a config file (otherwise Scout searches for one) |
 | `-h, --help` | Help for any command |
 
+## `scout init`
+
+Write a `scout.yaml` in the current directory with every common setting at its
+default (and the dashboard login), so settings are easy to change.
+
+```bash
+scout init          # writes scout.yaml
+scout init --force  # overwrite an existing one
+```
+
 ## `scout scan`
 
 Run a scan and print the report.
@@ -32,6 +42,7 @@ Run a scan and print the report.
 | `--dry-run` | `false` | Print what would run, run nothing |
 | `--json` | `false` | Print JSON instead of the report |
 | `--sarif <file>` | — | Also write SARIF 2.1.0 to this file |
+| `--export <formats>` | — | Also write `scout-report.<ext>` here: any of `md,html,txt,json` |
 | `--check-timeout <dur>` | `60s` | Max time per check (e.g. `120s`); raise it for slow targets |
 | `--serve` | `false` | After the scan, open the dashboard (runs until Ctrl+C) |
 | `--serve-addr <addr>` | `:9090` | Address for the `--serve` dashboard |

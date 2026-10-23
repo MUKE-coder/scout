@@ -41,9 +41,11 @@ fix — to hand to a developer or drop into a PR or ticket.
 
 ## Credentials
 
-The dashboard is protected by a username and password. In `dev` the defaults
-(`admin` / `scout`) are allowed; **outside dev Scout refuses to serve with the
-defaults** — set your own in the [config](/reference/configuration/):
+The dashboard is protected by a username and password. In `dev` the default
+login is **`admin` / `scout`**; **outside dev Scout refuses to serve with the
+defaults** — set your own in the [config](/reference/configuration/). Run
+`scout init` to generate a `scout.yaml` with these (and every other setting)
+already filled in, then edit it:
 
 ```yaml
 username: admin

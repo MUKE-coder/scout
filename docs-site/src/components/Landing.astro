@@ -120,6 +120,18 @@ function icon(name: string): string {
     </div>
   </section>
 
+  <!-- ============ dashboard showcase ============ -->
+  <section class="sc-showcase" data-reveal>
+    <div class="sc-shot">
+      <img src="/screens/overview.png" alt="The Scout dashboard: grade over time, findings and attack surface" loading="lazy" width="1262" height="568" />
+    </div>
+    <p class="sc-shot-cap">
+      The embedded dashboard — grade over time, findings, attack-surface map, OWASP
+      coverage and one-click export. Run <code>scout serve</code>, or
+      <code>scout scan --serve</code> to go straight from a scan to the UI.
+    </p>
+  </section>
+
   <!-- ============ gridline-framed, Supabase-style sections ============ -->
   <div class="ed">
     <!-- 01 · SCAN -->
@@ -314,6 +326,14 @@ function icon(name: string): string {
   .sc-grade-line { margin-top: 0.5rem; color: var(--fl-muted); }
   .sc-grade { display: inline-block; font-weight: 700; color: var(--sc-crit); border: 1px solid var(--sc-crit); border-radius: 0.3rem; padding: 0 0.3rem; margin: 0 0.2rem; }
   .sc-score { color: var(--fl-muted); }
+
+  /* ============ dashboard showcase ============ */
+  .sc-showcase { max-width: 68rem; margin: 1rem auto 0; padding: 0 var(--gutter, 1.5rem); }
+  .sc-shot { border: 1px solid var(--fl-rule); border-radius: 1rem; overflow: hidden; background: var(--fl-surface); box-shadow: var(--sl-shadow-lg); }
+  .sc-shot img { display: block; width: 100%; height: auto; }
+  .sc-shot-cap { margin: 1rem auto 0; max-width: 42rem; text-align: center; font-size: 0.95rem; line-height: 1.55; color: var(--fl-muted); }
+  .sc-shot-cap code { font-family: var(--sl-font-mono); font-size: 0.88em; color: var(--fl-ember-strong); }
+  :root:not([data-theme="light"]) .sc-shot-cap code { color: var(--fl-ember); }
 
   /* ============ editorial: gridlines + Supabase layout ============ */
   .ed { position: relative; max-width: 80rem; margin: 2rem auto 0; padding: 0 var(--gutter, 1.5rem); }
