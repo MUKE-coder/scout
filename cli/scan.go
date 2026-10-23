@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -17,17 +18,18 @@ import (
 
 // scanFlags are shared by scan and ci.
 type scanFlags struct {
-	targets   []string
-	repo      string
-	mode      string
-	env       string
-	db        string
-	dryRun    bool
-	optIn     bool
-	json      bool
-	sarif     string
-	serve     bool
-	serveAddr string
+	targets      []string
+	repo         string
+	mode         string
+	env          string
+	db           string
+	dryRun       bool
+	optIn        bool
+	json         bool
+	sarif        string
+	serve        bool
+	serveAddr    string
+	checkTimeout time.Duration
 }
 
 func (f *scanFlags) bind(cmd *cobra.Command) {
@@ -42,6 +44,7 @@ func (f *scanFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.sarif, "sarif", "", "also write SARIF 2.1.0 to this file")
 	cmd.Flags().BoolVar(&f.serve, "serve", false, "after the scan, open the dashboard (keeps running until Ctrl+C)")
 	cmd.Flags().StringVar(&f.serveAddr, "serve-addr", ":9090", "address for the --serve dashboard")
+	cmd.Flags().DurationVar(&f.checkTimeout, "check-timeout", 0, "max time per check (e.g. 120s); 0 keeps the default (60s). Raise it for slow targets")
 }
 
 // config validates the flags and turns them into a scout.Config.
@@ -75,6 +78,9 @@ func (f *scanFlags) config(cmd *cobra.Command) (scout.Config, error) {
 	}
 	if changed("db") || cfg.DBPath == "" {
 		cfg.DBPath = f.db // the flag default (scout.db) applies when config sets none
+	}
+	if changed("check-timeout") {
+		cfg.CheckTimeout = f.checkTimeout
 	}
 	if changed("target") {
 		cfg.Targets = nil

@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -54,6 +55,16 @@ func runServe(cmd *cobra.Command, addr, db string) error {
 		return err
 	}
 	s.Register(router)
+
+	// Friendliness: the dashboard lives under /scout/ui. Send the bare root and
+	// /scout there, so opening http://host:port/ just works instead of 404ing.
+	toUI := func(c *gin.Context) { c.Redirect(http.StatusFound, scout.UIPath+"/") }
+	router.GET("/", toUI)
+	router.GET(scout.BasePath, toUI)
+
+	// Tell the user where to go and how to stop, on stdout (the logs are stderr).
+	url := dashboardURL(addr)
+	fmt.Fprintf(cmd.OutOrStdout(), "\nDashboard:  %s\nPress Ctrl+C to stop.\n\n", url)
 
 	srv := &http.Server{Addr: addr, Handler: router, ReadHeaderTimeout: 10 * time.Second}
 	ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
