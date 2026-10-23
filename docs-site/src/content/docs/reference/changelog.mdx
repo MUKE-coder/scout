@@ -1,0 +1,37 @@
+---
+title: Changelog
+description: What changed in each Scout release.
+---
+
+Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
+
+## Unreleased
+
+- **New detective checks:** reachable Go CVEs (`code.go-vulncheck`), IDOR with
+  test identities (`auth.idor`), version/banner disclosure
+  (`app.version-disclosure`), directory listing (`app.directory-listing`),
+  missing Subresource Integrity (`app.missing-sri`) and mixed content
+  (`app.mixed-content`).
+- **Test-identity config surface** — `scout.WithTestIdentities`,
+  `core.Target.Identities`, and an `identities:` key in the config file.
+- **Active-probe scaffolds** registered for SSTI, XXE, file upload and
+  business-logic (inert until their payload logic is written).
+- **Embeddable Mount** feeds the real route table into the auth checks, with the
+  resolved table exposed at `GET /scout/api/routes`.
+
+## v0.3.0
+
+More coverage and the embedded dashboard. Expanded the check set across headers,
+exposure, app, auth and code categories; shipped the React dashboard compiled into
+the binary; added the deliberately-vulnerable lab app under `lab/`.
+
+## v0.2.0
+
+Core engine and the first collectors. Mode caps, environment gating, ownership
+verification, SARIF output, scan history in SQLite, and `scout ci` for pipeline
+gating.
+
+## v0.1.0
+
+Initial release — the CLI skeleton, the check registry, and the first passive
+checks.

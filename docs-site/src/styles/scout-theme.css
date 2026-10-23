@@ -1,0 +1,462 @@
+/*
+ * Scout docs theme: clean paper, ink type, one blue accent (matches the brand
+ * banner).
+ *
+ * Blue is the only colour. #1D4ED8 carries links and fills in light mode
+ * (contrast AA on white); dark mode lifts to #60A5FA for contrast on the dark
+ * ground. (The token names are kept generic — brand accent, rules, ink — so the
+ * components read the same across themes.)
+ *
+ * Deliberately NOT wrapped in `@layer starlight.base`: unlayered CSS always wins
+ * over Starlight's layered defaults at equal specificity, so plain :root overrides
+ * here are reliable.
+ */
+
+/* ---- Tokens ------------------------------------------------------------ */
+
+:root {
+  /* Dark (Starlight's default theme) */
+  --fl-paper: #141414;
+  --fl-surface: #1b1b1b;
+  --fl-raised: #222222;
+  --fl-ink: #f5f5f5;
+  --fl-body: #d4d4d4;
+  --fl-muted: #9a9a9a;
+  --fl-rule: #2a2a2a;
+  --fl-rule-strong: #3a3a3a;
+  --fl-ember: #60a5fa;
+  --fl-ember-strong: #60a5fa;
+  --fl-ember-soft: rgba(59, 130, 246, 0.18);
+  --fl-on-ember: #0b1220;
+  --fl-code-chrome: #1f1f1f;
+
+  --sl-font: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sl-font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --sl-color-white: var(--fl-ink);
+  --sl-color-black: var(--fl-paper);
+  --sl-color-gray-1: #ececec;
+  --sl-color-gray-2: #c7c7c7;
+  --sl-color-gray-3: #9a9a9a;
+  --sl-color-gray-4: #6b6b6b;
+  --sl-color-gray-5: #2e2e2e;
+  --sl-color-gray-6: #1f1f1f;
+
+  --sl-color-accent-low: #10243f;
+  --sl-color-accent: var(--fl-ember);
+  --sl-color-accent-high: #bfdbfe;
+
+  --sl-color-text: var(--fl-body);
+  --sl-color-text-accent: var(--fl-ember);
+  --sl-color-text-invert: var(--fl-on-ember);
+  --sl-color-bg: var(--fl-paper);
+  --sl-color-bg-nav: var(--fl-paper);
+  --sl-color-bg-sidebar: var(--fl-paper);
+  --sl-color-bg-inline-code: var(--fl-raised);
+  --sl-color-bg-accent: var(--fl-ember);
+  --sl-color-hairline-light: var(--fl-rule);
+  --sl-color-hairline: var(--fl-rule);
+  --sl-color-hairline-shade: var(--fl-paper);
+  --sl-color-backdrop-overlay: rgba(10, 10, 10, 0.72);
+
+  --sl-shadow-sm: none;
+  --sl-shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --sl-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+  --sl-text-h1: 2.5rem;
+  --sl-text-h2: 1.625rem;
+  --sl-text-h3: 1.25rem;
+  --sl-text-h4: 1.0625rem;
+  --sl-line-height: 1.7;
+  --sl-content-width: 46rem;
+  --sl-nav-height: 4rem;
+}
+
+:root[data-theme="light"] {
+  --fl-paper: #ffffff;
+  --fl-surface: #fafafa;
+  --fl-raised: #f4f4f4;
+  --fl-ink: #171717;
+  --fl-body: #3d3d3d;
+  --fl-muted: #6b6b6b;
+  --fl-rule: #eaeaea;
+  --fl-rule-strong: #dcdcdc;
+  --fl-ember: #2563eb;
+  --fl-ember-strong: #1d4ed8;
+  --fl-ember-soft: #e8f0fe;
+  --fl-on-ember: #ffffff;
+  --fl-code-chrome: #f6f6f6;
+
+  --sl-color-gray-1: #262626;
+  --sl-color-gray-2: #404040;
+  --sl-color-gray-3: #6b6b6b;
+  --sl-color-gray-4: #a3a3a3;
+  --sl-color-gray-5: #e5e5e5;
+  --sl-color-gray-6: #f4f4f4;
+  --sl-color-gray-7: #fafafa;
+
+  --sl-color-accent-low: #dbe7fe;
+  --sl-color-accent: var(--fl-ember-strong);
+  --sl-color-accent-high: #1e3a8a;
+  --sl-color-text-accent: var(--fl-ember-strong);
+
+  --sl-shadow-md: 0 1px 2px rgba(23, 23, 23, 0.04), 0 8px 24px rgba(23, 23, 23, 0.06);
+  --sl-shadow-lg: 0 16px 48px rgba(23, 23, 23, 0.12);
+  --sl-color-backdrop-overlay: rgba(250, 250, 250, 0.72);
+}
+
+/* ---- Base -------------------------------------------------------------- */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: var(--fl-ember);
+  color: var(--fl-on-ember);
+}
+
+:focus-visible {
+  outline: 2px solid var(--fl-ember);
+  outline-offset: 2px;
+}
+
+/* ---- Header ------------------------------------------------------------ */
+
+.header {
+  border-bottom: 1px solid var(--fl-rule);
+  backdrop-filter: saturate(1.4) blur(10px);
+  background: color-mix(in srgb, var(--fl-paper) 88%, transparent);
+}
+
+.site-title {
+  font-size: 1.1875rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  color: var(--fl-ink);
+  gap: 0.5rem;
+}
+
+.site-title img {
+  height: 1.625rem;
+}
+
+/* The search trigger reads as a quiet field, like a command palette. */
+site-search button[data-open-modal] {
+  border: 1px solid var(--fl-rule);
+  border-radius: 999px;
+  background: var(--fl-surface);
+  color: var(--fl-muted);
+  font-size: 0.875rem;
+  padding-inline: 0.875rem 0.5rem;
+  transition: border-color 0.15s ease;
+}
+
+site-search button[data-open-modal]:hover {
+  border-color: var(--fl-rule-strong);
+  color: var(--fl-ink);
+}
+
+site-search kbd {
+  font-family: var(--sl-font-mono);
+  font-size: 0.6875rem;
+  background: var(--fl-paper);
+  border: 1px solid var(--fl-rule);
+  border-radius: 0.375rem;
+  color: var(--fl-muted);
+}
+
+starlight-theme-select select,
+.social-icons a {
+  color: var(--fl-muted);
+}
+
+.social-icons a:hover {
+  color: var(--fl-ink);
+}
+
+/* ---- Sidebar ----------------------------------------------------------- */
+
+.sidebar-pane {
+  border-inline-end: 1px solid var(--fl-rule);
+}
+
+.sidebar-content {
+  font-size: 0.90625rem;
+}
+
+.sidebar-content .group-label .large {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--fl-ink);
+  letter-spacing: -0.005em;
+}
+
+.sidebar-content a {
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  color: var(--fl-muted);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.sidebar-content a:hover {
+  color: var(--fl-ink);
+  background: var(--fl-surface);
+}
+
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover,
+.sidebar-content a[aria-current="page"]:focus {
+  background: var(--fl-raised);
+  color: var(--fl-ink);
+  font-weight: 600;
+}
+
+.sidebar-content ul ul {
+  border-inline-start-color: var(--fl-rule);
+}
+
+/* ---- Table of contents -------------------------------------------------- */
+
+starlight-toc h2,
+mobile-starlight-toc h2 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--fl-ink);
+}
+
+starlight-toc nav a {
+  color: var(--fl-muted);
+  font-size: 0.84375rem;
+  border-inline-start: 1px solid var(--fl-rule);
+  padding-inline-start: calc(0.875rem + var(--depth) * 0.75rem);
+  padding-block: 0.3125rem;
+}
+
+starlight-toc nav a:hover {
+  color: var(--fl-ink);
+}
+
+starlight-toc nav a[aria-current="true"] {
+  color: var(--fl-ink);
+  font-weight: 550;
+  border-inline-start: 2px solid var(--fl-ember);
+}
+
+starlight-toc nav ul ul {
+  padding: 0;
+}
+
+/* ---- Content ----------------------------------------------------------- */
+
+.content-panel {
+  border-top-color: var(--fl-rule);
+}
+
+.content-panel h1#_top {
+  font-size: clamp(2rem, 1.5rem + 1.8vw, var(--sl-text-h1));
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--fl-ink);
+}
+
+.sl-markdown-content {
+  color: var(--fl-body);
+  font-size: 1rem;
+}
+
+.sl-markdown-content :is(h2, h3, h4, h5):not(:where(.not-content *)) {
+  color: var(--fl-ink);
+  font-weight: 620;
+  letter-spacing: -0.022em;
+  line-height: 1.25;
+}
+
+.sl-markdown-content h2:not(:where(.not-content *)) {
+  margin-top: 3rem;
+  letter-spacing: -0.028em;
+}
+
+.sl-markdown-content h3:not(:where(.not-content *)) {
+  margin-top: 2rem;
+}
+
+.sl-markdown-content :is(strong, b):not(:where(.not-content *)) {
+  color: var(--fl-ink);
+  font-weight: 600;
+}
+
+.sl-markdown-content a:not(.sl-link-button, .sl-anchor-link):not(:where(.not-content *)) {
+  color: var(--fl-ember-strong);
+  text-decoration-color: color-mix(in srgb, var(--fl-ember-strong) 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.sl-markdown-content a:not(.sl-link-button, .sl-anchor-link):not(:where(.not-content *)):hover {
+  text-decoration-color: currentColor;
+}
+
+.sl-markdown-content :not(pre) > code:not(:where(.not-content *)) {
+  font-size: 0.84em;
+  padding: 0.12em 0.36em;
+  border: 1px solid var(--fl-rule);
+  border-radius: 0.375rem;
+  background: var(--fl-surface);
+  color: var(--fl-ink);
+}
+
+.sl-markdown-content hr {
+  border-color: var(--fl-rule);
+}
+
+.sl-markdown-content blockquote {
+  border-inline-start: 2px solid var(--fl-ember);
+  color: var(--fl-muted);
+}
+
+/* Tables: hairlines only, a quiet header row. */
+.sl-markdown-content table {
+  font-size: 0.9rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--fl-rule);
+  border-radius: 0.75rem;
+  display: block;
+  overflow-x: auto;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.sl-markdown-content :is(th, td) {
+  border: 0;
+  border-bottom: 1px solid var(--fl-rule);
+  padding: 0.625rem 0.875rem;
+}
+
+.sl-markdown-content tr:last-child td {
+  border-bottom: 0;
+}
+
+.sl-markdown-content th {
+  background: var(--fl-surface);
+  color: var(--fl-ink);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+/* Asides: soft tint, violet marker for notes. */
+.starlight-aside {
+  border: 1px solid var(--fl-rule);
+  border-inline-start-width: 3px;
+  border-radius: 0.625rem;
+  background: var(--fl-surface);
+  color: var(--fl-body);
+}
+
+.starlight-aside--note {
+  border-inline-start-color: var(--fl-ember);
+  background: var(--fl-ember-soft);
+}
+
+.starlight-aside--note .starlight-aside__title {
+  color: var(--fl-ember-strong);
+}
+
+/* Cards (Starlight's <Card>) */
+.sl-markdown-content .card {
+  border: 1px solid var(--fl-rule);
+  border-radius: 0.875rem;
+  background: var(--fl-paper);
+  padding: 1.25rem 1.375rem;
+}
+
+.sl-markdown-content .card .title {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--fl-ink);
+}
+
+.sl-markdown-content .card .icon {
+  color: var(--fl-ember);
+  background: var(--fl-ember-soft);
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+/* Previous / next */
+.pagination-links a {
+  border: 1px solid var(--fl-rule);
+  border-radius: 0.75rem;
+  box-shadow: none;
+  transition: border-color 0.15s ease;
+}
+
+.pagination-links a:hover {
+  border-color: var(--fl-ember);
+}
+
+.pagination-links a .link-title {
+  color: var(--fl-ink);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Buttons Starlight renders (hero actions, <LinkButton>) */
+.sl-link-button.primary {
+  background: var(--fl-ember-strong);
+  border-color: var(--fl-ember-strong);
+  color: var(--fl-on-ember);
+  border-radius: 0.625rem;
+}
+
+/* ---- Page banner (landing announcement) ---------------------------------- */
+
+.sl-banner {
+  background: var(--fl-ember-strong);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding-block: 0.5rem;
+}
+
+:root:not([data-theme="light"]) .sl-banner {
+  background: #1d4ed8;
+}
+
+.sl-banner a {
+  color: #fff;
+  text-underline-offset: 0.2em;
+}
+
+/* Code frames: flat, hairline, a copy button that stays out of the way. */
+.expressive-code .frame {
+  box-shadow: none;
+}
+
+.expressive-code .copy button {
+  border-radius: 0.5rem;
+}
+
+/* Identifiers in table cells stay whole; a wide table scrolls instead. */
+.sl-markdown-content td code {
+  white-space: nowrap;
+}
+
+/* An untitled terminal frame is only an empty bar of dots: drop it, keep the box. */
+.expressive-code .frame.is-terminal:not(.has-title) .header {
+  display: none;
+}
+
+.expressive-code .frame.is-terminal:not(.has-title) pre {
+  border-top: 1px solid var(--fl-rule);
+  border-radius: 0.75rem;
+}

@@ -1,0 +1,30 @@
+---
+/**
+ * The banner across the top of every page. Reads the version from version.ts so
+ * it can never disagree with the release the docs describe.
+ */
+import { SCOUT_VERSION, RELEASE_BANNER } from "../version";
+---
+
+<div class="fl-banner">
+  <strong>Scout {SCOUT_VERSION}</strong>: {RELEASE_BANNER.text}
+  <a href={RELEASE_BANNER.href}>{RELEASE_BANNER.label}</a>
+</div>
+
+<style>
+  .fl-banner {
+    padding: 0.6rem 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--fl-on-ember, #fff);
+    background: var(--fl-ember, #6e56cf);
+  }
+
+  .fl-banner a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+</style>

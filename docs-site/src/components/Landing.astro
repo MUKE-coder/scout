@@ -1,0 +1,396 @@
+---
+import { Code } from "@astrojs/starlight/components";
+import { SCOUT_VERSION, RELEASE_HEADLINE, RELEASE_URL, REPO_URL } from "../version";
+import prompt from "../prompts/build-with-ai.md?raw";
+
+/**
+ * The docs home page. One idea carries it: point Scout at your app or your repo,
+ * and it shows you every way in — then grades it and tells you how to fix it.
+ */
+const install = [
+  { id: "go-install", label: "go install", command: "go install github.com/MUKE-coder/scout/cmd/scout@latest" },
+  { id: "go-run", label: "go run", command: "go run github.com/MUKE-coder/scout/cmd/scout@latest scan --target http://localhost:3000" },
+  { id: "source", label: "from source", command: "git clone https://github.com/MUKE-coder/scout && cd scout && go build ./cmd/scout" },
+  {
+    id: "ai",
+    label: "AI prompt",
+    command: "Paste this into Claude, Cursor, Codex or any coding agent →",
+    copy: prompt,
+    note: true,
+  },
+];
+
+// The first scan, start to finish.
+const firstScan = [
+  { cmd: "scout scan --target http://localhost:3000", what: "Black-box scan of a running app" },
+  { cmd: "scout scan --repo .", what: "Source & supply-chain scan of a repo" },
+  { cmd: "scout ci --fail-on high", what: "Gate a pull request on findings" },
+  { cmd: "scout serve", what: "Dashboard + scheduled scans" },
+];
+
+const catches = [
+  "Missing security headers & cookie flags",
+  "Exposed .env / .git / backups / metrics",
+  "Reflected XSS, open redirect, CSRF forms",
+  "SQL injection & OS command injection",
+  "Weak JWTs, permissive CORS, IDOR",
+  "Reachable Go CVEs in dependencies",
+  "Hard-coded secrets & insecure Dockerfiles",
+  "Version disclosure, directory listings, mixed content",
+];
+
+const pillars = [
+  {
+    title: "Black-box & source, one tool",
+    body: "Scan a running URL for live weaknesses, and a repo for secrets, supply-chain CVEs and insecure code — from the same binary.",
+  },
+  {
+    title: "Safe by default",
+    body: "Modes are capped by the environment. Active scans of a public host require a published ownership token. No destructive payloads.",
+  },
+  {
+    title: "Built for CI",
+    body: "One command fails the build on findings at or above a severity, with SARIF for code scanning and a graded terminal report.",
+  },
+  {
+    title: "Self-hosted, no account",
+    body: "A single Go binary. Nothing leaves your machine. Scan history in local SQLite, an embedded dashboard, scheduled scans.",
+  },
+];
+---
+
+<section class="sc-hero">
+  <a class="sc-pill" href={RELEASE_URL}>
+    <span class="sc-pill-tag">v{SCOUT_VERSION}</span>
+    <span class="sc-pill-text">{RELEASE_HEADLINE}</span>
+  </a>
+
+  <h1 class="sc-title">
+    The self-hosted scanner
+    <span class="sc-accent">for your apps and repos</span>
+  </h1>
+
+  <p class="sc-sub">
+    Point Scout at a running app or a code repository. It maps the attack surface,
+    finds the ways in — missing headers, exposed files, injection, weak auth,
+    vulnerable dependencies — then grades the result and tells you exactly how to fix it.
+  </p>
+
+  <div class="sc-actions">
+    <a class="sc-btn sc-btn-primary" href="/start/quickstart/">Start scanning</a>
+    <a class="sc-btn sc-btn-ghost" href={REPO_URL}>
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.57.1.78-.25.78-.55v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.3 1.19-3.1-.12-.3-.52-1.47.11-3.07 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.6.23 2.77.11 3.07.74.8 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.79.55A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"></path></svg>
+      View on GitHub
+    </a>
+  </div>
+
+  <div class="sc-install">
+    <div class="sc-tabs" role="tablist" aria-label="Install Scout">
+      {install.map((item, i) => (
+        <button
+          type="button"
+          role="tab"
+          class:list={["sc-tab", { active: i === 0 }]}
+          id={`tab-${item.id}`}
+          aria-controls={`panel-${item.id}`}
+          aria-selected={i === 0 ? "true" : "false"}
+          data-tab={item.id}
+        >{item.label}</button>
+      ))}
+    </div>
+    {install.map((item, i) => (
+      <div
+        class:list={["sc-panel", { active: i === 0 }]}
+        id={`panel-${item.id}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${item.id}`}
+        data-panel={item.id}
+        data-copy={item.copy ?? item.command}
+      >
+        {item.note ? (
+          <div class="sc-ai-line">
+            <span class="sc-ai-arrow">{item.command}</span>
+            <button type="button" class="sc-copy" data-copy-btn><span data-copy-label>Copy prompt</span></button>
+          </div>
+        ) : (
+          <Code code={item.command} lang="bash" frame="none" />
+        )}
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="sc-section">
+  <h2 class="sc-h2">Your first scan</h2>
+  <div class="sc-firstscan">
+    {firstScan.map((row) => (
+      <div class="sc-fs-row">
+        <code class="sc-fs-cmd">{row.cmd}</code>
+        <span class="sc-fs-what">{row.what}</span>
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="sc-section">
+  <div class="sc-grid">
+    {pillars.map((p) => (
+      <div class="sc-card">
+        <h3 class="sc-card-title">{p.title}</h3>
+        <p class="sc-card-body">{p.body}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="sc-section">
+  <h2 class="sc-h2">What it catches</h2>
+  <ul class="sc-catches">
+    {catches.map((c) => (
+      <li class="sc-catch">
+        <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"></path></svg>
+        {c}
+      </li>
+    ))}
+  </ul>
+  <p class="sc-catch-note">
+    See the full <a href="/reference/checks/">checks catalog</a>, or try them all against the
+    <a href="/lab/overview/"> deliberately-vulnerable lab app</a>.
+  </p>
+</section>
+
+<script>
+  // Install tab switcher.
+  document.querySelectorAll<HTMLElement>(".sc-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const id = tab.dataset.tab;
+      document.querySelectorAll<HTMLElement>(".sc-tab").forEach((t) => {
+        const on = t === tab;
+        t.classList.toggle("active", on);
+        t.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.querySelectorAll<HTMLElement>(".sc-panel").forEach((p) => {
+        p.classList.toggle("active", p.dataset.panel === id);
+      });
+    });
+  });
+
+  // Copy button on the AI-prompt panel.
+  document.querySelectorAll<HTMLButtonElement>("[data-copy-btn]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const panel = btn.closest<HTMLElement>(".sc-panel");
+      const text = panel?.dataset.copy ?? "";
+      const label = btn.querySelector<HTMLElement>("[data-copy-label]");
+      const say = (m: string) => {
+        if (label) label.textContent = m;
+        window.setTimeout(() => { if (label) label.textContent = "Copy prompt"; }, 2000);
+      };
+      try {
+        await navigator.clipboard.writeText(text);
+        say("Copied");
+      } catch {
+        say("Press Ctrl+C");
+      }
+    });
+  });
+</script>
+
+<style>
+  .sc-hero {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 3.5rem var(--gutter, 1.5rem) 1rem;
+    text-align: center;
+  }
+
+  .sc-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    padding: 0.3rem 0.75rem 0.3rem 0.3rem;
+    border: 1px solid var(--fl-rule);
+    border-radius: 999px;
+    background: var(--fl-surface);
+    font-size: 0.8125rem;
+    color: var(--fl-muted);
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+  }
+  .sc-pill:hover { border-color: var(--fl-ember); }
+  .sc-pill-tag {
+    font-family: var(--sl-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: var(--fl-ember);
+    color: var(--fl-on-ember);
+  }
+  .sc-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .sc-title {
+    margin: 1.75rem 0 0;
+    font-size: clamp(2.5rem, 1.5rem + 5vw, 4.25rem);
+    font-weight: 680;
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    color: var(--fl-ink);
+  }
+  .sc-accent { display: block; color: var(--fl-ember-strong); }
+
+  .sc-sub {
+    max-width: 40rem;
+    margin: 1.5rem auto 0;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: var(--fl-muted);
+  }
+
+  .sc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+  .sc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.3rem;
+    border-radius: 0.625rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: filter 0.15s ease, border-color 0.15s ease;
+  }
+  .sc-btn-primary { background: var(--fl-ember-strong); color: var(--fl-on-ember); }
+  .sc-btn-primary:hover { filter: brightness(1.08); }
+  .sc-btn-ghost { background: var(--fl-paper); color: var(--fl-ink); border-color: var(--fl-rule-strong); }
+  .sc-btn-ghost:hover { border-color: var(--fl-ember); }
+
+  .sc-install {
+    max-width: 44rem;
+    margin: 2.75rem auto 0;
+    border: 1px solid var(--fl-rule);
+    border-radius: 0.875rem;
+    background: var(--fl-paper);
+    overflow: hidden;
+    text-align: left;
+  }
+  .sc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.5rem 0.5rem 0;
+    border-bottom: 1px solid var(--fl-rule);
+    background: var(--fl-surface);
+  }
+  .sc-tab {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 0.84375rem;
+    font-weight: 500;
+    color: var(--fl-muted);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    cursor: pointer;
+  }
+  .sc-tab:hover { color: var(--fl-ink); }
+  .sc-tab.active { color: var(--fl-ink); background: var(--fl-paper); font-weight: 600; box-shadow: inset 0 -2px 0 var(--fl-ember); }
+
+  .sc-panel { display: none; padding: 0.5rem 0.75rem; }
+  .sc-panel.active { display: block; }
+  .sc-panel :global(.expressive-code) { margin: 0.25rem 0; }
+
+  .sc-ai-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.75rem 0.25rem;
+  }
+  .sc-ai-arrow { color: var(--fl-muted); font-size: 0.9rem; }
+  .sc-copy {
+    border: 1px solid var(--fl-ember);
+    background: var(--fl-ember);
+    color: var(--fl-on-ember);
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ---- Sections below the hero ---- */
+  .sc-section { max-width: 52rem; margin: 0 auto; padding: 1.5rem var(--gutter, 1.5rem); }
+  .sc-h2 {
+    font-size: 1.5rem;
+    font-weight: 640;
+    letter-spacing: -0.03em;
+    color: var(--fl-ink);
+    margin: 1.5rem 0 1.25rem;
+  }
+
+  .sc-firstscan { display: flex; flex-direction: column; gap: 0.5rem; }
+  .sc-fs-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--fl-rule);
+    border-radius: 0.625rem;
+    background: var(--fl-paper);
+  }
+  .sc-fs-cmd {
+    font-family: var(--sl-font-mono);
+    font-size: 0.8125rem;
+    color: var(--fl-ember-strong);
+    white-space: nowrap;
+  }
+  .sc-fs-what { color: var(--fl-muted); font-size: 0.9rem; }
+
+  .sc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem;
+  }
+  .sc-card {
+    border: 1px solid var(--fl-rule);
+    border-radius: 0.875rem;
+    background: var(--fl-paper);
+    padding: 1.25rem;
+  }
+  .sc-card-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 620; color: var(--fl-ink); letter-spacing: -0.015em; }
+  .sc-card-body { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--fl-muted); }
+
+  .sc-catches {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.5rem 1.5rem;
+  }
+  .sc-catch {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.925rem;
+    color: var(--fl-body);
+    padding: 0.3rem 0;
+  }
+  .sc-catch svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--fl-ember-strong); }
+  .sc-catch-note { margin-top: 1.5rem; font-size: 0.9rem; color: var(--fl-muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sc-btn, .sc-pill { transition: none; }
+  }
+</style>
