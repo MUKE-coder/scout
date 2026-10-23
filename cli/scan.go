@@ -109,6 +109,10 @@ func openStore(cfg scout.Config) (storage.Store, error) {
 var registry = core.DefaultRegistry
 
 func newEngine(cfg scout.Config, store storage.Store) (*engine.Engine, error) {
+	return newEngineWithBus(cfg, store, nil)
+}
+
+func newEngineWithBus(cfg scout.Config, store storage.Store, bus *engine.Bus) (*engine.Engine, error) {
 	window, err := cfg.Window.EngineWindow()
 	if err != nil {
 		return nil, err
@@ -121,6 +125,7 @@ func newEngine(cfg scout.Config, store storage.Store) (*engine.Engine, error) {
 		Window:       window,
 		SigningKey:   []byte(cfg.SigningKey),
 		Store:        store,
+		Bus:          bus,
 		Scoring:      scoring.Options{Criticality: cfg.Criticality},
 	}), nil
 }
@@ -147,19 +152,44 @@ func newScanCmd() *cobra.Command {
 			}
 			defer store.Close()
 
-			eng, err := newEngine(cfg, store)
+			// A live progress line (stderr, terminal only) so the user sees
+			// what is happening instead of an empty screen. Skipped for --json.
+			var bus *engine.Bus
+			var prog *progressReporter
+			if !f.json {
+				bus = engine.NewBus()
+				prog = startProgress(bus, progressWriter, useColor(cmd))
+			}
+
+			eng, err := newEngineWithBus(cfg, store, bus)
 			if err != nil {
+				if prog != nil {
+					prog.stop()
+				}
 				return err
 			}
 			var results []report.Result
 			for _, t := range cfg.Targets {
+				if prog != nil {
+					prog.setTarget(t.Name)
+				}
 				res, err := eng.Run(cmd.Context(), engine.Request{Target: t, Mode: cfg.Mode})
 				if err != nil {
+					if prog != nil {
+						prog.stop()
+					}
 					return err
 				}
 				results = append(results, report.Build(res, scoring.Options{Criticality: cfg.Criticality}))
 			}
-			return writeOutputs(cmd, f, results)
+			if prog != nil {
+				prog.stop()
+			}
+			if err := writeOutputs(cmd, f, results); err != nil {
+				return err
+			}
+			printDashboardHint(cmd, f, cfg, results)
+			return nil
 		},
 	}
 	f.bind(cmd)
@@ -184,6 +214,26 @@ func plan(cmd *cobra.Command, cfg scout.Config) error {
 		fmt.Fprintln(out)
 	}
 	return nil
+}
+
+// printDashboardHint points the user at the dashboard, where the scan they
+// just ran is waiting. Shown only for the human report (not --json) and only
+// when the scan was saved to a DB the dashboard can read.
+func printDashboardHint(cmd *cobra.Command, f scanFlags, cfg scout.Config, results []report.Result) {
+	if f.json || cfg.DBPath == "" || len(results) == 0 {
+		return
+	}
+	out := cmd.OutOrStdout()
+	url := "http://localhost:9090/scout/ui/history"
+	link := url
+	if useColor(cmd) {
+		link = "\x1b[36m\x1b[4m" + url + "\x1b[0m"
+	}
+	label := "View this scan in the dashboard"
+	if useColor(cmd) {
+		label = "\x1b[1m" + label + "\x1b[0m"
+	}
+	fmt.Fprintf(out, "%s →  run  scout serve  then open  %s\n", label, link)
 }
 
 // writeOutputs prints JSON or the terminal report and writes SARIF if asked.

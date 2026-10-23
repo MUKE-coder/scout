@@ -1,0 +1,57 @@
+# GoReleaser config — cross-platform binaries for every tagged release.
+# https://goreleaser.com   Run locally with:  goreleaser release --clean
+version: 2
+
+project_name: scout
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: scout
+    main: ./cmd/scout
+    binary: scout
+    env:
+      - CGO_ENABLED=0 # pure-Go SQLite (glebarez/sqlite), so no C toolchain
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      # Stamp the version so `scout version` reports the release tag.
+      - -s -w -X github.com/MUKE-coder/scout.buildVersion={{ .Tag }}
+
+archives:
+  - id: scout
+    # Predictable names so install.sh / install.ps1 can build a stable URL:
+    #   scout_linux_amd64.tar.gz , scout_windows_amd64.zip , ...
+    name_template: "scout_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: MUKE-coder
+    name: scout
+  draft: false
+  prerelease: auto
+  name_template: "Scout {{ .Tag }}"
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
