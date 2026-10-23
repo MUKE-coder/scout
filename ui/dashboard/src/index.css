@@ -25,10 +25,10 @@
   --text-muted: #a1a1aa;
   --text-subtle: #71717a;
 
-  --accent: #6e56cf;
-  --accent-hover: #7c66dd;
-  --accent-fg: #ffffff;
-  --accent-subtle: #6e56cf1a;
+  --accent: #3ecf8e;
+  --accent-hover: #34c98a;
+  --accent-fg: #06220f;
+  --accent-subtle: #3ecf8e1a;
 
   --sev-critical: #e5484d;
   --sev-high: #f76b15;
@@ -64,6 +64,12 @@
   --sev-low-fg: #1d4ed8;
   --sev-info-fg: #52525b;
   --ok-fg: #18794e;
+
+  /* A darker green reads better on the light theme's white surfaces. */
+  --accent: #0f7a46;
+  --accent-hover: #0c6b3d;
+  --accent-fg: #ffffff;
+  --accent-subtle: #0f7a461a;
   color-scheme: light;
 }
 
