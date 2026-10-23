@@ -38,16 +38,25 @@ try {
   Copy-Item -Path (Join-Path $tmp "scout.exe") -Destination (Join-Path $dir "scout.exe") -Force
   Say "Installed scout.exe to $dir"
 
-  # --- add to user PATH -----------------------------------------------------
+  # --- add to the FRONT of user PATH ----------------------------------------
+  # Prepend, so this install wins over any older scout (e.g. one from
+  # `go install` in %USERPROFILE%\go\bin) that would otherwise shadow it.
   $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-  if ($userPath -notlike "*$dir*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$dir", "User")
-    Say "Added $dir to your user PATH (restart your terminal to pick it up)"
-  }
-  $env:Path = "$env:Path;$dir"
+  $clean = ($userPath -split ';' | Where-Object { $_ -and $_ -ne $dir }) -join ';'
+  [Environment]::SetEnvironmentVariable("Path", "$dir;$clean", "User")
+  Say "Added $dir to the front of your user PATH (restart your terminal to pick it up)"
+  $env:Path = "$dir;$env:Path"
 
   & (Join-Path $dir "scout.exe") version
-  Say "Done. Try:  scout scan --target http://localhost:3000"
+
+  # Warn about an older scout that may shadow this one in existing terminals.
+  $gobin = Join-Path $env:USERPROFILE "go\bin\scout.exe"
+  if (Test-Path $gobin) {
+    Write-Host "note: another scout exists at $gobin" -ForegroundColor Yellow
+    Write-Host "      open a NEW terminal so this install wins, or remove the old one, or run:" -ForegroundColor Yellow
+    Write-Host "      go install github.com/$repo/cmd/scout@latest   (updates that copy too)" -ForegroundColor Yellow
+  }
+  Say "Done. Open a new terminal, then:  scout scan --target http://localhost:3000"
 }
 finally {
   Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

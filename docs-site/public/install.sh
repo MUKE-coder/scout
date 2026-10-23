@@ -65,5 +65,14 @@ say "Installed $BIN to $dir/$BIN"
 if ! command -v scout >/dev/null 2>&1; then
   printf '\033[33mnote:\033[0m add %s to your PATH:\n  export PATH="%s:$PATH"\n' "$dir" "$dir"
 fi
+
+# Warn if a different scout is earlier on PATH and would shadow this install.
+onpath="$(command -v scout 2>/dev/null || true)"
+if [ -n "$onpath" ] && [ "$onpath" != "$dir/$BIN" ]; then
+  printf '\033[33mnote:\033[0m another scout is earlier on your PATH: %s\n' "$onpath"
+  printf '      it will shadow this install. Remove it, or put %s first in PATH\n' "$dir"
+  printf '      (e.g. the one in "$(go env GOPATH)/bin"); then: go install github.com/%s/cmd/scout@latest\n' "$REPO"
+fi
+
 "$dir/$BIN" version 2>/dev/null || true
 say "Done. Try:  scout scan --target http://localhost:3000"
