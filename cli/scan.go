@@ -17,15 +17,17 @@ import (
 
 // scanFlags are shared by scan and ci.
 type scanFlags struct {
-	targets []string
-	repo    string
-	mode    string
-	env     string
-	db      string
-	dryRun  bool
-	optIn   bool
-	json    bool
-	sarif   string
+	targets   []string
+	repo      string
+	mode      string
+	env       string
+	db        string
+	dryRun    bool
+	optIn     bool
+	json      bool
+	sarif     string
+	serve     bool
+	serveAddr string
 }
 
 func (f *scanFlags) bind(cmd *cobra.Command) {
@@ -38,6 +40,8 @@ func (f *scanFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&f.optIn, "allow-active", false, "per-target opt-in: allows active in prod and intrusive in staging")
 	cmd.Flags().BoolVar(&f.json, "json", false, "print results as JSON instead of the terminal report")
 	cmd.Flags().StringVar(&f.sarif, "sarif", "", "also write SARIF 2.1.0 to this file")
+	cmd.Flags().BoolVar(&f.serve, "serve", false, "after the scan, open the dashboard (keeps running until Ctrl+C)")
+	cmd.Flags().StringVar(&f.serveAddr, "serve-addr", ":9090", "address for the --serve dashboard")
 }
 
 // config validates the flags and turns them into a scout.Config.
@@ -146,54 +150,72 @@ func newScanCmd() *cobra.Command {
 			if f.dryRun {
 				return plan(cmd, cfg)
 			}
-			store, err := openStore(cfg)
+			// Run the scan in a closure so its store is closed before --serve
+			// opens the same database for the dashboard.
+			results, err := runScan(cmd, f, cfg)
 			if err != nil {
 				return err
-			}
-			defer store.Close()
-
-			// A live progress line (stderr, terminal only) so the user sees
-			// what is happening instead of an empty screen. Skipped for --json.
-			var bus *engine.Bus
-			var prog *progressReporter
-			if !f.json {
-				bus = engine.NewBus()
-				prog = startProgress(bus, progressWriter, useColor(cmd))
-			}
-
-			eng, err := newEngineWithBus(cfg, store, bus)
-			if err != nil {
-				if prog != nil {
-					prog.stop()
-				}
-				return err
-			}
-			var results []report.Result
-			for _, t := range cfg.Targets {
-				if prog != nil {
-					prog.setTarget(t.Name)
-				}
-				res, err := eng.Run(cmd.Context(), engine.Request{Target: t, Mode: cfg.Mode})
-				if err != nil {
-					if prog != nil {
-						prog.stop()
-					}
-					return err
-				}
-				results = append(results, report.Build(res, scoring.Options{Criticality: cfg.Criticality}))
-			}
-			if prog != nil {
-				prog.stop()
 			}
 			if err := writeOutputs(cmd, f, results); err != nil {
 				return err
 			}
 			printDashboardHint(cmd, f, cfg, results)
+
+			// --serve: hand straight off to the dashboard on the same DB.
+			if f.serve {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nStarting the dashboard on %s …  (Ctrl+C to stop)\n", f.serveAddr)
+				return runServe(cmd, f.serveAddr, cfg.DBPath)
+			}
 			return nil
 		},
 	}
 	f.bind(cmd)
 	return cmd
+}
+
+// runScan opens the history store, runs every target (with a live progress
+// line), and returns the built results. The store is closed before returning,
+// so a following --serve can open the same database.
+func runScan(cmd *cobra.Command, f scanFlags, cfg scout.Config) ([]report.Result, error) {
+	store, err := openStore(cfg)
+	if err != nil {
+		return nil, err
+	}
+	defer store.Close()
+
+	// A live progress line (stderr, terminal only) so the user sees what is
+	// happening instead of an empty screen. Skipped for --json.
+	var bus *engine.Bus
+	var prog *progressReporter
+	if !f.json {
+		bus = engine.NewBus()
+		prog = startProgress(bus, progressWriter, useColor(cmd))
+	}
+	defer func() {
+		if prog != nil {
+			prog.stop()
+		}
+	}()
+
+	eng, err := newEngineWithBus(cfg, store, bus)
+	if err != nil {
+		return nil, err
+	}
+	var results []report.Result
+	for _, t := range cfg.Targets {
+		if prog != nil {
+			prog.setTarget(t.Name)
+		}
+		res, err := eng.Run(cmd.Context(), engine.Request{Target: t, Mode: cfg.Mode})
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, report.Build(res, scoring.Options{Criticality: cfg.Criticality}))
+	}
+	if prog != nil {
+		prog.stop()
+	}
+	return results, nil
 }
 
 // plan prints the dry-run plan for every target.
@@ -220,20 +242,36 @@ func plan(cmd *cobra.Command, cfg scout.Config) error {
 // just ran is waiting. Shown only for the human report (not --json) and only
 // when the scan was saved to a DB the dashboard can read.
 func printDashboardHint(cmd *cobra.Command, f scanFlags, cfg scout.Config, results []report.Result) {
-	if f.json || cfg.DBPath == "" || len(results) == 0 {
+	// With --serve we boot the dashboard right away, so no hint is needed.
+	if f.json || f.serve || cfg.DBPath == "" || len(results) == 0 {
 		return
 	}
 	out := cmd.OutOrStdout()
-	url := "http://localhost:9090/scout/ui/history"
-	link := url
-	if useColor(cmd) {
-		link = "\x1b[36m\x1b[4m" + url + "\x1b[0m"
+	color := useColor(cmd)
+	bold := func(s string) string {
+		if color {
+			return "\x1b[1m" + s + "\x1b[0m"
+		}
+		return s
 	}
-	label := "View this scan in the dashboard"
-	if useColor(cmd) {
-		label = "\x1b[1m" + label + "\x1b[0m"
+	mono := func(s string) string {
+		if color {
+			return "\x1b[36m" + s + "\x1b[0m"
+		}
+		return s
 	}
-	fmt.Fprintf(out, "%s →  run  scout serve  then open  %s\n", label, link)
+	dim := func(s string) string {
+		if color {
+			return "\x1b[38;5;244m" + s + "\x1b[0m"
+		}
+		return s
+	}
+	// The dashboard is not running yet — it's a separate command that reads the
+	// same history file. Spell that out so the URL isn't mistaken for a live one.
+	fmt.Fprintf(out, "\n%s  %s\n", bold("Saved to"), mono(cfg.DBPath))
+	fmt.Fprintf(out, "%s  the dashboard is a separate server. Start it, then open the URL it prints:\n", bold("Explore it:"))
+	fmt.Fprintf(out, "  %s   %s\n", mono("scout serve"), dim("# reads "+cfg.DBPath+" in this directory; --addr to change the port"))
+	fmt.Fprintf(out, "  %s   %s\n", mono("scout scan … --serve"), dim("# scan, then open the dashboard in one step"))
 }
 
 // writeOutputs prints JSON or the terminal report and writes SARIF if asked.
