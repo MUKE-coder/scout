@@ -395,17 +395,17 @@ const codeChecks = [
   .sc-score { color: var(--fl-muted); }
 
   /* ============ editorial gridline sections ============ */
-  .ed { position: relative; max-width: 68rem; margin: 2rem auto 0; padding: 0 var(--gutter, 1.5rem); }
+  .ed { position: relative; max-width: 80rem; margin: 2rem auto 0; padding: 0 var(--gutter, 1.5rem); }
   /* the two vertical gridlines */
   .ed::before, .ed::after { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--fl-rule); }
   .ed::before { left: var(--gutter, 1.5rem); } .ed::after { right: var(--gutter, 1.5rem); }
   .ed-rule { position: relative; height: 1px; background: var(--fl-rule); }
   .ed-plus { position: absolute; top: 50%; transform: translate(-50%, -50%); color: var(--fl-ember); font-size: 1.05rem; line-height: 1; font-weight: 400; }
   .ed-plus-l { left: 0; } .ed-plus-r { right: 0; transform: translate(50%, -50%); }
-  .ed-step { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 3rem; padding: 4rem 2.5rem; align-items: start; }
-  .ed-head { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 3rem; align-items: end; }
+  .ed-step { display: grid; grid-template-columns: 1fr; gap: 2rem; padding: 4rem 2.5rem; align-items: start; }
+  .ed-head { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 1rem 2.5rem; align-items: end; }
   .ed-label { grid-column: 1 / -1; font-family: var(--sl-font-mono); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--fl-ember-strong); margin-bottom: 0.25rem; }
-  .ed-title { grid-column: 1; margin: 0; font-size: clamp(1.9rem, 1.2rem + 2.2vw, 2.9rem); font-weight: 680; line-height: 1.05; letter-spacing: -0.035em; color: var(--fl-ink); }
+  .ed-title { grid-column: 1; margin: 0; font-size: clamp(1.8rem, 1.1rem + 1.9vw, 2.5rem); font-weight: 680; line-height: 1.08; letter-spacing: -0.035em; color: var(--fl-ink); text-wrap: balance; }
   .ed-lead { grid-column: 2; margin: 0; align-self: end; font-size: 1.0625rem; line-height: 1.6; color: var(--fl-muted); }
   .ed-lead code, .ed-title code { font-family: var(--sl-font-mono); font-size: 0.9em; }
   .ed-body { grid-column: 1 / -1; margin-top: 0.5rem; }
