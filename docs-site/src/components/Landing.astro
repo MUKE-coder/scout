@@ -9,8 +9,9 @@ import prompt from "../prompts/build-with-ai.md?raw";
  * The hero pairs that message with a live, animated "scan" console.
  */
 const install = [
+  { id: "sh", label: "macOS / Linux", command: "curl -fsSL https://scout.codetotech.com/install.sh | sh" },
+  { id: "ps", label: "Windows", command: "irm https://scout.codetotech.com/install.ps1 | iex" },
   { id: "go-install", label: "go install", command: "go install github.com/MUKE-coder/scout/cmd/scout@latest" },
-  { id: "go-run", label: "go run", command: "go run github.com/MUKE-coder/scout/cmd/scout@latest scan --target http://localhost:3000" },
   { id: "source", label: "from source", command: "git clone https://github.com/MUKE-coder/scout && cd scout && go build ./cmd/scout" },
   {
     id: "ai",

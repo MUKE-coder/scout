@@ -6,6 +6,25 @@ description: Install Scout with go install, build it from source, or run it with
 Scout is a single, statically-linked Go binary with no runtime dependencies
 (pure-Go SQLite, no CGo). Pick whichever install suits you.
 
+## Install script (recommended)
+
+**macOS / Linux:**
+
+```bash
+curl -fsSL https://scout.codetotech.com/install.sh | sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://scout.codetotech.com/install.ps1 | iex
+```
+
+These download the latest prebuilt binary for your OS and architecture from
+[GitHub releases](https://github.com/MUKE-coder/scout/releases) and put `scout`
+on your `PATH`. Set `SCOUT_VERSION` to pin a version, or `SCOUT_INSTALL_DIR`
+(Unix) to choose where it lands.
+
 ## Requirements
 
 - **Go 1.24+** to install from source or with `go install`.

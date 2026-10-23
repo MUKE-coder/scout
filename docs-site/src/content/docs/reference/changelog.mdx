@@ -5,8 +5,13 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
-## Unreleased
+## v0.3.1
 
+- **Install scripts** for macOS, Linux and Windows, plus prebuilt binaries on
+  every release (GoReleaser). `scout version` now reports the real version.
+- **Live scan progress** — a spinner with progress and status while a scan runs.
+- **Dashboard pointer** printed after a scan, and a redesigned terminal report
+  with a readable palette that works in light and dark terminals.
 - **New detective checks:** reachable Go CVEs (`code.go-vulncheck`), IDOR with
   test identities (`auth.idor`), version/banner disclosure
   (`app.version-disclosure`), directory listing (`app.directory-listing`),
