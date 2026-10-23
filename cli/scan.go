@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -27,6 +29,7 @@ type scanFlags struct {
 	optIn        bool
 	json         bool
 	sarif        string
+	export       []string
 	serve        bool
 	serveAddr    string
 	checkTimeout time.Duration
@@ -42,6 +45,7 @@ func (f *scanFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&f.optIn, "allow-active", false, "per-target opt-in: allows active in prod and intrusive in staging")
 	cmd.Flags().BoolVar(&f.json, "json", false, "print results as JSON instead of the terminal report")
 	cmd.Flags().StringVar(&f.sarif, "sarif", "", "also write SARIF 2.1.0 to this file")
+	cmd.Flags().StringSliceVar(&f.export, "export", nil, "also write report files here (scout-report.<ext>): any of md,html,txt,json (e.g. --export md,html)")
 	cmd.Flags().BoolVar(&f.serve, "serve", false, "after the scan, open the dashboard (keeps running until Ctrl+C)")
 	cmd.Flags().StringVar(&f.serveAddr, "serve-addr", ":9090", "address for the --serve dashboard")
 	cmd.Flags().DurationVar(&f.checkTimeout, "check-timeout", 0, "max time per check (e.g. 120s); 0 keeps the default (60s). Raise it for slow targets")
@@ -300,6 +304,46 @@ func writeOutputs(cmd *cobra.Command, f scanFlags, results []report.Result) erro
 			return fmt.Errorf("write SARIF: %w", err)
 		}
 	}
+	for _, format := range f.export {
+		if err := writeExport(cmd, strings.TrimSpace(format), results); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// writeExport writes a report file (scout-report.<ext>) in the current
+// directory, so findings are on disk without opening the dashboard.
+func writeExport(cmd *cobra.Command, format string, results []report.Result) error {
+	var ext string
+	var render func(io.Writer) error
+	switch strings.ToLower(format) {
+	case "md", "markdown":
+		ext, render = "md", func(w io.Writer) error { return report.Markdown(w, results) }
+	case "txt", "text":
+		ext, render = "txt", func(w io.Writer) error { return report.Text(w, results) }
+	case "html":
+		ext, render = "html", func(w io.Writer) error {
+			return report.HTML(w, results, report.HTMLOptions{Version: scout.Version, Generated: time.Now()})
+		}
+	case "json":
+		ext, render = "json", func(w io.Writer) error { return report.JSON(w, scout.Version, results) }
+	default:
+		return fmt.Errorf("unknown export format %q (use md, html, txt or json)", format)
+	}
+	name := "scout-report." + ext
+	file, err := os.Create(filepath.Clean(name))
+	if err != nil {
+		return err
+	}
+	if err := render(file); err != nil {
+		_ = file.Close()
+		return fmt.Errorf("write %s: %w", name, err)
+	}
+	if err := file.Close(); err != nil {
+		return err
+	}
+	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s\n", name)
 	return nil
 }
 
