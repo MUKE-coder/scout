@@ -32,6 +32,9 @@ Run a scan and print the report.
 | `--dry-run` | `false` | Print what would run, run nothing |
 | `--json` | `false` | Print JSON instead of the report |
 | `--sarif <file>` | — | Also write SARIF 2.1.0 to this file |
+| `--check-timeout <dur>` | `60s` | Max time per check (e.g. `120s`); raise it for slow targets |
+| `--serve` | `false` | After the scan, open the dashboard (runs until Ctrl+C) |
+| `--serve-addr <addr>` | `:9090` | Address for the `--serve` dashboard |
 
 ```bash
 scout scan --target http://localhost:3000 --mode active --env dev

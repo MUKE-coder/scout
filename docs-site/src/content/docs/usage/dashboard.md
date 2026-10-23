@@ -12,9 +12,15 @@ history, findings over time, and scheduled scans that run while it is up.
 scout serve
 ```
 
-Then open the URL it prints. The dashboard is compiled into the binary — there is
-nothing else to install or host. `scout serve` reads `scout.db` from the current
-directory (change the file with `--db`, the port with `--addr`).
+Then open the URL it prints — the dashboard lives at `/scout/ui/`, but the bare
+root (`http://localhost:9090/`) now redirects there too, so either works. The
+dashboard is compiled into the binary — there is nothing else to install or host.
+`scout serve` reads `scout.db` from the current directory (change the file with
+`--db`, the port with `--addr`).
+
+**Stopping it:** the server runs in the foreground until you press **Ctrl+C**,
+which shuts it down gracefully. (Running from a non-default directory? It only
+sees the `scout.db` in that directory — point it with `--db <path>`.)
 
 :::tip
 `scout serve` is a **separate server** — a scan on its own does not start it. To

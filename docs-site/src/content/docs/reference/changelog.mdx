@@ -5,6 +5,12 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.3.5
+
+- **Dashboard reachable from the root:** `/` and `/scout` now redirect to
+  `/scout/ui/`, and `scout serve` prints the URL and "Press Ctrl+C to stop".
+- **`--check-timeout`** raises the per-check timeout for slow targets.
+
 ## v0.3.4
 
 - **Fix:** `scout scan --serve` no longer panics on a terminal (a double-stop
