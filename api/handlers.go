@@ -600,15 +600,30 @@ func (s *Server) export(c *gin.Context) {
 		return
 	}
 	stamp := time.Now().UTC().Format("20060102-150405")
-	switch c.DefaultQuery("format", "json") {
-	case "json":
+	buildResults := func() []report.Result {
 		results := make([]report.Result, 0, len(scans))
 		for _, sc := range scans {
 			results = append(results, report.Build(sc, s.d.Scoring))
 		}
-		c.Header("Content-Disposition", `attachment; filename="scout-`+stamp+`.json"`)
-		c.Header("Content-Type", "application/json")
-		_ = report.JSON(c.Writer, s.d.Settings.Version, results)
+		return results
+	}
+	attach := func(ext, ctype string) {
+		c.Header("Content-Disposition", `attachment; filename="scout-`+stamp+`.`+ext+`"`)
+		c.Header("Content-Type", ctype)
+	}
+	switch c.DefaultQuery("format", "json") {
+	case "json":
+		attach("json", "application/json")
+		_ = report.JSON(c.Writer, s.d.Settings.Version, buildResults())
+	case "md", "markdown":
+		attach("md", "text/markdown; charset=utf-8")
+		_ = report.Markdown(c.Writer, buildResults())
+	case "txt", "text":
+		attach("txt", "text/plain; charset=utf-8")
+		_ = report.Text(c.Writer, buildResults())
+	case "html":
+		attach("html", "text/html; charset=utf-8")
+		_ = report.HTML(c.Writer, buildResults(), report.HTMLOptions{Generated: time.Now()})
 	case "csv":
 		c.Header("Content-Disposition", `attachment; filename="scout-`+stamp+`.csv"`)
 		c.Header("Content-Type", "text/csv")
@@ -624,7 +639,7 @@ func (s *Server) export(c *gin.Context) {
 		}
 		w.Flush()
 	default:
-		fail(c, http.StatusBadRequest, "format must be json or csv")
+		fail(c, http.StatusBadRequest, "format must be json, csv, md, txt or html")
 	}
 }
 

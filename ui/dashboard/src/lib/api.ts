@@ -50,6 +50,29 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
+// download fetches a file endpoint with the auth header and saves it, so
+// protected exports work without exposing the token in a URL.
+export async function download(path: string, filename: string) {
+  const headers = new Headers();
+  const token = getToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const res = await fetch(API + path, { headers });
+  if (res.status === 401 && token) {
+    setToken(null);
+    return;
+  }
+  if (!res.ok) throw new ApiError(res.status, res.statusText);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export async function login(username: string, password: string) {
   const res = await api<{ token: string; expires_at: string }>("/auth/login", {
     method: "POST",

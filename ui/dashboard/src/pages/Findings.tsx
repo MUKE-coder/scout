@@ -11,6 +11,7 @@ import { EmptyState, ErrorNote } from "../components/EmptyState";
 import { Pill, SeverityDot } from "../components/Severity";
 import { FindingPanel } from "../components/FindingPanel";
 import { StatusDialog, needsReason } from "../components/StatusDialog";
+import { ExportMenu } from "../components/ExportMenu";
 
 const CATEGORIES = ["app", "api", "auth", "tls", "headers", "exposure", "network", "dns", "host", "code", "config"];
 const FILTERS = ["severity", "category", "status", "change", "target", "q"] as const;
@@ -75,7 +76,7 @@ export function Findings() {
 
   return (
     <>
-      <PageTitle>Findings</PageTitle>
+      <PageTitle action={<ExportMenu />}>Findings</PageTitle>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">
