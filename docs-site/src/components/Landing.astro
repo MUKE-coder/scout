@@ -6,6 +6,7 @@ import prompt from "../prompts/build-with-ai.md?raw";
 /**
  * The docs home page. One idea carries it: point Scout at your app or your repo,
  * and it shows you every way in — then grades it and tells you how to fix it.
+ * The hero pairs that message with a live, animated "scan" console.
  */
 const install = [
   { id: "go-install", label: "go install", command: "go install github.com/MUKE-coder/scout/cmd/scout@latest" },
@@ -20,7 +21,6 @@ const install = [
   },
 ];
 
-// The first scan, start to finish.
 const firstScan = [
   { cmd: "scout scan --target http://localhost:3000", what: "Black-box scan of a running app" },
   { cmd: "scout scan --repo .", what: "Source & supply-chain scan of a repo" },
@@ -39,127 +39,273 @@ const catches = [
   "Version disclosure, directory listings, mixed content",
 ];
 
+// Inline SVG icons for the pillar cards (stroke uses currentColor).
+function icon(name: string): string {
+  const s = (p: string) =>
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const icons: Record<string, string> = {
+    scan: s('<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/>'),
+    shield: s('<path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>'),
+    ci: s('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v4h-4"/><path d="M9 12l2 2 4-4"/>'),
+    server: s('<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><line x1="7" y1="7.5" x2="7.01" y2="7.5"/><line x1="7" y1="16.5" x2="7.01" y2="16.5"/>'),
+  };
+  return icons[name] ?? "";
+}
+
 const pillars = [
   {
+    icon: "scan",
     title: "Black-box & source, one tool",
     body: "Scan a running URL for live weaknesses, and a repo for secrets, supply-chain CVEs and insecure code — from the same binary.",
   },
   {
+    icon: "shield",
     title: "Safe by default",
     body: "Modes are capped by the environment. Active scans of a public host require a published ownership token. No destructive payloads.",
   },
   {
+    icon: "ci",
     title: "Built for CI",
     body: "One command fails the build on findings at or above a severity, with SARIF for code scanning and a graded terminal report.",
   },
   {
+    icon: "server",
     title: "Self-hosted, no account",
     body: "A single Go binary. Nothing leaves your machine. Scan history in local SQLite, an embedded dashboard, scheduled scans.",
   },
 ];
 ---
 
-<section class="sc-hero">
-  <a class="sc-pill" href={RELEASE_URL}>
-    <span class="sc-pill-tag">v{SCOUT_VERSION}</span>
-    <span class="sc-pill-text">{RELEASE_HEADLINE}</span>
-  </a>
-
-  <h1 class="sc-title">
-    The self-hosted scanner
-    <span class="sc-accent">for your apps and repos</span>
-  </h1>
-
-  <p class="sc-sub">
-    Point Scout at a running app or a code repository. It maps the attack surface,
-    finds the ways in — missing headers, exposed files, injection, weak auth,
-    vulnerable dependencies — then grades the result and tells you exactly how to fix it.
-  </p>
-
-  <div class="sc-actions">
-    <a class="sc-btn sc-btn-primary" href="/start/quickstart/">Start scanning</a>
-    <a class="sc-btn sc-btn-ghost" href={REPO_URL}>
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.57.1.78-.25.78-.55v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.3 1.19-3.1-.12-.3-.52-1.47.11-3.07 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.6.23 2.77.11 3.07.74.8 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.79.55A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"></path></svg>
-      View on GitHub
-    </a>
+<div class="sc-root">
+  <!-- animated techy background -->
+  <div class="sc-bg" aria-hidden="true">
+    <div class="sc-grid"></div>
+    <div class="sc-glow sc-glow-1"></div>
+    <div class="sc-glow sc-glow-2"></div>
   </div>
 
-  <div class="sc-install">
-    <div class="sc-tabs" role="tablist" aria-label="Install Scout">
-      {install.map((item, i) => (
-        <button
-          type="button"
-          role="tab"
-          class:list={["sc-tab", { active: i === 0 }]}
-          id={`tab-${item.id}`}
-          aria-controls={`panel-${item.id}`}
-          aria-selected={i === 0 ? "true" : "false"}
-          data-tab={item.id}
-        >{item.label}</button>
+  <section class="sc-hero">
+    <div class="sc-hero-copy">
+      <a class="sc-pill" href={RELEASE_URL} data-anim>
+        <span class="sc-pill-tag">v{SCOUT_VERSION}</span>
+        <span class="sc-pill-text">{RELEASE_HEADLINE}</span>
+      </a>
+
+      <h1 class="sc-title" data-anim>
+        The self-hosted scanner
+        <span class="sc-accent">for your apps &amp; repos</span>
+      </h1>
+
+      <p class="sc-sub" data-anim>
+        Point Scout at a running app or a code repository. It maps the attack
+        surface, finds the ways in — missing headers, exposed files, injection,
+        weak auth, vulnerable dependencies — then grades the result and tells
+        you exactly how to fix it.
+      </p>
+
+      <div class="sc-actions" data-anim>
+        <a class="sc-btn sc-btn-primary" href="/start/quickstart/">
+          Start scanning
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+        <a class="sc-btn sc-btn-ghost" href={REPO_URL}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.57.1.78-.25.78-.55v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.3 1.19-3.1-.12-.3-.52-1.47.11-3.07 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.6.23 2.77.11 3.07.74.8 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.79.55A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"></path></svg>
+          View on GitHub
+        </a>
+      </div>
+
+      <div class="sc-install" data-anim>
+        <div class="sc-tabs" role="tablist" aria-label="Install Scout">
+          {install.map((item, i) => (
+            <button type="button" role="tab" class:list={["sc-tab", { active: i === 0 }]} id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={i === 0 ? "true" : "false"} data-tab={item.id}>{item.label}</button>
+          ))}
+        </div>
+        {install.map((item, i) => (
+          <div class:list={["sc-panel", { active: i === 0 }]} id={`panel-${item.id}`} role="tabpanel" aria-labelledby={`tab-${item.id}`} data-panel={item.id} data-copy={item.copy ?? item.command}>
+            {item.note ? (
+              <div class="sc-ai-line">
+                <span class="sc-ai-arrow">{item.command}</span>
+                <button type="button" class="sc-copy" data-copy-btn><span data-copy-label>Copy prompt</span></button>
+              </div>
+            ) : (
+              <Code code={item.command} lang="bash" frame="none" />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- animated scan console -->
+    <div class="sc-visual" data-anim>
+      <div class="sc-console">
+        <div class="sc-radar" aria-hidden="true">
+          <svg viewBox="0 0 220 220" width="100%" height="100%">
+            <defs>
+              <radialGradient id="sweep" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="var(--sc-beam)" stop-opacity="0.55"></stop>
+                <stop offset="100%" stop-color="var(--sc-beam)" stop-opacity="0"></stop>
+              </radialGradient>
+            </defs>
+            <g stroke="var(--sc-ring)" fill="none" stroke-width="1">
+              <circle cx="110" cy="110" r="100"></circle>
+              <circle cx="110" cy="110" r="70"></circle>
+              <circle cx="110" cy="110" r="40"></circle>
+            </g>
+            <line x1="10" y1="110" x2="210" y2="110" stroke="var(--sc-ring)" stroke-width="1"></line>
+            <line x1="110" y1="10" x2="110" y2="210" stroke="var(--sc-ring)" stroke-width="1"></line>
+            <g class="sc-sweep">
+              <path d="M110 110 L110 10 A100 100 0 0 1 180 40 Z" fill="url(#sweep)"></path>
+              <line x1="110" y1="110" x2="110" y2="10" stroke="var(--sc-beam)" stroke-width="2"></line>
+            </g>
+            <circle class="sc-blip sc-blip-1" cx="150" cy="70" r="3.5" fill="var(--sc-crit)"></circle>
+            <circle class="sc-blip sc-blip-2" cx="78" cy="150" r="3.5" fill="var(--sc-high)"></circle>
+            <circle class="sc-blip sc-blip-3" cx="140" cy="150" r="3" fill="var(--sc-med)"></circle>
+            <circle cx="110" cy="110" r="4" fill="var(--sc-beam)"></circle>
+          </svg>
+        </div>
+
+        <div class="sc-term">
+          <div class="sc-term-bar">
+            <span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span>
+            <span class="sc-term-title">scout</span>
+          </div>
+          <div class="sc-term-body" id="sc-term-body">
+            <div class="sc-line sc-prompt"><span class="sc-dollar">$</span> <span id="sc-typed"></span><span class="sc-caret" id="sc-caret">▋</span></div>
+            <div class="sc-out" data-out="0"><span class="sc-tick">✓</span> Crawling application…</div>
+            <div class="sc-out" data-out="1"><span class="sc-tick">✓</span> Scanning for vulnerabilities…</div>
+            <div class="sc-out" data-out="2"><span class="sc-tick">✓</span> Mapping attack surface…</div>
+            <div class="sc-out" data-out="3"><span class="sc-tick">✓</span> Generating report…</div>
+            <div class="sc-findings" data-out="4">
+              <span class="sc-chip sc-crit">2 Critical</span>
+              <span class="sc-chip sc-high">5 High</span>
+              <span class="sc-chip sc-med">8 Medium</span>
+            </div>
+            <div class="sc-grade-line" data-out="5">
+              Scan complete. Grade <span class="sc-grade">F</span> <span class="sc-score" id="sc-score">17/100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc-section">
+    <h2 class="sc-h2" data-reveal>Your first scan</h2>
+    <div class="sc-firstscan">
+      {firstScan.map((row) => (
+        <div class="sc-fs-row" data-reveal>
+          <code class="sc-fs-cmd">{row.cmd}</code>
+          <span class="sc-fs-what">{row.what}</span>
+        </div>
       ))}
     </div>
-    {install.map((item, i) => (
-      <div
-        class:list={["sc-panel", { active: i === 0 }]}
-        id={`panel-${item.id}`}
-        role="tabpanel"
-        aria-labelledby={`tab-${item.id}`}
-        data-panel={item.id}
-        data-copy={item.copy ?? item.command}
-      >
-        {item.note ? (
-          <div class="sc-ai-line">
-            <span class="sc-ai-arrow">{item.command}</span>
-            <button type="button" class="sc-copy" data-copy-btn><span data-copy-label>Copy prompt</span></button>
-          </div>
-        ) : (
-          <Code code={item.command} lang="bash" frame="none" />
-        )}
-      </div>
-    ))}
-  </div>
-</section>
+  </section>
 
-<section class="sc-section">
-  <h2 class="sc-h2">Your first scan</h2>
-  <div class="sc-firstscan">
-    {firstScan.map((row) => (
-      <div class="sc-fs-row">
-        <code class="sc-fs-cmd">{row.cmd}</code>
-        <span class="sc-fs-what">{row.what}</span>
-      </div>
-    ))}
-  </div>
-</section>
+  <section class="sc-section">
+    <div class="sc-grid-cards">
+      {pillars.map((p) => (
+        <div class="sc-card" data-reveal>
+          <span class="sc-card-ic" set:html={icon(p.icon)} />
+          <h3 class="sc-card-title">{p.title}</h3>
+          <p class="sc-card-body">{p.body}</p>
+        </div>
+      ))}
+    </div>
+  </section>
 
-<section class="sc-section">
-  <div class="sc-grid">
-    {pillars.map((p) => (
-      <div class="sc-card">
-        <h3 class="sc-card-title">{p.title}</h3>
-        <p class="sc-card-body">{p.body}</p>
-      </div>
-    ))}
-  </div>
-</section>
-
-<section class="sc-section">
-  <h2 class="sc-h2">What it catches</h2>
-  <ul class="sc-catches">
-    {catches.map((c) => (
-      <li class="sc-catch">
-        <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"></path></svg>
-        {c}
-      </li>
-    ))}
-  </ul>
-  <p class="sc-catch-note">
-    See the full <a href="/reference/checks/">checks catalog</a>, or try them all against the
-    <a href="/lab/overview/"> deliberately-vulnerable lab app</a>.
-  </p>
-</section>
+  <section class="sc-section">
+    <h2 class="sc-h2" data-reveal>What it catches</h2>
+    <ul class="sc-catches">
+      {catches.map((c) => (
+        <li class="sc-catch" data-reveal>
+          <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"></path></svg>
+          {c}
+        </li>
+      ))}
+    </ul>
+    <p class="sc-catch-note" data-reveal>
+      See the full <a href="/reference/checks/">checks catalog</a>, or try them all against the
+      <a href="/lab/overview/"> deliberately-vulnerable lab app</a>.
+    </p>
+  </section>
+</div>
 
 <script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  gsap.registerPlugin(ScrollTrigger);
+
+  const COMMAND = "scout scan --target https://example.com";
+
+  const mm = gsap.matchMedia();
+
+  mm.add(
+    {
+      reduce: "(prefers-reduced-motion: reduce)",
+      ok: "(prefers-reduced-motion: no-preference)",
+    },
+    (ctx) => {
+      const reduce = ctx.conditions?.reduce;
+      const typed = document.querySelector<HTMLElement>("#sc-typed");
+      const caret = document.querySelector<HTMLElement>("#sc-caret");
+      const outs = gsap.utils.toArray<HTMLElement>(".sc-out, .sc-findings, .sc-grade-line");
+      const score = document.querySelector<HTMLElement>("#sc-score");
+
+      if (reduce) {
+        // Show the finished state, no motion.
+        if (typed) typed.textContent = COMMAND;
+        if (caret) caret.style.display = "none";
+        gsap.set(outs, { autoAlpha: 1, y: 0 });
+        document.querySelectorAll<HTMLElement>("[data-anim],[data-reveal]").forEach((el) => gsap.set(el, { autoAlpha: 1, y: 0 }));
+        return;
+      }
+
+      // Hero entrance.
+      gsap.from("[data-anim]", {
+        autoAlpha: 0,
+        y: 18,
+        duration: 0.7,
+        ease: "power2.out",
+        stagger: 0.09,
+      });
+
+      // Type the command, then reveal the scan output line by line.
+      const tl = gsap.timeline({ delay: 0.5 });
+      const state = { n: 0 };
+      tl.to(state, {
+        n: COMMAND.length,
+        duration: 1.1,
+        ease: "none",
+        onUpdate: () => {
+          if (typed) typed.textContent = COMMAND.slice(0, Math.round(state.n));
+        },
+      });
+      tl.to(outs, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.22, ease: "power2.out" }, "+=0.15");
+      // Count the score down from 100 to the real grade as it lands.
+      const scoreState = { v: 100 };
+      tl.to(scoreState, {
+        v: 17,
+        duration: 0.9,
+        ease: "power1.out",
+        snap: { v: 1 },
+        onUpdate: () => { if (score) score.textContent = Math.round(scoreState.v) + "/100"; },
+      }, ">-0.5");
+      // Blink the caret forever.
+      gsap.to(caret, { autoAlpha: 0, duration: 0.5, repeat: -1, yoyo: true, ease: "steps(1)" });
+
+      // Scroll reveals for the sections below the fold.
+      gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
+        gsap.from(el, {
+          autoAlpha: 0,
+          y: 22,
+          duration: 0.6,
+          ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%" },
+        });
+      });
+    }
+  );
+
   // Install tab switcher.
   document.querySelectorAll<HTMLElement>(".sc-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -181,216 +327,175 @@ const pillars = [
       const panel = btn.closest<HTMLElement>(".sc-panel");
       const text = panel?.dataset.copy ?? "";
       const label = btn.querySelector<HTMLElement>("[data-copy-label]");
-      const say = (m: string) => {
-        if (label) label.textContent = m;
-        window.setTimeout(() => { if (label) label.textContent = "Copy prompt"; }, 2000);
-      };
-      try {
-        await navigator.clipboard.writeText(text);
-        say("Copied");
-      } catch {
-        say("Press Ctrl+C");
-      }
+      const say = (m: string) => { if (label) label.textContent = m; window.setTimeout(() => { if (label) label.textContent = "Copy prompt"; }, 2000); };
+      try { await navigator.clipboard.writeText(text); say("Copied"); } catch { say("Press Ctrl+C"); }
     });
   });
 </script>
 
 <style>
-  .sc-hero {
-    max-width: 52rem;
-    margin: 0 auto;
-    padding: 3.5rem var(--gutter, 1.5rem) 1rem;
-    text-align: center;
+  /* Starlight's splash template prints the frontmatter title as an h1#_top.
+     The hero already carries the headline, so hide it on this page only
+     (Landing renders only here). */
+  :global(main h1#_top) { display: none; }
+  :global(.content-panel:first-of-type) { border-top: 0; }
+
+  /* ============ tokens local to the landing ============ */
+  .sc-root {
+    --sc-beam: var(--fl-ember-strong);
+    --sc-ring: color-mix(in srgb, var(--fl-ember) 32%, transparent);
+    --sc-crit: #ef4444;
+    --sc-high: #f97316;
+    --sc-med: #eab308;
+    position: relative;
+    isolation: isolate;
   }
+  :root:not([data-theme="light"]) .sc-root { --sc-beam: #60a5fa; }
+
+  /* ============ background ============ */
+  .sc-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .sc-grid {
+    position: absolute; inset: -2px;
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%);
+  }
+  .sc-glow { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.5; }
+  .sc-glow-1 { width: 42rem; height: 42rem; top: -18rem; right: -10rem; background: radial-gradient(circle, color-mix(in srgb, var(--fl-ember) 38%, transparent), transparent 70%); animation: sc-float 14s ease-in-out infinite; }
+  .sc-glow-2 { width: 32rem; height: 32rem; top: 6rem; left: -14rem; background: radial-gradient(circle, color-mix(in srgb, #22d3ee 26%, transparent), transparent 70%); animation: sc-float 18s ease-in-out infinite reverse; }
+  @keyframes sc-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(26px) } }
+
+  /* ============ hero ============ */
+  .sc-hero {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 3rem;
+    align-items: center;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 4.5rem var(--gutter, 1.5rem) 2rem;
+  }
+  .sc-hero-copy { text-align: left; }
 
   .sc-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    max-width: 100%;
-    padding: 0.3rem 0.75rem 0.3rem 0.3rem;
-    border: 1px solid var(--fl-rule);
-    border-radius: 999px;
-    background: var(--fl-surface);
-    font-size: 0.8125rem;
-    color: var(--fl-muted);
-    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%;
+    padding: 0.3rem 0.8rem 0.3rem 0.3rem;
+    border: 1px solid var(--fl-rule); border-radius: 999px;
+    background: color-mix(in srgb, var(--fl-surface) 80%, transparent);
+    backdrop-filter: blur(6px);
+    font-size: 0.8rem; color: var(--fl-muted); text-decoration: none;
     transition: border-color 0.15s ease;
   }
   .sc-pill:hover { border-color: var(--fl-ember); }
-  .sc-pill-tag {
-    font-family: var(--sl-font-mono);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    padding: 0.2rem 0.5rem;
-    border-radius: 999px;
-    background: var(--fl-ember);
-    color: var(--fl-on-ember);
-  }
+  .sc-pill-tag { font-family: var(--sl-font-mono); font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 999px; background: var(--fl-ember); color: var(--fl-on-ember); }
   .sc-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .sc-title {
-    margin: 1.75rem 0 0;
-    font-size: clamp(2.5rem, 1.5rem + 5vw, 4.25rem);
-    font-weight: 680;
-    line-height: 1.02;
-    letter-spacing: -0.04em;
+    margin: 1.5rem 0 0;
+    font-size: clamp(2.4rem, 1.4rem + 3.4vw, 3.9rem);
+    font-weight: 680; line-height: 1.04; letter-spacing: -0.04em;
     color: var(--fl-ink);
   }
-  .sc-accent { display: block; color: var(--fl-ember-strong); }
+  .sc-accent {
+    display: block;
+    background: linear-gradient(100deg, var(--fl-ember-strong), #22d3ee);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+  :root:not([data-theme="light"]) .sc-accent { background: linear-gradient(100deg, #60a5fa, #22d3ee); -webkit-background-clip: text; background-clip: text; }
 
-  .sc-sub {
-    max-width: 40rem;
-    margin: 1.5rem auto 0;
-    font-size: 1.125rem;
-    line-height: 1.6;
-    color: var(--fl-muted);
-  }
+  .sc-sub { max-width: 34rem; margin: 1.35rem 0 0; font-size: 1.05rem; line-height: 1.6; color: var(--fl-muted); }
 
-  .sc-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    justify-content: center;
-    margin-top: 2rem;
-  }
-  .sc-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem 1.3rem;
-    border-radius: 0.625rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid transparent;
-    transition: filter 0.15s ease, border-color 0.15s ease;
-  }
-  .sc-btn-primary { background: var(--fl-ember-strong); color: var(--fl-on-ember); }
-  .sc-btn-primary:hover { filter: brightness(1.08); }
-  .sc-btn-ghost { background: var(--fl-paper); color: var(--fl-ink); border-color: var(--fl-rule-strong); }
-  .sc-btn-ghost:hover { border-color: var(--fl-ember); }
+  .sc-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.9rem; }
+  .sc-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.25rem; border-radius: 0.625rem; font-size: 0.95rem; font-weight: 600; text-decoration: none; border: 1px solid transparent; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
+  /* High specificity + !important: beat Starlight's .sl-markdown-content a colour. */
+  .sc-btn.sc-btn-primary { background: var(--fl-ember-strong) !important; color: #fff !important; box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--fl-ember) 70%, transparent); }
+  .sc-btn.sc-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--fl-ember) 85%, transparent); }
+  .sc-btn.sc-btn-ghost { background: color-mix(in srgb, var(--fl-paper) 70%, transparent) !important; color: var(--fl-ink) !important; border-color: var(--fl-rule-strong); backdrop-filter: blur(6px); }
+  .sc-btn.sc-btn-ghost:hover { border-color: var(--fl-ember); transform: translateY(-1px); }
 
-  .sc-install {
-    max-width: 44rem;
-    margin: 2.75rem auto 0;
-    border: 1px solid var(--fl-rule);
-    border-radius: 0.875rem;
-    background: var(--fl-paper);
-    overflow: hidden;
-    text-align: left;
-  }
-  .sc-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    padding: 0.5rem 0.5rem 0;
-    border-bottom: 1px solid var(--fl-rule);
-    background: var(--fl-surface);
-  }
-  .sc-tab {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    font: inherit;
-    font-size: 0.84375rem;
-    font-weight: 500;
-    color: var(--fl-muted);
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem 0.5rem 0 0;
-    cursor: pointer;
-  }
+  /* install panel */
+  .sc-install { margin-top: 2rem; border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 75%, transparent); backdrop-filter: blur(6px); overflow: hidden; max-width: 36rem; }
+  .sc-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.4rem 0.4rem 0; border-bottom: 1px solid var(--fl-rule); background: var(--fl-surface); }
+  .sc-tab { appearance: none; border: 0; background: transparent; font: inherit; font-size: 0.8rem; font-weight: 500; color: var(--fl-muted); padding: 0.45rem 0.7rem; border-radius: 0.5rem 0.5rem 0 0; cursor: pointer; }
   .sc-tab:hover { color: var(--fl-ink); }
   .sc-tab.active { color: var(--fl-ink); background: var(--fl-paper); font-weight: 600; box-shadow: inset 0 -2px 0 var(--fl-ember); }
-
-  .sc-panel { display: none; padding: 0.5rem 0.75rem; }
+  .sc-panel { display: none; padding: 0.4rem 0.6rem; }
   .sc-panel.active { display: block; }
-  .sc-panel :global(.expressive-code) { margin: 0.25rem 0; }
+  .sc-panel :global(.expressive-code) { margin: 0.2rem 0; }
+  .sc-ai-line { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.7rem 0.3rem; }
+  .sc-ai-arrow { color: var(--fl-muted); font-size: 0.85rem; }
+  .sc-copy { border: 1px solid var(--fl-ember); background: var(--fl-ember); color: var(--fl-on-ember); border-radius: 0.5rem; padding: 0.4rem 0.8rem; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
-  .sc-ai-line {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 0.75rem 0.25rem;
-  }
-  .sc-ai-arrow { color: var(--fl-muted); font-size: 0.9rem; }
-  .sc-copy {
-    border: 1px solid var(--fl-ember);
-    background: var(--fl-ember);
-    color: var(--fl-on-ember);
-    border-radius: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    font: inherit;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
+  /* ============ scan console (right) ============ */
+  .sc-visual { display: flex; justify-content: center; }
+  .sc-console { width: 100%; max-width: 27rem; border: 1px solid var(--fl-rule); border-radius: 1rem; background: color-mix(in srgb, var(--fl-paper) 82%, transparent); backdrop-filter: blur(8px); box-shadow: var(--sl-shadow-lg); overflow: hidden; }
+  .sc-radar { aspect-ratio: 1; max-height: 15rem; margin: 1rem auto 0; width: 70%; }
+  .sc-sweep { transform-origin: 110px 110px; animation: sc-spin 4s linear infinite; }
+  @keyframes sc-spin { to { transform: rotate(360deg); } }
+  .sc-blip { opacity: 0; animation: sc-ping 4s ease-out infinite; }
+  .sc-blip-1 { animation-delay: 0.6s; }
+  .sc-blip-2 { animation-delay: 2.1s; }
+  .sc-blip-3 { animation-delay: 3.1s; }
+  @keyframes sc-ping { 0%,55% { opacity: 0; } 60% { opacity: 1; } 100% { opacity: 0.25; } }
 
-  /* ---- Sections below the hero ---- */
-  .sc-section { max-width: 52rem; margin: 0 auto; padding: 1.5rem var(--gutter, 1.5rem); }
-  .sc-h2 {
-    font-size: 1.5rem;
-    font-weight: 640;
-    letter-spacing: -0.03em;
-    color: var(--fl-ink);
-    margin: 1.5rem 0 1.25rem;
-  }
+  .sc-term { border-top: 1px solid var(--fl-rule); font-family: var(--sl-font-mono); font-size: 0.78rem; }
+  .sc-term-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--fl-rule); background: var(--fl-surface); }
+  .sc-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--fl-rule-strong); }
+  .sc-dot:nth-child(1) { background: #ff5f57; } .sc-dot:nth-child(2) { background: #febc2e; } .sc-dot:nth-child(3) { background: #28c840; }
+  .sc-term-title { margin-left: 0.5rem; color: var(--fl-muted); font-size: 0.72rem; }
+  .sc-term-body { padding: 0.85rem 0.9rem; line-height: 1.85; color: var(--fl-body); min-height: 9.5rem; }
+  .sc-prompt { color: var(--fl-ink); }
+  .sc-dollar { color: var(--fl-ember-strong); }
+  .sc-caret { color: var(--fl-ember); }
+  .sc-out, .sc-findings, .sc-grade-line { opacity: 0; }
+  .sc-tick { color: #28c840; margin-right: 0.3rem; }
+  .sc-findings { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
+  .sc-chip { font-size: 0.68rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 0.375rem; }
+  .sc-chip.sc-crit { color: #fff; background: var(--sc-crit); }
+  .sc-chip.sc-high { color: #fff; background: var(--sc-high); }
+  .sc-chip.sc-med { color: #3a2e00; background: var(--sc-med); }
+  .sc-grade-line { margin-top: 0.5rem; color: var(--fl-muted); }
+  .sc-grade { display: inline-block; font-weight: 700; color: var(--sc-crit); border: 1px solid var(--sc-crit); border-radius: 0.3rem; padding: 0 0.3rem; margin: 0 0.2rem; }
+  .sc-score { color: var(--fl-muted); }
+
+  /* ============ sections ============ */
+  .sc-section { max-width: 60rem; margin: 0 auto; padding: 2rem var(--gutter, 1.5rem); }
+  .sc-h2 { font-size: 1.5rem; font-weight: 640; letter-spacing: -0.03em; color: var(--fl-ink); margin: 1.5rem 0 1.25rem; }
 
   .sc-firstscan { display: flex; flex-direction: column; gap: 0.5rem; }
-  .sc-fs-row {
-    display: flex;
-    align-items: baseline;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--fl-rule);
-    border-radius: 0.625rem;
-    background: var(--fl-paper);
-  }
-  .sc-fs-cmd {
-    font-family: var(--sl-font-mono);
-    font-size: 0.8125rem;
-    color: var(--fl-ember-strong);
-    white-space: nowrap;
-  }
+  .sc-fs-row { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; padding: 0.75rem 1rem; border: 1px solid var(--fl-rule); border-radius: 0.625rem; background: color-mix(in srgb, var(--fl-paper) 70%, transparent); transition: border-color 0.15s ease, transform 0.15s ease; }
+  .sc-fs-row:hover { border-color: var(--fl-ember); transform: translateX(3px); }
+  .sc-fs-cmd { font-family: var(--sl-font-mono); font-size: 0.8125rem; color: var(--fl-ember-strong); white-space: nowrap; }
   .sc-fs-what { color: var(--fl-muted); font-size: 0.9rem; }
 
-  .sc-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 1rem;
-  }
-  .sc-card {
-    border: 1px solid var(--fl-rule);
-    border-radius: 0.875rem;
-    background: var(--fl-paper);
-    padding: 1.25rem;
-  }
+  .sc-grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+  .sc-card { border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 70%, transparent); padding: 1.35rem; transition: border-color 0.15s ease, transform 0.15s ease; }
+  .sc-card:hover { border-color: var(--fl-ember); transform: translateY(-3px); }
+  .sc-card-ic { display: inline-flex; width: 2.1rem; height: 2.1rem; align-items: center; justify-content: center; border-radius: 0.6rem; color: var(--fl-ember); background: var(--fl-ember-soft); margin-bottom: 0.8rem; }
+  .sc-card-ic :global(svg) { width: 1.2rem; height: 1.2rem; }
   .sc-card-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 620; color: var(--fl-ink); letter-spacing: -0.015em; }
   .sc-card-body { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--fl-muted); }
 
-  .sc-catches {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-    gap: 0.5rem 1.5rem;
-  }
-  .sc-catch {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    font-size: 0.925rem;
-    color: var(--fl-body);
-    padding: 0.3rem 0;
-  }
+  .sc-catches { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.5rem 1.5rem; }
+  .sc-catch { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.925rem; color: var(--fl-body); padding: 0.3rem 0; }
   .sc-catch svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--fl-ember-strong); }
   .sc-catch-note { margin-top: 1.5rem; font-size: 0.9rem; color: var(--fl-muted); }
 
+  /* ============ responsive ============ */
+  @media (max-width: 54rem) {
+    .sc-hero { grid-template-columns: 1fr; gap: 2.25rem; padding-top: 3.25rem; text-align: center; }
+    .sc-hero-copy { text-align: center; }
+    .sc-sub { margin-inline: auto; }
+    .sc-actions { justify-content: center; }
+    .sc-install { margin-inline: auto; }
+    .sc-visual { order: -1; }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .sc-btn, .sc-pill { transition: none; }
+    .sc-sweep, .sc-blip, .sc-glow { animation: none; }
+    .sc-btn, .sc-fs-row, .sc-card, .sc-pill { transition: none; }
   }
 </style>

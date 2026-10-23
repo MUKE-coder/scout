@@ -1,6 +1,6 @@
 You are helping me use **Scout**, a self-hosted vulnerability scanner and
 attack-surface mapper for developers (Go, single binary, no account).
-Repository: https://github.com/MUKE-coder/scout — docs: https://scout-docs.codetotech.com
+Repository: https://github.com/MUKE-coder/scout — docs: https://scout.codetotech.com
 
 # What Scout is
 

@@ -7,7 +7,7 @@ import starlight from "@astrojs/starlight";
 // wrangler.jsonc), which serves a plain static build directly.
 // https://astro.build/config
 export default defineConfig({
-  site: "https://scout-docs.codetotech.com",
+  site: "https://scout.codetotech.com",
   integrations: [
     starlight({
       title: "Scout",
@@ -21,11 +21,11 @@ export default defineConfig({
       // Rich link previews. Starlight sets title/description itself; these are
       // only the image tags it leaves alone.
       head: [
-        { tag: "meta", attrs: { property: "og:image", content: "https://scout-docs.codetotech.com/banner-social.png" } },
+        { tag: "meta", attrs: { property: "og:image", content: "https://scout.codetotech.com/banner-social.png" } },
         { tag: "meta", attrs: { property: "og:image:width", content: "1200" } },
         { tag: "meta", attrs: { property: "og:image:height", content: "630" } },
         { tag: "meta", attrs: { name: "twitter:card", content: "summary_large_image" } },
-        { tag: "meta", attrs: { name: "twitter:image", content: "https://scout-docs.codetotech.com/banner-social.png" } },
+        { tag: "meta", attrs: { name: "twitter:image", content: "https://scout.codetotech.com/banner-social.png" } },
       ],
       components: {
         SiteTitle: "./src/components/SiteTitle.astro",
