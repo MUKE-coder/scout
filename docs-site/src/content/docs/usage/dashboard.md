@@ -13,7 +13,25 @@ scout serve
 ```
 
 Then open the URL it prints. The dashboard is compiled into the binary — there is
-nothing else to install or host.
+nothing else to install or host. `scout serve` reads `scout.db` from the current
+directory (change the file with `--db`, the port with `--addr`).
+
+:::tip
+`scout serve` is a **separate server** — a scan on its own does not start it. To
+go from a scan straight to the dashboard in one step, add `--serve`:
+
+```bash
+scout scan --target https://example.com --serve
+```
+
+This runs the scan, then boots the dashboard on the same history database.
+:::
+
+## Export findings
+
+On the dashboard's **Findings** page, the **Export** menu downloads the findings
+as Markdown, HTML or plain text (plus JSON/CSV) — each with the evidence and the
+fix — to hand to a developer or drop into a PR or ticket.
 
 ## Credentials
 

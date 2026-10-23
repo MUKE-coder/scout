@@ -9,7 +9,7 @@ export default defineEcConfig({
     theme.settings.push({
       // Quoted strings only: shell grammars mark every bare argument as string.unquoted.
       scope: ["string.quoted", "string.template", "punctuation.definition.string"],
-      settings: { foreground: theme.type === "dark" ? "#93c5fd" : "#1d4ed8" },
+      settings: { foreground: theme.type === "dark" ? "#6ee7b7" : "#0f7a46" },
     });
     // Shell commands and bare arguments read as plain text; flags and quoted strings keep colour.
     theme.settings.push({
@@ -33,7 +33,7 @@ export default defineEcConfig({
     frames: {
       shadowColor: "transparent",
       frameBoxShadowCssValue: "none",
-      editorActiveTabIndicatorTopColor: ({ theme }) => (theme.type === "dark" ? "#3b82f6" : "#2563eb"),
+      editorActiveTabIndicatorTopColor: ({ theme }) => (theme.type === "dark" ? "#3ecf8e" : "#1f9d63"),
       editorActiveTabBackground: ({ theme }) => (theme.type === "dark" ? "#181818" : "#fafafa"),
       editorTabBarBackground: ({ theme }) => (theme.type === "dark" ? "#1f1f1f" : "#f4f4f4"),
       terminalTitlebarBackground: ({ theme }) => (theme.type === "dark" ? "#1f1f1f" : "#f4f4f4"),

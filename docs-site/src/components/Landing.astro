@@ -4,10 +4,8 @@ import { SCOUT_VERSION, RELEASE_HEADLINE, RELEASE_URL, REPO_URL } from "../versi
 import prompt from "../prompts/build-with-ai.md?raw";
 
 /**
- * The docs home page. One idea carries it: point Scout at your app or your repo,
- * and it shows you every way in — then grades it and tells you how to fix it.
- * The hero pairs that message with a live, animated "scan" console; below it, a
- * gridline-framed, numbered walk-through of what Scout does.
+ * The docs home page, Supabase-style: a clean hero, then gridline-framed
+ * sections that pair a left-hand heading with a right-hand grid of cards.
  */
 const install = [
   { id: "sh", label: "macOS / Linux", command: "curl -fsSL https://scout.codetotech.com/install.sh | sh" },
@@ -15,6 +13,13 @@ const install = [
   { id: "go-install", label: "go install", command: "go install github.com/MUKE-coder/scout/cmd/scout@latest" },
   { id: "source", label: "from source", command: "git clone https://github.com/MUKE-coder/scout && cd scout && go build ./cmd/scout" },
   { id: "ai", label: "AI prompt", command: "Paste this into Claude, Cursor, Codex or any coding agent →", copy: prompt, note: true },
+];
+
+const capabilities = [
+  { icon: "globe", title: "Running app", body: "Black-box scan a live URL for missing headers, exposed files, injection and weak auth." },
+  { icon: "code", title: "Code repo", body: "Source & supply-chain: committed secrets, insecure Dockerfiles, reachable Go CVEs." },
+  { icon: "ci", title: "CI pipeline", body: "Fail the build on findings at or above a severity, with SARIF for code scanning." },
+  { icon: "export", title: "Dashboard & export", body: "A local dashboard, then export findings as Markdown, HTML or text to hand to a developer." },
 ];
 
 const catches = [
@@ -28,31 +33,23 @@ const catches = [
   "Version disclosure, directory listings, mixed content",
 ];
 
-const ci = `name: scout
-on: [pull_request]
-jobs:
-  scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: scout ci --repo . --fail-on high --new-only`;
-
-const codeChecks = [
-  "Hard-coded secrets",
-  "Insecure Dockerfiles",
-  "Weak crypto (MD5/SHA-1)",
-  "Dangerous sinks (eval/exec)",
-  "Reachable Go CVEs",
-  "Unpinned dependencies",
-];
+function icon(name: string): string {
+  const s = (p: string) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const icons: Record<string, string> = {
+    globe: s('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/>'),
+    code: s('<path d="M8 9l-3 3 3 3M16 9l3 3-3 3M13 7l-2 10"/>'),
+    ci: s('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v4h-4"/><path d="M9 12l2 2 4-4"/>'),
+    export: s('<path d="M12 15V3M8 7l4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/>'),
+    check: s('<path d="M4 12.5l5 5 11-12"/>'),
+  };
+  return icons[name] ?? "";
+}
 ---
 
 <div class="sc-root">
-  <!-- animated techy background -->
   <div class="sc-bg" aria-hidden="true">
     <div class="sc-grid"></div>
-    <div class="sc-glow sc-glow-1"></div>
-    <div class="sc-glow sc-glow-2"></div>
+    <div class="sc-glow"></div>
   </div>
 
   <section class="sc-hero">
@@ -61,19 +58,15 @@ const codeChecks = [
         <span class="sc-pill-tag">v{SCOUT_VERSION}</span>
         <span class="sc-pill-text">{RELEASE_HEADLINE}</span>
       </a>
-
       <h1 class="sc-title" data-anim>
         The self-hosted scanner
         <span class="sc-accent">for your apps &amp; repos</span>
       </h1>
-
       <p class="sc-sub" data-anim>
         Point Scout at a running app or a code repository. It maps the attack
-        surface, finds the ways in — missing headers, exposed files, injection,
-        weak auth, vulnerable dependencies — then grades the result and tells
-        you exactly how to fix it.
+        surface, finds the ways in, then grades the result and tells you exactly
+        how to fix it — one binary, self-hosted, no account.
       </p>
-
       <div class="sc-actions" data-anim>
         <a class="sc-btn sc-btn-primary" href="/start/quickstart/">
           Start scanning
@@ -86,71 +79,77 @@ const codeChecks = [
       </div>
     </div>
 
-    <!-- animated scan console -->
     <div class="sc-visual" data-anim>
       <div class="sc-console">
         <div class="sc-radar" aria-hidden="true">
           <svg viewBox="0 0 220 220" width="100%" height="100%">
             <defs>
               <radialGradient id="sweep" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="var(--sc-beam)" stop-opacity="0.55"></stop>
-                <stop offset="100%" stop-color="var(--sc-beam)" stop-opacity="0"></stop>
+                <stop offset="0%" stop-color="var(--fl-ember)" stop-opacity="0.55"></stop>
+                <stop offset="100%" stop-color="var(--fl-ember)" stop-opacity="0"></stop>
               </radialGradient>
             </defs>
             <g stroke="var(--sc-ring)" fill="none" stroke-width="1">
-              <circle cx="110" cy="110" r="100"></circle>
-              <circle cx="110" cy="110" r="70"></circle>
-              <circle cx="110" cy="110" r="40"></circle>
+              <circle cx="110" cy="110" r="100"></circle><circle cx="110" cy="110" r="70"></circle><circle cx="110" cy="110" r="40"></circle>
             </g>
             <line x1="10" y1="110" x2="210" y2="110" stroke="var(--sc-ring)" stroke-width="1"></line>
             <line x1="110" y1="10" x2="110" y2="210" stroke="var(--sc-ring)" stroke-width="1"></line>
             <g class="sc-sweep">
               <path d="M110 110 L110 10 A100 100 0 0 1 180 40 Z" fill="url(#sweep)"></path>
-              <line x1="110" y1="110" x2="110" y2="10" stroke="var(--sc-beam)" stroke-width="2"></line>
+              <line x1="110" y1="110" x2="110" y2="10" stroke="var(--fl-ember)" stroke-width="2"></line>
             </g>
             <circle class="sc-blip sc-blip-1" cx="150" cy="70" r="3.5" fill="var(--sc-crit)"></circle>
             <circle class="sc-blip sc-blip-2" cx="78" cy="150" r="3.5" fill="var(--sc-high)"></circle>
             <circle class="sc-blip sc-blip-3" cx="140" cy="150" r="3" fill="var(--sc-med)"></circle>
-            <circle cx="110" cy="110" r="4" fill="var(--sc-beam)"></circle>
+            <circle cx="110" cy="110" r="4" fill="var(--fl-ember)"></circle>
           </svg>
         </div>
-
         <div class="sc-term">
-          <div class="sc-term-bar">
-            <span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span>
-            <span class="sc-term-title">scout</span>
-          </div>
-          <div class="sc-term-body" id="sc-term-body">
+          <div class="sc-term-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-term-title">scout</span></div>
+          <div class="sc-term-body">
             <div class="sc-line sc-prompt"><span class="sc-dollar">$</span> <span id="sc-typed"></span><span class="sc-caret" id="sc-caret">▋</span></div>
             <div class="sc-out" data-out="0"><span class="sc-tick">✓</span> Crawling application…</div>
             <div class="sc-out" data-out="1"><span class="sc-tick">✓</span> Scanning for vulnerabilities…</div>
             <div class="sc-out" data-out="2"><span class="sc-tick">✓</span> Mapping attack surface…</div>
             <div class="sc-out" data-out="3"><span class="sc-tick">✓</span> Generating report…</div>
-            <div class="sc-findings" data-out="4">
-              <span class="sc-chip sc-crit">2 Critical</span>
-              <span class="sc-chip sc-high">5 High</span>
-              <span class="sc-chip sc-med">8 Medium</span>
-            </div>
-            <div class="sc-grade-line" data-out="5">
-              Scan complete. Grade <span class="sc-grade">F</span> <span class="sc-score" id="sc-score">17/100</span>
-            </div>
+            <div class="sc-findings" data-out="4"><span class="sc-chip sc-crit">2 Critical</span><span class="sc-chip sc-high">5 High</span><span class="sc-chip sc-med">8 Medium</span></div>
+            <div class="sc-grade-line" data-out="5">Scan complete. Grade <span class="sc-grade">F</span> <span class="sc-score" id="sc-score">17/100</span></div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ editorial, gridline-framed walk-through ============ -->
+  <!-- ============ gridline-framed, Supabase-style sections ============ -->
   <div class="ed">
-    <!-- 01 · INSTALL -->
+    <!-- 01 · SCAN -->
     <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
     <section class="ed-step">
       <div class="ed-head">
-        <div class="ed-label" data-reveal>[ 01 / 05 ]&nbsp;&nbsp;INSTALL</div>
-        <h2 class="ed-title" data-reveal>One command to install,<br /><span class="sc-accent">on macOS, Linux &amp; Windows</span></h2>
-        <p class="ed-lead" data-reveal>A single Go binary, no runtime and no account. Or grab it with <code>go install</code> — the version is stamped either way.</p>
+        <div class="ed-label" data-reveal>[ 01 / 03 ]&nbsp;&nbsp;SCAN</div>
+        <h2 class="ed-title" data-reveal>Point it at<br /><span class="sc-accent">anything you ship</span></h2>
+        <p class="ed-lead" data-reveal>A running app, a code repo, a CI pipeline — Scout finds the ways in from the same single binary.</p>
       </div>
-      <div class="ed-body" data-reveal>
+      <div class="ed-cards" data-reveal>
+        {capabilities.map((c) => (
+          <div class="ed-card">
+            <span class="ed-card-ic" set:html={icon(c.icon)} />
+            <h3 class="ed-card-title">{c.title}</h3>
+            <p class="ed-card-body">{c.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- 02 · INSTALL -->
+    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+    <section class="ed-step">
+      <div class="ed-head">
+        <div class="ed-label" data-reveal>[ 02 / 03 ]&nbsp;&nbsp;INSTALL</div>
+        <h2 class="ed-title" data-reveal>Up and running<br /><span class="sc-accent">in one line</span></h2>
+        <p class="ed-lead" data-reveal>A single Go binary, no runtime and no account — on macOS, Linux and Windows. Then scan with <code>--serve</code> to open the dashboard.</p>
+      </div>
+      <div class="ed-panel" data-reveal>
         <div class="sc-install">
           <div class="sc-tabs" role="tablist" aria-label="Install Scout">
             {install.map((item, i) => (
@@ -160,10 +159,7 @@ const codeChecks = [
           {install.map((item, i) => (
             <div class:list={["sc-panel", { active: i === 0 }]} id={`panel-${item.id}`} role="tabpanel" aria-labelledby={`tab-${item.id}`} data-panel={item.id} data-copy={item.copy ?? item.command}>
               {item.note ? (
-                <div class="sc-ai-line">
-                  <span class="sc-ai-arrow">{item.command}</span>
-                  <button type="button" class="sc-copy" data-copy-btn><span data-copy-label>Copy prompt</span></button>
-                </div>
+                <div class="sc-ai-line"><span class="sc-ai-arrow">{item.command}</span><button type="button" class="sc-copy" data-copy-btn><span data-copy-label>Copy prompt</span></button></div>
               ) : (
                 <Code code={item.command} lang="bash" frame="none" />
               )}
@@ -173,86 +169,30 @@ const codeChecks = [
       </div>
     </section>
 
-    <!-- 02 · SCAN -->
+    <!-- 03 · CATCH -->
     <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
     <section class="ed-step">
       <div class="ed-head">
-        <div class="ed-label" data-reveal>[ 02 / 05 ]&nbsp;&nbsp;SCAN</div>
-        <h2 class="ed-title" data-reveal>Point it at a running app,<br /><span class="sc-accent">see every way in</span></h2>
-        <p class="ed-lead" data-reveal>Crawl the surface and run the checks your mode allows — headers, exposed files, CORS, injection, weak auth — then read a graded report.</p>
+        <div class="ed-label" data-reveal>[ 03 / 03 ]&nbsp;&nbsp;CATCH</div>
+        <h2 class="ed-title" data-reveal>Finds the ways in,<br /><span class="sc-accent">tells you the fix</span></h2>
+        <p class="ed-lead" data-reveal>Dozens of checks across headers, TLS, auth, injection, exposure and your dependencies — each finding carries the evidence and a concrete fix.</p>
       </div>
-      <div class="ed-body" data-reveal>
-        <Code code={`scout scan --target https://example.com --mode active`} lang="bash" frame="none" />
-      </div>
-    </section>
-
-    <!-- 03 · SOURCE -->
-    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
-    <section class="ed-step">
-      <div class="ed-head">
-        <div class="ed-label" data-reveal>[ 03 / 05 ]&nbsp;&nbsp;SOURCE</div>
-        <h2 class="ed-title" data-reveal>Or scan the repo<br /><span class="sc-accent">before you ship</span></h2>
-        <p class="ed-lead" data-reveal>No running app needed. Find the problems you want caught at review time — secrets, supply-chain CVEs and insecure code.</p>
-      </div>
-      <div class="ed-body" data-reveal>
-        <Code code={`scout scan --repo .`} lang="bash" frame="none" />
-        <ul class="ed-chips">
-          {codeChecks.map((c) => <li class="ed-chip">{c}</li>)}
-        </ul>
-      </div>
-    </section>
-
-    <!-- 04 · CI -->
-    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
-    <section class="ed-step">
-      <div class="ed-head">
-        <div class="ed-label" data-reveal>[ 04 / 05 ]&nbsp;&nbsp;CI</div>
-        <h2 class="ed-title" data-reveal>Fail the build<br /><span class="sc-accent">on new risk</span></h2>
-        <p class="ed-lead" data-reveal>One command turns the pipeline red on findings at or above a severity. Baseline once, then gate on only what a change introduced.</p>
-      </div>
-      <div class="ed-body" data-reveal>
-        <Code code={ci} lang="yaml" frame="none" />
-      </div>
-    </section>
-
-    <!-- 05 · SHARE -->
-    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
-    <section class="ed-step">
-      <div class="ed-head">
-        <div class="ed-label" data-reveal>[ 05 / 05 ]&nbsp;&nbsp;SHARE</div>
-        <h2 class="ed-title" data-reveal>Hand developers<br /><span class="sc-accent">a ready-made fix list</span></h2>
-        <p class="ed-lead" data-reveal>Run the dashboard with <code>scout serve</code>, then export the findings as Markdown, HTML or text — each with the evidence and the fix — to drop into a PR or ticket.</p>
-      </div>
-      <div class="ed-body" data-reveal>
-        <div class="ed-formats">
-          <span class="ed-fmt">report.md</span>
-          <span class="ed-fmt">report.html</span>
-          <span class="ed-fmt">report.txt</span>
-          <span class="ed-fmt">findings.json</span>
-          <span class="ed-fmt">findings.csv</span>
-        </div>
+      <div class="ed-checks" data-reveal>
+        {catches.map((c) => (
+          <div class="ed-check">
+            <span class="ed-check-ic" set:html={icon("check")} />
+            <span>{c}</span>
+          </div>
+        ))}
       </div>
     </section>
 
     <div class="ed-rule"><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+    <div class="ed-cta" data-reveal>
+      <a class="sc-btn sc-btn-primary" href="/start/quickstart/">Start scanning</a>
+      <a class="ed-link" href="/reference/checks/">Browse the full checks catalog →</a>
+    </div>
   </div>
-
-  <!-- ============ what it catches ============ -->
-  <section class="sc-section">
-    <h2 class="sc-h2" data-reveal>What it catches</h2>
-    <ul class="sc-catches">
-      {catches.map((c) => (
-        <li class="sc-catch" data-reveal>
-          <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"></path></svg>
-          {c}
-        </li>
-      ))}
-    </ul>
-    <p class="sc-catch-note" data-reveal>
-      See the full <a href="/reference/checks/">checks catalog</a>, or try them all against the
-      <a href="/lab/overview/"> deliberately-vulnerable lab app</a>.
-    </p>
-  </section>
 </div>
 
 <script>
@@ -262,54 +202,40 @@ const codeChecks = [
 
   const COMMAND = "scout scan --target https://example.com";
   const mm = gsap.matchMedia();
+  mm.add({ reduce: "(prefers-reduced-motion: reduce)", ok: "(prefers-reduced-motion: no-preference)" }, (ctx) => {
+    const reduce = ctx.conditions?.reduce;
+    const typed = document.querySelector<HTMLElement>("#sc-typed");
+    const caret = document.querySelector<HTMLElement>("#sc-caret");
+    const outs = gsap.utils.toArray<HTMLElement>(".sc-out, .sc-findings, .sc-grade-line");
+    const score = document.querySelector<HTMLElement>("#sc-score");
 
-  mm.add(
-    { reduce: "(prefers-reduced-motion: reduce)", ok: "(prefers-reduced-motion: no-preference)" },
-    (ctx) => {
-      const reduce = ctx.conditions?.reduce;
-      const typed = document.querySelector<HTMLElement>("#sc-typed");
-      const caret = document.querySelector<HTMLElement>("#sc-caret");
-      const outs = gsap.utils.toArray<HTMLElement>(".sc-out, .sc-findings, .sc-grade-line");
-      const score = document.querySelector<HTMLElement>("#sc-score");
-
-      if (reduce) {
-        if (typed) typed.textContent = COMMAND;
-        if (caret) caret.style.display = "none";
-        gsap.set(outs, { autoAlpha: 1, y: 0 });
-        document.querySelectorAll<HTMLElement>("[data-anim],[data-reveal]").forEach((el) => gsap.set(el, { autoAlpha: 1, y: 0 }));
-        return;
-      }
-
-      gsap.from("[data-anim]", { autoAlpha: 0, y: 18, duration: 0.7, ease: "power2.out", stagger: 0.09 });
-
-      const tl = gsap.timeline({ delay: 0.5 });
-      const state = { n: 0 };
-      tl.to(state, { n: COMMAND.length, duration: 1.1, ease: "none", onUpdate: () => { if (typed) typed.textContent = COMMAND.slice(0, Math.round(state.n)); } });
-      tl.to(outs, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.22, ease: "power2.out" }, "+=0.15");
-      const scoreState = { v: 100 };
-      tl.to(scoreState, { v: 17, duration: 0.9, ease: "power1.out", snap: { v: 1 }, onUpdate: () => { if (score) score.textContent = Math.round(scoreState.v) + "/100"; } }, ">-0.5");
-      gsap.to(caret, { autoAlpha: 0, duration: 0.5, repeat: -1, yoyo: true, ease: "steps(1)" });
-
-      gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { autoAlpha: 0, y: 22, duration: 0.6, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 90%" } });
-      });
+    if (reduce) {
+      if (typed) typed.textContent = COMMAND;
+      if (caret) caret.style.display = "none";
+      gsap.set(outs, { autoAlpha: 1, y: 0 });
+      document.querySelectorAll<HTMLElement>("[data-anim],[data-reveal]").forEach((el) => gsap.set(el, { autoAlpha: 1, y: 0 }));
+      return;
     }
-  );
-
-  // Install tab switcher.
-  document.querySelectorAll<HTMLElement>(".sc-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const id = tab.dataset.tab;
-      document.querySelectorAll<HTMLElement>(".sc-tab").forEach((t) => {
-        const on = t === tab;
-        t.classList.toggle("active", on);
-        t.setAttribute("aria-selected", on ? "true" : "false");
-      });
-      document.querySelectorAll<HTMLElement>(".sc-panel").forEach((p) => { p.classList.toggle("active", p.dataset.panel === id); });
+    gsap.from("[data-anim]", { autoAlpha: 0, y: 18, duration: 0.7, ease: "power2.out", stagger: 0.09 });
+    const tl = gsap.timeline({ delay: 0.5 });
+    const state = { n: 0 };
+    tl.to(state, { n: COMMAND.length, duration: 1.1, ease: "none", onUpdate: () => { if (typed) typed.textContent = COMMAND.slice(0, Math.round(state.n)); } });
+    tl.to(outs, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.22, ease: "power2.out" }, "+=0.15");
+    const scoreState = { v: 100 };
+    tl.to(scoreState, { v: 17, duration: 0.9, ease: "power1.out", snap: { v: 1 }, onUpdate: () => { if (score) score.textContent = Math.round(scoreState.v) + "/100"; } }, ">-0.5");
+    gsap.to(caret, { autoAlpha: 0, duration: 0.5, repeat: -1, yoyo: true, ease: "steps(1)" });
+    gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
+      gsap.from(el, { autoAlpha: 0, y: 22, duration: 0.6, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 90%" } });
     });
   });
 
-  // Copy button on the AI-prompt panel.
+  document.querySelectorAll<HTMLElement>(".sc-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const id = tab.dataset.tab;
+      document.querySelectorAll<HTMLElement>(".sc-tab").forEach((t) => { const on = t === tab; t.classList.toggle("active", on); t.setAttribute("aria-selected", on ? "true" : "false"); });
+      document.querySelectorAll<HTMLElement>(".sc-panel").forEach((p) => { p.classList.toggle("active", p.dataset.panel === id); });
+    });
+  });
   document.querySelectorAll<HTMLButtonElement>("[data-copy-btn]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const panel = btn.closest<HTMLElement>(".sc-panel");
@@ -322,20 +248,15 @@ const codeChecks = [
 </script>
 
 <style>
-  /* Hide Starlight's splash title; the hero carries the headline. */
   :global(main h1#_top) { display: none; }
   :global(.content-panel:first-of-type) { border-top: 0; }
 
-  .sc-root { --sc-beam: var(--fl-ember-strong); --sc-ring: color-mix(in srgb, var(--fl-ember) 32%, transparent); --sc-crit: #ef4444; --sc-high: #f97316; --sc-med: #eab308; position: relative; isolation: isolate; }
-  :root:not([data-theme="light"]) .sc-root { --sc-beam: #60a5fa; }
+  .sc-root { --sc-ring: color-mix(in srgb, var(--fl-ember) 32%, transparent); --sc-crit: #ef4444; --sc-high: #f59e0b; --sc-med: #eab308; position: relative; isolation: isolate; }
 
-  /* background */
+  /* background — subtle, Supabase-clean */
   .sc-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-  .sc-grid { position: absolute; inset: -2px; background-image: linear-gradient(to right, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px); background-size: 44px 44px; -webkit-mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%); mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%); }
-  .sc-glow { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.5; }
-  .sc-glow-1 { width: 42rem; height: 42rem; top: -18rem; right: -10rem; background: radial-gradient(circle, color-mix(in srgb, var(--fl-ember) 38%, transparent), transparent 70%); animation: sc-float 14s ease-in-out infinite; }
-  .sc-glow-2 { width: 32rem; height: 32rem; top: 6rem; left: -14rem; background: radial-gradient(circle, color-mix(in srgb, #22d3ee 26%, transparent), transparent 70%); animation: sc-float 18s ease-in-out infinite reverse; }
-  @keyframes sc-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(26px) } }
+  .sc-grid { position: absolute; inset: -2px; background-image: linear-gradient(to right, color-mix(in srgb, var(--fl-ember) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--fl-ember) 7%, transparent) 1px, transparent 1px); background-size: 48px 48px; -webkit-mask-image: radial-gradient(ellipse 75% 50% at 65% 0%, #000 0%, transparent 72%); mask-image: radial-gradient(ellipse 75% 50% at 65% 0%, #000 0%, transparent 72%); }
+  .sc-glow { position: absolute; width: 40rem; height: 40rem; top: -16rem; right: -8rem; border-radius: 50%; filter: blur(80px); opacity: 0.4; background: radial-gradient(circle, color-mix(in srgb, var(--fl-ember) 34%, transparent), transparent 70%); }
 
   /* hero */
   .sc-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 3rem; align-items: center; max-width: 72rem; margin: 0 auto; padding: 4.5rem var(--gutter, 1.5rem) 3.5rem; }
@@ -345,19 +266,19 @@ const codeChecks = [
   .sc-pill-tag { font-family: var(--sl-font-mono); font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 999px; background: var(--fl-ember); color: var(--fl-on-ember); }
   .sc-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sc-title { margin: 1.5rem 0 0; font-size: clamp(2.4rem, 1.4rem + 3.4vw, 3.9rem); font-weight: 680; line-height: 1.04; letter-spacing: -0.04em; color: var(--fl-ink); }
-  .sc-accent { background: linear-gradient(100deg, var(--fl-ember-strong), #22d3ee); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-  .sc-title .sc-accent { display: block; }
-  :root:not([data-theme="light"]) .sc-accent { background: linear-gradient(100deg, #60a5fa, #22d3ee); -webkit-background-clip: text; background-clip: text; }
+  .sc-accent { display: block; color: var(--fl-ember-strong); }
+  :root:not([data-theme="light"]) .sc-accent { color: var(--fl-ember); }
   .sc-sub { max-width: 34rem; margin: 1.35rem 0 0; font-size: 1.05rem; line-height: 1.6; color: var(--fl-muted); }
   .sc-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.9rem; }
-  .sc-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.25rem; border-radius: 0.625rem; font-size: 0.95rem; font-weight: 600; text-decoration: none; border: 1px solid transparent; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
-  .sc-btn.sc-btn-primary { background: var(--fl-ember-strong) !important; color: #fff !important; box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--fl-ember) 70%, transparent); }
-  .sc-btn.sc-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--fl-ember) 85%, transparent); }
+  .sc-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.25rem; border-radius: 0.625rem; font-size: 0.95rem; font-weight: 600; text-decoration: none; border: 1px solid transparent; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, filter 0.15s ease; }
+  .sc-btn.sc-btn-primary { background: var(--fl-ember-strong) !important; color: var(--fl-on-ember) !important; box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--fl-ember) 60%, transparent); }
+  :root:not([data-theme="light"]) .sc-btn.sc-btn-primary { color: #06220f !important; }
+  .sc-btn.sc-btn-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
   .sc-btn.sc-btn-ghost { background: color-mix(in srgb, var(--fl-paper) 70%, transparent) !important; color: var(--fl-ink) !important; border-color: var(--fl-rule-strong); backdrop-filter: blur(6px); }
   .sc-btn.sc-btn-ghost:hover { border-color: var(--fl-ember); transform: translateY(-1px); }
 
-  /* install panel (used in step 01) */
-  .sc-install { border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 75%, transparent); backdrop-filter: blur(6px); overflow: hidden; }
+  /* install panel */
+  .sc-install { border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 80%, transparent); overflow: hidden; }
   .sc-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.4rem 0.4rem 0; border-bottom: 1px solid var(--fl-rule); background: var(--fl-surface); }
   .sc-tab { appearance: none; border: 0; background: transparent; font: inherit; font-size: 0.8rem; font-weight: 500; color: var(--fl-muted); padding: 0.45rem 0.7rem; border-radius: 0.5rem 0.5rem 0 0; cursor: pointer; }
   .sc-tab:hover { color: var(--fl-ink); }
@@ -371,7 +292,7 @@ const codeChecks = [
 
   /* scan console */
   .sc-visual { display: flex; justify-content: center; }
-  .sc-console { width: 100%; max-width: 27rem; border: 1px solid var(--fl-rule); border-radius: 1rem; background: color-mix(in srgb, var(--fl-paper) 82%, transparent); backdrop-filter: blur(8px); box-shadow: var(--sl-shadow-lg); overflow: hidden; }
+  .sc-console { width: 100%; max-width: 27rem; border: 1px solid var(--fl-rule); border-radius: 1rem; background: color-mix(in srgb, var(--fl-paper) 85%, transparent); box-shadow: var(--sl-shadow-lg); overflow: hidden; }
   .sc-radar { aspect-ratio: 1; max-height: 15rem; margin: 1rem auto 0; width: 70%; }
   .sc-sweep { transform-origin: 110px 110px; animation: sc-spin 4s linear infinite; }
   @keyframes sc-spin { to { transform: rotate(360deg); } }
@@ -386,7 +307,7 @@ const codeChecks = [
   .sc-term-body { padding: 0.85rem 0.9rem; line-height: 1.85; color: var(--fl-body); min-height: 9.5rem; }
   .sc-prompt { color: var(--fl-ink); } .sc-dollar { color: var(--fl-ember-strong); } .sc-caret { color: var(--fl-ember); }
   .sc-out, .sc-findings, .sc-grade-line { opacity: 0; }
-  .sc-tick { color: #28c840; margin-right: 0.3rem; }
+  .sc-tick { color: var(--fl-ember-strong); margin-right: 0.3rem; }
   .sc-findings { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
   .sc-chip { font-size: 0.68rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 0.375rem; }
   .sc-chip.sc-crit { color: #fff; background: var(--sc-crit); } .sc-chip.sc-high { color: #fff; background: var(--sc-high); } .sc-chip.sc-med { color: #3a2e00; background: var(--sc-med); }
@@ -394,34 +315,43 @@ const codeChecks = [
   .sc-grade { display: inline-block; font-weight: 700; color: var(--sc-crit); border: 1px solid var(--sc-crit); border-radius: 0.3rem; padding: 0 0.3rem; margin: 0 0.2rem; }
   .sc-score { color: var(--fl-muted); }
 
-  /* ============ editorial gridline sections ============ */
+  /* ============ editorial: gridlines + Supabase layout ============ */
   .ed { position: relative; max-width: 80rem; margin: 2rem auto 0; padding: 0 var(--gutter, 1.5rem); }
-  /* the two vertical gridlines */
   .ed::before, .ed::after { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--fl-rule); }
   .ed::before { left: var(--gutter, 1.5rem); } .ed::after { right: var(--gutter, 1.5rem); }
   .ed-rule { position: relative; height: 1px; background: var(--fl-rule); }
-  .ed-plus { position: absolute; top: 50%; transform: translate(-50%, -50%); color: var(--fl-ember); font-size: 1.05rem; line-height: 1; font-weight: 400; }
-  .ed-plus-l { left: 0; } .ed-plus-r { right: 0; transform: translate(50%, -50%); }
-  .ed-step { display: grid; grid-template-columns: 1fr; gap: 2rem; padding: 4rem 2.5rem; align-items: start; }
-  .ed-head { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 1rem 2.5rem; align-items: end; }
-  .ed-label { grid-column: 1 / -1; font-family: var(--sl-font-mono); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--fl-ember-strong); margin-bottom: 0.25rem; }
-  .ed-title { grid-column: 1; margin: 0; font-size: clamp(1.8rem, 1.1rem + 1.9vw, 2.5rem); font-weight: 680; line-height: 1.08; letter-spacing: -0.035em; color: var(--fl-ink); text-wrap: balance; }
-  .ed-lead { grid-column: 2; margin: 0; align-self: end; font-size: 1.0625rem; line-height: 1.6; color: var(--fl-muted); }
-  .ed-lead code, .ed-title code { font-family: var(--sl-font-mono); font-size: 0.9em; }
-  .ed-body { grid-column: 1 / -1; margin-top: 0.5rem; }
-  .ed-body :global(.expressive-code) { margin: 0; }
-  .ed-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; margin: 1rem 0 0; }
-  .ed-chip { font-size: 0.8rem; color: var(--fl-body); border: 1px solid var(--fl-rule); border-radius: 999px; padding: 0.3rem 0.75rem; background: color-mix(in srgb, var(--fl-paper) 60%, transparent); }
-  .ed-formats { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-  .ed-fmt { font-family: var(--sl-font-mono); font-size: 0.85rem; color: var(--fl-ink); border: 1px solid var(--fl-rule-strong); border-radius: 0.5rem; padding: 0.5rem 0.9rem; background: color-mix(in srgb, var(--fl-ember) 7%, transparent); }
+  .ed-plus { position: absolute; top: 50%; color: var(--fl-ember); font-size: 1.05rem; line-height: 1; }
+  .ed-plus-l { left: 0; transform: translate(-50%, -50%); } .ed-plus-r { right: 0; transform: translate(50%, -50%); }
 
-  /* what it catches */
-  .sc-section { max-width: 60rem; margin: 0 auto; padding: 3.5rem var(--gutter, 1.5rem); }
-  .sc-h2 { font-size: 1.5rem; font-weight: 640; letter-spacing: -0.03em; color: var(--fl-ink); margin: 0 0 1.5rem; }
-  .sc-catches { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.5rem 1.5rem; }
-  .sc-catch { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.925rem; color: var(--fl-body); padding: 0.3rem 0; }
-  .sc-catch svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--fl-ember-strong); }
-  .sc-catch-note { margin-top: 1.5rem; font-size: 0.9rem; color: var(--fl-muted); }
+  /* each section: left heading, right content grid (Supabase) */
+  .ed-step { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr); gap: 2rem 3.5rem; padding: 4.5rem 2.5rem; align-items: start; }
+  .ed-head { position: sticky; top: 5rem; }
+  .ed-label { font-family: var(--sl-font-mono); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--fl-ember-strong); margin-bottom: 0.9rem; }
+  .ed-title { margin: 0; font-size: clamp(1.8rem, 1.1rem + 1.9vw, 2.6rem); font-weight: 680; line-height: 1.08; letter-spacing: -0.035em; color: var(--fl-ink); text-wrap: balance; }
+  .ed-lead { margin: 1rem 0 0; font-size: 1.0625rem; line-height: 1.6; color: var(--fl-muted); max-width: 26rem; }
+  .ed-lead code, .ed-title code { font-family: var(--sl-font-mono); font-size: 0.9em; }
+
+  .ed-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .ed-card { border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 65%, transparent); padding: 1.4rem; transition: border-color 0.15s ease, transform 0.15s ease; }
+  .ed-card:hover { border-color: var(--fl-ember); transform: translateY(-2px); }
+  .ed-card-ic { display: inline-flex; width: 2.1rem; height: 2.1rem; align-items: center; justify-content: center; border-radius: 0.6rem; color: var(--fl-ember-strong); background: var(--fl-ember-soft); margin-bottom: 0.9rem; }
+  :root:not([data-theme="light"]) .ed-card-ic { color: var(--fl-ember); }
+  .ed-card-ic :global(svg) { width: 1.2rem; height: 1.2rem; }
+  .ed-card-title { margin: 0 0 0.4rem; font-size: 1.0625rem; font-weight: 620; color: var(--fl-ink); letter-spacing: -0.015em; }
+  .ed-card-body { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--fl-muted); }
+
+  .ed-panel :global(.expressive-code) { margin: 0; }
+
+  .ed-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.5rem; }
+  .ed-check { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.95rem; color: var(--fl-body); }
+  .ed-check-ic { display: inline-flex; flex-shrink: 0; width: 1.3rem; height: 1.3rem; align-items: center; justify-content: center; border-radius: 0.3rem; color: var(--fl-ember-strong); background: var(--fl-ember-soft); margin-top: 0.1rem; }
+  :root:not([data-theme="light"]) .ed-check-ic { color: var(--fl-ember); }
+  .ed-check-ic :global(svg) { width: 0.85rem; height: 0.85rem; }
+
+  .ed-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; padding: 3rem 2.5rem; }
+  .ed-link { color: var(--fl-ember-strong); font-weight: 600; text-decoration: none; }
+  :root:not([data-theme="light"]) .ed-link { color: var(--fl-ember); }
+  .ed-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
   /* responsive */
   @media (max-width: 54rem) {
@@ -430,12 +360,10 @@ const codeChecks = [
     .sc-sub { margin-inline: auto; } .sc-actions { justify-content: center; }
     .sc-visual { order: -1; }
     .ed::before, .ed::after { display: none; }
-    .ed-step { grid-template-columns: 1fr; padding: 2.75rem 1.25rem; gap: 1.25rem; }
-    .ed-head { grid-template-columns: 1fr; gap: 0.75rem; }
-    .ed-title, .ed-lead { grid-column: 1; }
+    .ed-step { grid-template-columns: 1fr; padding: 2.75rem 1.25rem; gap: 1.75rem; }
+    .ed-head { position: static; }
+    .ed-cards, .ed-checks { grid-template-columns: 1fr; }
+    .ed-cta { padding: 2rem 1.25rem; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .sc-sweep, .sc-blip, .sc-glow { animation: none; }
-    .sc-btn, .sc-pill { transition: none; }
-  }
+  @media (prefers-reduced-motion: reduce) { .sc-sweep, .sc-blip { animation: none; } .sc-btn, .sc-pill, .ed-card { transition: none; } }
 </style>
