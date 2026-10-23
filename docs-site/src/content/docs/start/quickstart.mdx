@@ -1,0 +1,137 @@
+---
+title: Quickstart
+description: From zero to a graded security report and a live dashboard in a couple of minutes — install, scan, open the dashboard, log in, and where to go next.
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Scout is a single Go binary. Install it, point it at something, read the grade —
+then open the dashboard to explore and export the findings.
+
+## 1. Install
+
+Pick one. All three put `scout` on your `PATH` — no account, no config required.
+
+**macOS / Linux:**
+
+```bash
+curl -fsSL https://scout.codetotech.com/install.sh | sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://scout.codetotech.com/install.ps1 | iex
+```
+
+**With Go (any OS):**
+
+```bash
+go install github.com/MUKE-coder/scout/cmd/scout@latest
+```
+
+Open a new terminal and check it:
+
+```bash
+scout version
+```
+
+<Aside type="tip">
+Run `scout init` to drop a `scout.yaml` with every setting (and the dashboard
+login) at its defaults — handy to edit later.
+</Aside>
+
+## 2. Scan a running app
+
+Start your app locally, then point Scout at it:
+
+```bash
+scout scan --target http://localhost:3000
+```
+
+Scout crawls the surface, runs the safe-mode checks, and prints a graded report:
+findings grouped by severity, each with a CWE/OWASP tag and a fix.
+
+<Aside type="note">
+`--mode safe` is the default. Against **localhost** you can go further with
+`--mode active --env dev` to run the injection and auth probes — no ownership
+proof is needed for local targets. See [Modes & environments](/start/modes/).
+</Aside>
+
+## 3. Scan a repository
+
+Point Scout at a checkout to find secrets, insecure Dockerfiles, weak crypto and
+reachable CVEs — no running app needed:
+
+```bash
+scout scan --repo .
+```
+
+## 4. Scan and open the dashboard
+
+Add `--serve` to run a scan and then open the dashboard on the same results. Use
+`--check-timeout` to give slow sites more time per check:
+
+```bash
+scout scan --target https://tulabefilm.com --check-timeout 120s --serve
+```
+
+When the scan finishes, Scout starts the dashboard and prints:
+
+```text
+Dashboard:  http://localhost:9090/scout/ui/
+Press Ctrl+C to stop.
+```
+
+Open that URL in your browser. (The bare root, `http://localhost:9090/`, redirects
+there too.) Press **Ctrl+C** in the terminal to stop the server.
+
+### Log in
+
+The dashboard asks for a username and password. The dev default is:
+
+- **Username:** `admin`
+- **Password:** `scout`
+
+<Aside type="caution">
+These defaults work only in the `dev` environment. Before serving in
+staging/prod, set your own `username`, `password` and `jwt_secret` in
+`scout.yaml` — Scout refuses to serve with the defaults outside dev.
+</Aside>
+
+Already have the dashboard running separately? Just use `scout serve` (it reads
+`scout.db` from the current directory).
+
+## 5. Gate your CI (optional)
+
+Fail a pull request when Scout finds something at or above a severity:
+
+```bash
+scout ci --repo . --fail-on high
+```
+
+## 6. Hand findings to a developer (optional)
+
+Export the report to files in your working directory — no dashboard needed:
+
+```bash
+scout scan --target https://tulabefilm.com --export md,html
+# writes scout-report.md and scout-report.html
+```
+
+Or use the **Export** menu on the dashboard's Findings page.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard title="Dashboard tour" href="/usage/dashboard-tour/" description="Every dashboard page — overview, findings, attack surface, compliance — and how to read it." />
+  <LinkCard title="Modes & environments" href="/start/modes/" description="The four scan modes and how the environment caps them." />
+  <LinkCard title="Ownership verification" href="/start/ownership/" description="Required before active scans of a public host you own." />
+  <LinkCard title="Scan a running app" href="/usage/scan-app/" description="Black-box scanning in depth." />
+  <LinkCard title="Scan a repo" href="/usage/scan-repo/" description="Source & supply-chain scanning." />
+  <LinkCard title="Gate your CI" href="/usage/ci/" description="Fail builds on new risk, with SARIF for code scanning." />
+  <LinkCard title="Output & export" href="/usage/output/" description="JSON, SARIF, Markdown, HTML and the report files." />
+  <LinkCard title="Configuration" href="/reference/configuration/" description="Every scout.yaml setting, annotated." />
+  <LinkCard title="Checks catalog" href="/reference/checks/" description="Every check Scout can run." />
+  <LinkCard title="The vuln lab" href="/lab/overview/" description="A deliberately-vulnerable app to try every check against." />
+</CardGrid>
