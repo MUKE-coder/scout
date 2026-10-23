@@ -6,27 +6,15 @@ import prompt from "../prompts/build-with-ai.md?raw";
 /**
  * The docs home page. One idea carries it: point Scout at your app or your repo,
  * and it shows you every way in — then grades it and tells you how to fix it.
- * The hero pairs that message with a live, animated "scan" console.
+ * The hero pairs that message with a live, animated "scan" console; below it, a
+ * gridline-framed, numbered walk-through of what Scout does.
  */
 const install = [
   { id: "sh", label: "macOS / Linux", command: "curl -fsSL https://scout.codetotech.com/install.sh | sh" },
   { id: "ps", label: "Windows", command: "irm https://scout.codetotech.com/install.ps1 | iex" },
   { id: "go-install", label: "go install", command: "go install github.com/MUKE-coder/scout/cmd/scout@latest" },
   { id: "source", label: "from source", command: "git clone https://github.com/MUKE-coder/scout && cd scout && go build ./cmd/scout" },
-  {
-    id: "ai",
-    label: "AI prompt",
-    command: "Paste this into Claude, Cursor, Codex or any coding agent →",
-    copy: prompt,
-    note: true,
-  },
-];
-
-const firstScan = [
-  { cmd: "scout scan --target http://localhost:3000", what: "Black-box scan of a running app" },
-  { cmd: "scout scan --repo .", what: "Source & supply-chain scan of a repo" },
-  { cmd: "scout ci --fail-on high", what: "Gate a pull request on findings" },
-  { cmd: "scout serve", what: "Dashboard + scheduled scans" },
+  { id: "ai", label: "AI prompt", command: "Paste this into Claude, Cursor, Codex or any coding agent →", copy: prompt, note: true },
 ];
 
 const catches = [
@@ -40,40 +28,22 @@ const catches = [
   "Version disclosure, directory listings, mixed content",
 ];
 
-// Inline SVG icons for the pillar cards (stroke uses currentColor).
-function icon(name: string): string {
-  const s = (p: string) =>
-    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-  const icons: Record<string, string> = {
-    scan: s('<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/>'),
-    shield: s('<path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>'),
-    ci: s('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v4h-4"/><path d="M9 12l2 2 4-4"/>'),
-    server: s('<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><line x1="7" y1="7.5" x2="7.01" y2="7.5"/><line x1="7" y1="16.5" x2="7.01" y2="16.5"/>'),
-  };
-  return icons[name] ?? "";
-}
+const ci = `name: scout
+on: [pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scout ci --repo . --fail-on high --new-only`;
 
-const pillars = [
-  {
-    icon: "scan",
-    title: "Black-box & source, one tool",
-    body: "Scan a running URL for live weaknesses, and a repo for secrets, supply-chain CVEs and insecure code — from the same binary.",
-  },
-  {
-    icon: "shield",
-    title: "Safe by default",
-    body: "Modes are capped by the environment. Active scans of a public host require a published ownership token. No destructive payloads.",
-  },
-  {
-    icon: "ci",
-    title: "Built for CI",
-    body: "One command fails the build on findings at or above a severity, with SARIF for code scanning and a graded terminal report.",
-  },
-  {
-    icon: "server",
-    title: "Self-hosted, no account",
-    body: "A single Go binary. Nothing leaves your machine. Scan history in local SQLite, an embedded dashboard, scheduled scans.",
-  },
+const codeChecks = [
+  "Hard-coded secrets",
+  "Insecure Dockerfiles",
+  "Weak crypto (MD5/SHA-1)",
+  "Dangerous sinks (eval/exec)",
+  "Reachable Go CVEs",
+  "Unpinned dependencies",
 ];
 ---
 
@@ -113,26 +83,6 @@ const pillars = [
           <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.57.1.78-.25.78-.55v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.3 1.19-3.1-.12-.3-.52-1.47.11-3.07 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.6.23 2.77.11 3.07.74.8 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.79.55A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"></path></svg>
           View on GitHub
         </a>
-      </div>
-
-      <div class="sc-install" data-anim>
-        <div class="sc-tabs" role="tablist" aria-label="Install Scout">
-          {install.map((item, i) => (
-            <button type="button" role="tab" class:list={["sc-tab", { active: i === 0 }]} id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={i === 0 ? "true" : "false"} data-tab={item.id}>{item.label}</button>
-          ))}
-        </div>
-        {install.map((item, i) => (
-          <div class:list={["sc-panel", { active: i === 0 }]} id={`panel-${item.id}`} role="tabpanel" aria-labelledby={`tab-${item.id}`} data-panel={item.id} data-copy={item.copy ?? item.command}>
-            {item.note ? (
-              <div class="sc-ai-line">
-                <span class="sc-ai-arrow">{item.command}</span>
-                <button type="button" class="sc-copy" data-copy-btn><span data-copy-label>Copy prompt</span></button>
-              </div>
-            ) : (
-              <Code code={item.command} lang="bash" frame="none" />
-            )}
-          </div>
-        ))}
       </div>
     </div>
 
@@ -190,30 +140,104 @@ const pillars = [
     </div>
   </section>
 
-  <section class="sc-section">
-    <h2 class="sc-h2" data-reveal>Your first scan</h2>
-    <div class="sc-firstscan">
-      {firstScan.map((row) => (
-        <div class="sc-fs-row" data-reveal>
-          <code class="sc-fs-cmd">{row.cmd}</code>
-          <span class="sc-fs-what">{row.what}</span>
+  <!-- ============ editorial, gridline-framed walk-through ============ -->
+  <div class="ed">
+    <!-- 01 · INSTALL -->
+    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+    <section class="ed-step">
+      <div class="ed-head">
+        <div class="ed-label" data-reveal>[ 01 / 05 ]&nbsp;&nbsp;INSTALL</div>
+        <h2 class="ed-title" data-reveal>One command to install,<br /><span class="sc-accent">on macOS, Linux &amp; Windows</span></h2>
+        <p class="ed-lead" data-reveal>A single Go binary, no runtime and no account. Or grab it with <code>go install</code> — the version is stamped either way.</p>
+      </div>
+      <div class="ed-body" data-reveal>
+        <div class="sc-install">
+          <div class="sc-tabs" role="tablist" aria-label="Install Scout">
+            {install.map((item, i) => (
+              <button type="button" role="tab" class:list={["sc-tab", { active: i === 0 }]} id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={i === 0 ? "true" : "false"} data-tab={item.id}>{item.label}</button>
+            ))}
+          </div>
+          {install.map((item, i) => (
+            <div class:list={["sc-panel", { active: i === 0 }]} id={`panel-${item.id}`} role="tabpanel" aria-labelledby={`tab-${item.id}`} data-panel={item.id} data-copy={item.copy ?? item.command}>
+              {item.note ? (
+                <div class="sc-ai-line">
+                  <span class="sc-ai-arrow">{item.command}</span>
+                  <button type="button" class="sc-copy" data-copy-btn><span data-copy-label>Copy prompt</span></button>
+                </div>
+              ) : (
+                <Code code={item.command} lang="bash" frame="none" />
+              )}
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
-  </section>
+      </div>
+    </section>
 
-  <section class="sc-section">
-    <div class="sc-grid-cards">
-      {pillars.map((p) => (
-        <div class="sc-card" data-reveal>
-          <span class="sc-card-ic" set:html={icon(p.icon)} />
-          <h3 class="sc-card-title">{p.title}</h3>
-          <p class="sc-card-body">{p.body}</p>
+    <!-- 02 · SCAN -->
+    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+    <section class="ed-step">
+      <div class="ed-head">
+        <div class="ed-label" data-reveal>[ 02 / 05 ]&nbsp;&nbsp;SCAN</div>
+        <h2 class="ed-title" data-reveal>Point it at a running app,<br /><span class="sc-accent">see every way in</span></h2>
+        <p class="ed-lead" data-reveal>Crawl the surface and run the checks your mode allows — headers, exposed files, CORS, injection, weak auth — then read a graded report.</p>
+      </div>
+      <div class="ed-body" data-reveal>
+        <Code code={`scout scan --target https://example.com --mode active`} lang="bash" frame="none" />
+      </div>
+    </section>
+
+    <!-- 03 · SOURCE -->
+    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+    <section class="ed-step">
+      <div class="ed-head">
+        <div class="ed-label" data-reveal>[ 03 / 05 ]&nbsp;&nbsp;SOURCE</div>
+        <h2 class="ed-title" data-reveal>Or scan the repo<br /><span class="sc-accent">before you ship</span></h2>
+        <p class="ed-lead" data-reveal>No running app needed. Find the problems you want caught at review time — secrets, supply-chain CVEs and insecure code.</p>
+      </div>
+      <div class="ed-body" data-reveal>
+        <Code code={`scout scan --repo .`} lang="bash" frame="none" />
+        <ul class="ed-chips">
+          {codeChecks.map((c) => <li class="ed-chip">{c}</li>)}
+        </ul>
+      </div>
+    </section>
+
+    <!-- 04 · CI -->
+    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+    <section class="ed-step">
+      <div class="ed-head">
+        <div class="ed-label" data-reveal>[ 04 / 05 ]&nbsp;&nbsp;CI</div>
+        <h2 class="ed-title" data-reveal>Fail the build<br /><span class="sc-accent">on new risk</span></h2>
+        <p class="ed-lead" data-reveal>One command turns the pipeline red on findings at or above a severity. Baseline once, then gate on only what a change introduced.</p>
+      </div>
+      <div class="ed-body" data-reveal>
+        <Code code={ci} lang="yaml" frame="none" />
+      </div>
+    </section>
+
+    <!-- 05 · SHARE -->
+    <div class="ed-rule" data-reveal><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+    <section class="ed-step">
+      <div class="ed-head">
+        <div class="ed-label" data-reveal>[ 05 / 05 ]&nbsp;&nbsp;SHARE</div>
+        <h2 class="ed-title" data-reveal>Hand developers<br /><span class="sc-accent">a ready-made fix list</span></h2>
+        <p class="ed-lead" data-reveal>Run the dashboard with <code>scout serve</code>, then export the findings as Markdown, HTML or text — each with the evidence and the fix — to drop into a PR or ticket.</p>
+      </div>
+      <div class="ed-body" data-reveal>
+        <div class="ed-formats">
+          <span class="ed-fmt">report.md</span>
+          <span class="ed-fmt">report.html</span>
+          <span class="ed-fmt">report.txt</span>
+          <span class="ed-fmt">findings.json</span>
+          <span class="ed-fmt">findings.csv</span>
         </div>
-      ))}
-    </div>
-  </section>
+      </div>
+    </section>
 
+    <div class="ed-rule"><span class="ed-plus ed-plus-l">+</span><span class="ed-plus ed-plus-r">+</span></div>
+  </div>
+
+  <!-- ============ what it catches ============ -->
   <section class="sc-section">
     <h2 class="sc-h2" data-reveal>What it catches</h2>
     <ul class="sc-catches">
@@ -237,14 +261,10 @@ const pillars = [
   gsap.registerPlugin(ScrollTrigger);
 
   const COMMAND = "scout scan --target https://example.com";
-
   const mm = gsap.matchMedia();
 
   mm.add(
-    {
-      reduce: "(prefers-reduced-motion: reduce)",
-      ok: "(prefers-reduced-motion: no-preference)",
-    },
+    { reduce: "(prefers-reduced-motion: reduce)", ok: "(prefers-reduced-motion: no-preference)" },
     (ctx) => {
       const reduce = ctx.conditions?.reduce;
       const typed = document.querySelector<HTMLElement>("#sc-typed");
@@ -253,7 +273,6 @@ const pillars = [
       const score = document.querySelector<HTMLElement>("#sc-score");
 
       if (reduce) {
-        // Show the finished state, no motion.
         if (typed) typed.textContent = COMMAND;
         if (caret) caret.style.display = "none";
         gsap.set(outs, { autoAlpha: 1, y: 0 });
@@ -261,48 +280,18 @@ const pillars = [
         return;
       }
 
-      // Hero entrance.
-      gsap.from("[data-anim]", {
-        autoAlpha: 0,
-        y: 18,
-        duration: 0.7,
-        ease: "power2.out",
-        stagger: 0.09,
-      });
+      gsap.from("[data-anim]", { autoAlpha: 0, y: 18, duration: 0.7, ease: "power2.out", stagger: 0.09 });
 
-      // Type the command, then reveal the scan output line by line.
       const tl = gsap.timeline({ delay: 0.5 });
       const state = { n: 0 };
-      tl.to(state, {
-        n: COMMAND.length,
-        duration: 1.1,
-        ease: "none",
-        onUpdate: () => {
-          if (typed) typed.textContent = COMMAND.slice(0, Math.round(state.n));
-        },
-      });
+      tl.to(state, { n: COMMAND.length, duration: 1.1, ease: "none", onUpdate: () => { if (typed) typed.textContent = COMMAND.slice(0, Math.round(state.n)); } });
       tl.to(outs, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.22, ease: "power2.out" }, "+=0.15");
-      // Count the score down from 100 to the real grade as it lands.
       const scoreState = { v: 100 };
-      tl.to(scoreState, {
-        v: 17,
-        duration: 0.9,
-        ease: "power1.out",
-        snap: { v: 1 },
-        onUpdate: () => { if (score) score.textContent = Math.round(scoreState.v) + "/100"; },
-      }, ">-0.5");
-      // Blink the caret forever.
+      tl.to(scoreState, { v: 17, duration: 0.9, ease: "power1.out", snap: { v: 1 }, onUpdate: () => { if (score) score.textContent = Math.round(scoreState.v) + "/100"; } }, ">-0.5");
       gsap.to(caret, { autoAlpha: 0, duration: 0.5, repeat: -1, yoyo: true, ease: "steps(1)" });
 
-      // Scroll reveals for the sections below the fold.
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, {
-          autoAlpha: 0,
-          y: 22,
-          duration: 0.6,
-          ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 88%" },
-        });
+        gsap.from(el, { autoAlpha: 0, y: 22, duration: 0.6, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 90%" } });
       });
     }
   );
@@ -316,9 +305,7 @@ const pillars = [
         t.classList.toggle("active", on);
         t.setAttribute("aria-selected", on ? "true" : "false");
       });
-      document.querySelectorAll<HTMLElement>(".sc-panel").forEach((p) => {
-        p.classList.toggle("active", p.dataset.panel === id);
-      });
+      document.querySelectorAll<HTMLElement>(".sc-panel").forEach((p) => { p.classList.toggle("active", p.dataset.panel === id); });
     });
   });
 
@@ -335,91 +322,42 @@ const pillars = [
 </script>
 
 <style>
-  /* Starlight's splash template prints the frontmatter title as an h1#_top.
-     The hero already carries the headline, so hide it on this page only
-     (Landing renders only here). */
+  /* Hide Starlight's splash title; the hero carries the headline. */
   :global(main h1#_top) { display: none; }
   :global(.content-panel:first-of-type) { border-top: 0; }
 
-  /* ============ tokens local to the landing ============ */
-  .sc-root {
-    --sc-beam: var(--fl-ember-strong);
-    --sc-ring: color-mix(in srgb, var(--fl-ember) 32%, transparent);
-    --sc-crit: #ef4444;
-    --sc-high: #f97316;
-    --sc-med: #eab308;
-    position: relative;
-    isolation: isolate;
-  }
+  .sc-root { --sc-beam: var(--fl-ember-strong); --sc-ring: color-mix(in srgb, var(--fl-ember) 32%, transparent); --sc-crit: #ef4444; --sc-high: #f97316; --sc-med: #eab308; position: relative; isolation: isolate; }
   :root:not([data-theme="light"]) .sc-root { --sc-beam: #60a5fa; }
 
-  /* ============ background ============ */
+  /* background */
   .sc-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-  .sc-grid {
-    position: absolute; inset: -2px;
-    background-image:
-      linear-gradient(to right, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px);
-    background-size: 44px 44px;
-    -webkit-mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%);
-    mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%);
-  }
+  .sc-grid { position: absolute; inset: -2px; background-image: linear-gradient(to right, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--fl-ember) 9%, transparent) 1px, transparent 1px); background-size: 44px 44px; -webkit-mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%); mask-image: radial-gradient(ellipse 80% 55% at 70% 0%, #000 0%, transparent 75%); }
   .sc-glow { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.5; }
   .sc-glow-1 { width: 42rem; height: 42rem; top: -18rem; right: -10rem; background: radial-gradient(circle, color-mix(in srgb, var(--fl-ember) 38%, transparent), transparent 70%); animation: sc-float 14s ease-in-out infinite; }
   .sc-glow-2 { width: 32rem; height: 32rem; top: 6rem; left: -14rem; background: radial-gradient(circle, color-mix(in srgb, #22d3ee 26%, transparent), transparent 70%); animation: sc-float 18s ease-in-out infinite reverse; }
   @keyframes sc-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(26px) } }
 
-  /* ============ hero ============ */
-  .sc-hero {
-    display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 3rem;
-    align-items: center;
-    max-width: 72rem;
-    margin: 0 auto;
-    padding: 4.5rem var(--gutter, 1.5rem) 2rem;
-  }
+  /* hero */
+  .sc-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 3rem; align-items: center; max-width: 72rem; margin: 0 auto; padding: 4.5rem var(--gutter, 1.5rem) 3.5rem; }
   .sc-hero-copy { text-align: left; }
-
-  .sc-pill {
-    display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%;
-    padding: 0.3rem 0.8rem 0.3rem 0.3rem;
-    border: 1px solid var(--fl-rule); border-radius: 999px;
-    background: color-mix(in srgb, var(--fl-surface) 80%, transparent);
-    backdrop-filter: blur(6px);
-    font-size: 0.8rem; color: var(--fl-muted); text-decoration: none;
-    transition: border-color 0.15s ease;
-  }
+  .sc-pill { display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; padding: 0.3rem 0.8rem 0.3rem 0.3rem; border: 1px solid var(--fl-rule); border-radius: 999px; background: color-mix(in srgb, var(--fl-surface) 80%, transparent); backdrop-filter: blur(6px); font-size: 0.8rem; color: var(--fl-muted); text-decoration: none; transition: border-color 0.15s ease; }
   .sc-pill:hover { border-color: var(--fl-ember); }
   .sc-pill-tag { font-family: var(--sl-font-mono); font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 999px; background: var(--fl-ember); color: var(--fl-on-ember); }
   .sc-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  .sc-title {
-    margin: 1.5rem 0 0;
-    font-size: clamp(2.4rem, 1.4rem + 3.4vw, 3.9rem);
-    font-weight: 680; line-height: 1.04; letter-spacing: -0.04em;
-    color: var(--fl-ink);
-  }
-  .sc-accent {
-    display: block;
-    background: linear-gradient(100deg, var(--fl-ember-strong), #22d3ee);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-  }
+  .sc-title { margin: 1.5rem 0 0; font-size: clamp(2.4rem, 1.4rem + 3.4vw, 3.9rem); font-weight: 680; line-height: 1.04; letter-spacing: -0.04em; color: var(--fl-ink); }
+  .sc-accent { background: linear-gradient(100deg, var(--fl-ember-strong), #22d3ee); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+  .sc-title .sc-accent { display: block; }
   :root:not([data-theme="light"]) .sc-accent { background: linear-gradient(100deg, #60a5fa, #22d3ee); -webkit-background-clip: text; background-clip: text; }
-
   .sc-sub { max-width: 34rem; margin: 1.35rem 0 0; font-size: 1.05rem; line-height: 1.6; color: var(--fl-muted); }
-
   .sc-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.9rem; }
   .sc-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.25rem; border-radius: 0.625rem; font-size: 0.95rem; font-weight: 600; text-decoration: none; border: 1px solid transparent; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
-  /* High specificity + !important: beat Starlight's .sl-markdown-content a colour. */
   .sc-btn.sc-btn-primary { background: var(--fl-ember-strong) !important; color: #fff !important; box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--fl-ember) 70%, transparent); }
   .sc-btn.sc-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--fl-ember) 85%, transparent); }
   .sc-btn.sc-btn-ghost { background: color-mix(in srgb, var(--fl-paper) 70%, transparent) !important; color: var(--fl-ink) !important; border-color: var(--fl-rule-strong); backdrop-filter: blur(6px); }
   .sc-btn.sc-btn-ghost:hover { border-color: var(--fl-ember); transform: translateY(-1px); }
 
-  /* install panel */
-  .sc-install { margin-top: 2rem; border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 75%, transparent); backdrop-filter: blur(6px); overflow: hidden; max-width: 36rem; }
+  /* install panel (used in step 01) */
+  .sc-install { border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 75%, transparent); backdrop-filter: blur(6px); overflow: hidden; }
   .sc-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.4rem 0.4rem 0; border-bottom: 1px solid var(--fl-rule); background: var(--fl-surface); }
   .sc-tab { appearance: none; border: 0; background: transparent; font: inherit; font-size: 0.8rem; font-weight: 500; color: var(--fl-muted); padding: 0.45rem 0.7rem; border-radius: 0.5rem 0.5rem 0 0; cursor: pointer; }
   .sc-tab:hover { color: var(--fl-ink); }
@@ -431,72 +369,73 @@ const pillars = [
   .sc-ai-arrow { color: var(--fl-muted); font-size: 0.85rem; }
   .sc-copy { border: 1px solid var(--fl-ember); background: var(--fl-ember); color: var(--fl-on-ember); border-radius: 0.5rem; padding: 0.4rem 0.8rem; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
-  /* ============ scan console (right) ============ */
+  /* scan console */
   .sc-visual { display: flex; justify-content: center; }
   .sc-console { width: 100%; max-width: 27rem; border: 1px solid var(--fl-rule); border-radius: 1rem; background: color-mix(in srgb, var(--fl-paper) 82%, transparent); backdrop-filter: blur(8px); box-shadow: var(--sl-shadow-lg); overflow: hidden; }
   .sc-radar { aspect-ratio: 1; max-height: 15rem; margin: 1rem auto 0; width: 70%; }
   .sc-sweep { transform-origin: 110px 110px; animation: sc-spin 4s linear infinite; }
   @keyframes sc-spin { to { transform: rotate(360deg); } }
   .sc-blip { opacity: 0; animation: sc-ping 4s ease-out infinite; }
-  .sc-blip-1 { animation-delay: 0.6s; }
-  .sc-blip-2 { animation-delay: 2.1s; }
-  .sc-blip-3 { animation-delay: 3.1s; }
+  .sc-blip-1 { animation-delay: 0.6s; } .sc-blip-2 { animation-delay: 2.1s; } .sc-blip-3 { animation-delay: 3.1s; }
   @keyframes sc-ping { 0%,55% { opacity: 0; } 60% { opacity: 1; } 100% { opacity: 0.25; } }
-
   .sc-term { border-top: 1px solid var(--fl-rule); font-family: var(--sl-font-mono); font-size: 0.78rem; }
   .sc-term-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--fl-rule); background: var(--fl-surface); }
   .sc-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--fl-rule-strong); }
   .sc-dot:nth-child(1) { background: #ff5f57; } .sc-dot:nth-child(2) { background: #febc2e; } .sc-dot:nth-child(3) { background: #28c840; }
   .sc-term-title { margin-left: 0.5rem; color: var(--fl-muted); font-size: 0.72rem; }
   .sc-term-body { padding: 0.85rem 0.9rem; line-height: 1.85; color: var(--fl-body); min-height: 9.5rem; }
-  .sc-prompt { color: var(--fl-ink); }
-  .sc-dollar { color: var(--fl-ember-strong); }
-  .sc-caret { color: var(--fl-ember); }
+  .sc-prompt { color: var(--fl-ink); } .sc-dollar { color: var(--fl-ember-strong); } .sc-caret { color: var(--fl-ember); }
   .sc-out, .sc-findings, .sc-grade-line { opacity: 0; }
   .sc-tick { color: #28c840; margin-right: 0.3rem; }
   .sc-findings { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
   .sc-chip { font-size: 0.68rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 0.375rem; }
-  .sc-chip.sc-crit { color: #fff; background: var(--sc-crit); }
-  .sc-chip.sc-high { color: #fff; background: var(--sc-high); }
-  .sc-chip.sc-med { color: #3a2e00; background: var(--sc-med); }
+  .sc-chip.sc-crit { color: #fff; background: var(--sc-crit); } .sc-chip.sc-high { color: #fff; background: var(--sc-high); } .sc-chip.sc-med { color: #3a2e00; background: var(--sc-med); }
   .sc-grade-line { margin-top: 0.5rem; color: var(--fl-muted); }
   .sc-grade { display: inline-block; font-weight: 700; color: var(--sc-crit); border: 1px solid var(--sc-crit); border-radius: 0.3rem; padding: 0 0.3rem; margin: 0 0.2rem; }
   .sc-score { color: var(--fl-muted); }
 
-  /* ============ sections ============ */
-  .sc-section { max-width: 60rem; margin: 0 auto; padding: 2rem var(--gutter, 1.5rem); }
-  .sc-h2 { font-size: 1.5rem; font-weight: 640; letter-spacing: -0.03em; color: var(--fl-ink); margin: 1.5rem 0 1.25rem; }
+  /* ============ editorial gridline sections ============ */
+  .ed { position: relative; max-width: 68rem; margin: 2rem auto 0; padding: 0 var(--gutter, 1.5rem); }
+  /* the two vertical gridlines */
+  .ed::before, .ed::after { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--fl-rule); }
+  .ed::before { left: var(--gutter, 1.5rem); } .ed::after { right: var(--gutter, 1.5rem); }
+  .ed-rule { position: relative; height: 1px; background: var(--fl-rule); }
+  .ed-plus { position: absolute; top: 50%; transform: translate(-50%, -50%); color: var(--fl-ember); font-size: 1.05rem; line-height: 1; font-weight: 400; }
+  .ed-plus-l { left: 0; } .ed-plus-r { right: 0; transform: translate(50%, -50%); }
+  .ed-step { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 3rem; padding: 4rem 2.5rem; align-items: start; }
+  .ed-head { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 3rem; align-items: end; }
+  .ed-label { grid-column: 1 / -1; font-family: var(--sl-font-mono); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--fl-ember-strong); margin-bottom: 0.25rem; }
+  .ed-title { grid-column: 1; margin: 0; font-size: clamp(1.9rem, 1.2rem + 2.2vw, 2.9rem); font-weight: 680; line-height: 1.05; letter-spacing: -0.035em; color: var(--fl-ink); }
+  .ed-lead { grid-column: 2; margin: 0; align-self: end; font-size: 1.0625rem; line-height: 1.6; color: var(--fl-muted); }
+  .ed-lead code, .ed-title code { font-family: var(--sl-font-mono); font-size: 0.9em; }
+  .ed-body { grid-column: 1 / -1; margin-top: 0.5rem; }
+  .ed-body :global(.expressive-code) { margin: 0; }
+  .ed-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; margin: 1rem 0 0; }
+  .ed-chip { font-size: 0.8rem; color: var(--fl-body); border: 1px solid var(--fl-rule); border-radius: 999px; padding: 0.3rem 0.75rem; background: color-mix(in srgb, var(--fl-paper) 60%, transparent); }
+  .ed-formats { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .ed-fmt { font-family: var(--sl-font-mono); font-size: 0.85rem; color: var(--fl-ink); border: 1px solid var(--fl-rule-strong); border-radius: 0.5rem; padding: 0.5rem 0.9rem; background: color-mix(in srgb, var(--fl-ember) 7%, transparent); }
 
-  .sc-firstscan { display: flex; flex-direction: column; gap: 0.5rem; }
-  .sc-fs-row { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; padding: 0.75rem 1rem; border: 1px solid var(--fl-rule); border-radius: 0.625rem; background: color-mix(in srgb, var(--fl-paper) 70%, transparent); transition: border-color 0.15s ease, transform 0.15s ease; }
-  .sc-fs-row:hover { border-color: var(--fl-ember); transform: translateX(3px); }
-  .sc-fs-cmd { font-family: var(--sl-font-mono); font-size: 0.8125rem; color: var(--fl-ember-strong); white-space: nowrap; }
-  .sc-fs-what { color: var(--fl-muted); font-size: 0.9rem; }
-
-  .sc-grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
-  .sc-card { border: 1px solid var(--fl-rule); border-radius: 0.875rem; background: color-mix(in srgb, var(--fl-paper) 70%, transparent); padding: 1.35rem; transition: border-color 0.15s ease, transform 0.15s ease; }
-  .sc-card:hover { border-color: var(--fl-ember); transform: translateY(-3px); }
-  .sc-card-ic { display: inline-flex; width: 2.1rem; height: 2.1rem; align-items: center; justify-content: center; border-radius: 0.6rem; color: var(--fl-ember); background: var(--fl-ember-soft); margin-bottom: 0.8rem; }
-  .sc-card-ic :global(svg) { width: 1.2rem; height: 1.2rem; }
-  .sc-card-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 620; color: var(--fl-ink); letter-spacing: -0.015em; }
-  .sc-card-body { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--fl-muted); }
-
+  /* what it catches */
+  .sc-section { max-width: 60rem; margin: 0 auto; padding: 3.5rem var(--gutter, 1.5rem); }
+  .sc-h2 { font-size: 1.5rem; font-weight: 640; letter-spacing: -0.03em; color: var(--fl-ink); margin: 0 0 1.5rem; }
   .sc-catches { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.5rem 1.5rem; }
   .sc-catch { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.925rem; color: var(--fl-body); padding: 0.3rem 0; }
   .sc-catch svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--fl-ember-strong); }
   .sc-catch-note { margin-top: 1.5rem; font-size: 0.9rem; color: var(--fl-muted); }
 
-  /* ============ responsive ============ */
+  /* responsive */
   @media (max-width: 54rem) {
     .sc-hero { grid-template-columns: 1fr; gap: 2.25rem; padding-top: 3.25rem; text-align: center; }
     .sc-hero-copy { text-align: center; }
-    .sc-sub { margin-inline: auto; }
-    .sc-actions { justify-content: center; }
-    .sc-install { margin-inline: auto; }
+    .sc-sub { margin-inline: auto; } .sc-actions { justify-content: center; }
     .sc-visual { order: -1; }
+    .ed::before, .ed::after { display: none; }
+    .ed-step { grid-template-columns: 1fr; padding: 2.75rem 1.25rem; gap: 1.25rem; }
+    .ed-head { grid-template-columns: 1fr; gap: 0.75rem; }
+    .ed-title, .ed-lead { grid-column: 1; }
   }
   @media (prefers-reduced-motion: reduce) {
     .sc-sweep, .sc-blip, .sc-glow { animation: none; }
-    .sc-btn, .sc-fs-row, .sc-card, .sc-pill { transition: none; }
+    .sc-btn, .sc-pill { transition: none; }
   }
 </style>
