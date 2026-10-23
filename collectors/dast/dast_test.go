@@ -47,9 +47,29 @@ func TestMetadata(t *testing.T) {
 }
 
 func TestRemediationTemplatesPresent(t *testing.T) {
-	for _, r := range []core.Remediation{RemediationSQLi, RemediationCmdInjection, RemediationSSRF, RemediationPathTraversal, RemediationOpenRedirect, RemediationXSS} {
+	for _, r := range []core.Remediation{
+		RemediationSQLi, RemediationCmdInjection, RemediationSSRF, RemediationPathTraversal, RemediationOpenRedirect, RemediationXSS,
+		RemediationSSTI, RemediationXXE, RemediationFileUpload, RemediationBusinessLogic,
+	} {
 		if r.What == "" || r.Why == "" || len(r.How) == 0 || r.Effort == "" {
 			t.Errorf("incomplete remediation template: %+v", r)
+		}
+	}
+}
+
+// Scaffold probes are registered (so they appear in the catalog) but must
+// stay no-ops until their logic is written — including against a live target
+// with discovered URLs. This guards against a half-wired scaffold shipping.
+func TestScaffoldsAreNoops(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("ok " + r.URL.RawQuery))
+	}))
+	t.Cleanup(srv.Close)
+	withCrawl(t, []string{srv.URL + "/?q=1&name=x"}, []string{srv.URL + "/api/ping?host=1"})
+	for _, c := range scaffoldChecks() {
+		got, err := c.Run(scanCtx(srv), devTarget(srv))
+		if err != nil || len(got) != 0 {
+			t.Errorf("scaffold %s should be a no-op, got %d findings err=%v", c.ID(), len(got), err)
 		}
 	}
 }

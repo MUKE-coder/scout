@@ -29,19 +29,23 @@ import (
 	"github.com/MUKE-coder/scout/core"
 )
 
-// init registers the implemented DAST checks. A blank import of this package
-// (from collectors/all) activates them. All six probes below are implemented.
+// init registers the DAST checks. A blank import of this package (from
+// collectors/all) activates them. The six probes in this file are implemented;
+// the scaffolds in scaffolds.go are registered too but no-op until their probe
+// logic is written.
 func init() {
 	for _, c := range Checks() {
 		core.Register(c)
 	}
 }
 
-// Checks returns the DAST checks.
+// Checks returns the DAST checks: the six implemented probes plus the
+// scaffold probes (registered, but no-ops until their logic is written).
 func Checks() []core.Check {
-	return []core.Check{
+	impl := []core.Check{
 		SQLi{}, CommandInjection{}, SSRF{}, PathTraversal{}, OpenRedirect{}, ReflectedXSS{},
 	}
+	return append(impl, scaffoldChecks()...)
 }
 
 // --- SQL injection ------------------------------------------------------

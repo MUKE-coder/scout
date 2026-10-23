@@ -189,24 +189,33 @@ Then the deepest:
 > checks is not forced to compile them; consider a build tag if the weight
 > becomes a problem.
 
-## 6. Skeletons already in the tree
+## 6. Offensive probes: implemented vs. scaffolded
 
-Two offensive collectors are scaffolded and compile, with complete metadata,
-mode, OWASP/ASVS mapping and remediation templates — only the attack logic is
-a stub marked `TODO(you)`:
+The offensive collectors are wired into `collectors/all` and most probes are
+implemented. The remaining scaffolds are **registered** (they appear in the
+catalog and run in active scans) but their `Run` is a safe no-op marked
+`TODO(you)` until you fill in the attack logic.
+
+**Implemented (real probes):**
 
 - **`collectors/dast`** — `app.sqli`, `app.cmd-injection`, `app.ssrf`,
   `app.path-traversal`, `app.open-redirect`, `app.reflected-xss`.
-- **`collectors/authz`** — `auth.jwt`, `auth.idor`, `auth.missing`,
-  `auth.cors`, `auth.mass-assignment`.
+- **`collectors/authz`** — `auth.jwt`, `auth.missing`, `auth.cors`,
+  `auth.idor` (needs test identities — see `scout.WithTestIdentities`).
 
-Each check's `Run` is a safe no-op that returns no findings until you fill the
-stub. To finish one: implement the probe (every request through
-`core.HTTPClient(ctx)`, test accounts only, honor `Mode()`), return a
-`core.Finding` with the ready-made `Remediation<Name>` attached, add a test,
-and blank-import the package in `collectors/all`. They are deliberately **not**
-imported yet, so the shipped build never exposes no-op active checks.
+**Scaffolded — your payload logic goes here:**
 
-When a collector lands and its package is added to `collectors/all/all.go`,
-`scout scan` immediately produces real findings and every downstream surface
-(grade, dashboard, SARIF, compliance, reports) works with no further change.
+| Check | Where | Notes in the stub |
+|---|---|---|
+| `app.ssti` | `collectors/dast/scaffolds.go` | arithmetic marker ({{7*7}}→49), confirm server-side eval |
+| `app.xxe` | `collectors/dast/scaffolds.go` | in-band entity expansion; no OOB listener yet |
+| `app.file-upload` | `collectors/dast/scaffolds.go` | state-changing; needs a test identity, benign file only |
+| `app.business-logic` | `collectors/dast/scaffolds.go` | state-changing; negative qty/amount against a scratch object |
+| `auth.mass-assignment` | `collectors/authz/authz.go` | state-changing; submit a privileged field, read it back |
+
+To finish one: implement the probe where marked `TODO(you)` (every request
+through `core.HTTPClient(ctx)`, test accounts only, honor `Mode()`,
+non-destructive), return a `core.Finding` with the ready-made
+`Remediation<Name>` attached, and extend the test. Nothing else needs to
+change — the check is already registered, so `scout scan` and every downstream
+surface (grade, dashboard, SARIF, compliance, reports) pick it up immediately.
