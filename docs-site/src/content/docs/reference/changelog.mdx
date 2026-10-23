@@ -5,6 +5,11 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.3.4
+
+- **Fix:** `scout scan --serve` no longer panics on a terminal (a double-stop
+  of the progress line closed an already-closed channel).
+
 ## v0.3.3
 
 - **`scout scan --serve`** runs the scan and then opens the dashboard on the
