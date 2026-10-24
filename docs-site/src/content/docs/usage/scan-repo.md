@@ -30,6 +30,7 @@ scout scan --repo /path/to/project
 | `code.dangerous-sink` | `eval`, `child_process`, `exec.Command`, `dangerouslySetInnerHTML`, unsafe deserialization |
 | `code.secret-logging` | Passwords / tokens written to logs |
 | `code.unpinned-deps` | Loose version ranges (`^`, `~`, `*`, `latest`) in `package.json` |
+| `code.vulnerable-deps` | **Known-vulnerable dependencies in any ecosystem** — npm, Go, PyPI, Composer, Cargo, RubyGems, NuGet, Maven (via OSV) |
 | `code.go-vulncheck` | Known, **reachable** CVEs in Go dependencies (via `govulncheck`) |
 
 ## Reachable CVEs in Go dependencies

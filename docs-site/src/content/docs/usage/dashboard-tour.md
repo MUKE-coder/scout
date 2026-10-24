@@ -115,6 +115,29 @@ route — so you can see what's exposed.
 **What to do:** open the node with the highest number, jump to those findings,
 and fix or lock down the exposed services you didn't expect.
 
+## Stack & dependencies
+
+**Purpose:** what the target is built with, and which of its dependencies have
+known vulnerabilities. Scout detects the **language, framework and runtime**
+(from repo manifests and the app's server headers) and runs **software
+composition analysis** — matching your exact dependency versions against the
+world's vulnerability data (via OSV, which aggregates NVD, GitHub Advisories,
+RustSec, PyPA and the Go vuln DB).
+
+![Stack & dependencies page](/screens/stack.png)
+
+**How to read it:**
+- **Detected stack** — languages and frameworks with versions (e.g. *Next.js
+  16.4.2 · React 19.3.1*). Confirms Scout is testing the right thing.
+- **Vulnerable dependencies** — each row is a dependency with a published
+  advisory (CVE/GHSA): its **severity**, the **package@version**, and the
+  advisory. ❌ any row is a to-do; ✅ an empty table means no known-vulnerable
+  deps right now.
+
+**What to do:** update each listed package to its fixed version, then re-scan.
+From the CLI, `scout scan --repo .` produces the same findings (every major
+ecosystem: npm, Go, PyPI, Composer, Cargo, RubyGems, NuGet, Maven).
+
 ## Compliance
 
 **Purpose:** your open findings mapped onto the **OWASP Top 10 (2021)** (and ASVS
