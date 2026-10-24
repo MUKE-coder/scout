@@ -42,6 +42,19 @@ scout scan --target https://staging.example.com --env staging
 scout scan --target https://staging.example.com --mode active --env staging --allow-active
 ```
 
+## Outdated client-side libraries
+
+A black-box scan also flags **known-vulnerable front-end libraries** the page
+loads (`app.vulnerable-js-lib`). Scout reads the `<script>` / `<link>` URLs,
+extracts each library's name and version — from CDN paths and versioned
+filenames like `jquery-1.12.4.min.js`, `cdn.jsdelivr.net/npm/vue@2.6.10`, or
+`?ver=3.6.0` — and matches them against OSV, enriched with [KEV + EPSS](/usage/scan-repo/#exploitation-intelligence-kev--epss).
+
+This needs no repository: the version is right there in the asset URL. It covers
+the usual suspects (jQuery, jQuery UI, Bootstrap, AngularJS, Vue, React, lodash,
+Moment, D3, Handlebars, TinyMCE, CKEditor and more). An exploited library shows
+the red **Exploited** marker, exactly like a vulnerable dependency.
+
 ## Scan several targets at once
 
 `--target` is repeatable:

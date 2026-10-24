@@ -5,6 +5,14 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.4
+
+- **Outdated client-side libraries** (`app.vulnerable-js-lib`): a black-box scan
+  now flags known-vulnerable front-end libraries the page loads — jQuery,
+  Bootstrap, AngularJS, Vue, React, lodash and more. Scout reads the version
+  straight from the `<script>`/`<link>` URL (CDN paths and versioned filenames),
+  matches it against OSV, and enriches it with KEV + EPSS. No repository needed.
+
 ## v0.4.3
 
 - **Exploitation intelligence**: every vulnerable-dependency finding is now

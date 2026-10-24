@@ -20,6 +20,7 @@ package all
 // Scout has a test-identity config surface (see collectors/authz).
 import (
 	_ "github.com/MUKE-coder/scout/collectors/authz"
+	_ "github.com/MUKE-coder/scout/collectors/clientlib"
 	_ "github.com/MUKE-coder/scout/collectors/clientside"
 	_ "github.com/MUKE-coder/scout/collectors/codeaudit"
 	_ "github.com/MUKE-coder/scout/collectors/config"

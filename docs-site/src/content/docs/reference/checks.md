@@ -69,6 +69,7 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `app.framework-exposure` | safe | Framework-specific exposure, gated by the detected stack: Spring Boot actuators, WordPress REST user-enumeration & XML-RPC, Laravel Telescope/Ignition |
 | `app.directory-listing` | safe | Directory autoindex |
 | `app.missing-sri` | safe | Cross-origin script/style without SRI |
+| `app.vulnerable-js-lib` | safe | Known-vulnerable client-side library (jQuery, Bootstrap, Angular…) loaded by the page, via OSV + KEV/EPSS |
 | `app.mixed-content` | safe | HTTPS page loading HTTP resources |
 | `app.csrf-form` | safe | State-changing form with no CSRF token |
 | `app.open-redirect` | active | Open redirect |
