@@ -5,6 +5,13 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.8
+
+- **Expo detection**: Scout now identifies [Expo](https://expo.dev) (React Native)
+  apps as a first-class framework — from `eas.json` (or an `expo` key in
+  `app.json`), with the version from the `expo` dependency — and reports Expo,
+  React and React Native in the stack.
+
 ## v0.4.7
 
 - **php2shell detection** (`app.php-runtime-rce`): Scout flags servers running a

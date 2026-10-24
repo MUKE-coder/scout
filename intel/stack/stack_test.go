@@ -70,6 +70,41 @@ func TestDetectGrit(t *testing.T) {
 	}
 }
 
+func TestDetectExpo(t *testing.T) {
+	// Expo app: package.json has the expo dependency (with version) and eas.json
+	// marks the root.
+	dir := t.TempDir()
+	write := func(name, body string) {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("package.json", `{"dependencies":{"expo":"~54.0.0","react-native":"0.79.0","expo-router":"~6.0.0"}}`)
+	write("eas.json", `{"cli":{"version":">= 16.0.0"}}`)
+
+	got := Detect(core.Target{Repo: dir, Environment: core.EnvDev}, nil)
+	if !has(got, "framework", "Expo") {
+		t.Errorf("Expo not detected: %+v", got)
+	}
+	if !has(got, "framework", "React Native") {
+		t.Errorf("React Native not detected: %+v", got)
+	}
+	for _, c := range got {
+		if c.Name == "Expo" && c.Version != "54.0.0" {
+			t.Errorf("Expo version = %q, want 54.0.0 (from package.json)", c.Version)
+		}
+	}
+
+	// eas.json alone (no expo dependency) still identifies an Expo app.
+	dir2 := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir2, "eas.json"), []byte(`{"build":{}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !has(Detect(core.Target{Repo: dir2, Environment: core.EnvDev}, nil), "framework", "Expo") {
+		t.Error("Expo not detected from eas.json alone")
+	}
+}
+
 func TestDetectFromFindings(t *testing.T) {
 	findings := []core.Finding{
 		{CheckID: "app.version-disclosure", Evidence: core.Evidence{Matched: "Server: nginx/1.18.0"}},

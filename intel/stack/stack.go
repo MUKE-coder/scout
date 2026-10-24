@@ -36,7 +36,7 @@ var languageOf = map[string]string{
 
 // framework dependency name → display name, per ecosystem key.
 var frameworks = map[string]map[string]string{
-	"js":   {"next": "Next.js", "react": "React", "vue": "Vue", "@angular/core": "Angular", "nuxt": "Nuxt", "svelte": "Svelte", "express": "Express", "@nestjs/core": "NestJS", "@remix-run/react": "Remix", "astro": "Astro"},
+	"js":   {"next": "Next.js", "react": "React", "vue": "Vue", "@angular/core": "Angular", "nuxt": "Nuxt", "svelte": "Svelte", "express": "Express", "@nestjs/core": "NestJS", "@remix-run/react": "Remix", "astro": "Astro", "expo": "Expo", "react-native": "React Native"},
 	"go":   {"github.com/gin-gonic/gin": "Gin", "github.com/labstack/echo": "Echo", "github.com/gofiber/fiber": "Fiber", "github.com/go-chi/chi": "Chi", "github.com/gorilla/mux": "Gorilla"},
 	"py":   {"django": "Django", "flask": "Flask", "fastapi": "FastAPI", "tornado": "Tornado", "celery": "Celery"},
 	"php":  {"laravel/framework": "Laravel", "symfony/symfony": "Symfony", "symfony/framework-bundle": "Symfony"},
@@ -144,6 +144,16 @@ func fromRepo(repoPath string) []core.StackComponent {
 				}
 			}
 		}
+	}
+
+	// Expo (React Native) apps are marked by eas.json, or an "expo" key in
+	// app.json. Add it as a fallback so the framework is detected even when the
+	// package.json "expo" dependency (with its version) was not read above; dedupe
+	// keeps the versioned entry when both are present.
+	if _, err := os.Stat(filepath.Join(repoPath, "eas.json")); err == nil {
+		add(core.StackComponent{Kind: "framework", Name: "Expo", Source: "eas.json"})
+	} else if b, ok := read("app.json"); ok && strings.Contains(string(b), "\"expo\"") {
+		add(core.StackComponent{Kind: "framework", Name: "Expo", Source: "app.json"})
 	}
 	return out
 }

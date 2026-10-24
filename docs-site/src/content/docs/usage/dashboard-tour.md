@@ -139,7 +139,9 @@ RustSec, PyPA and the Go vuln DB).
   16.4.2 · React 19.3.1*). Confirms Scout is testing the right thing.
   [Grit](https://gritframework.dev) monorepos are recognized first-class from
   their `grit.json` — the Grit version and architecture, the Go API and the
-  Next.js/React frontend all appear here.
+  Next.js/React frontend all appear here. [Expo](https://expo.dev) (React Native)
+  apps are detected from `eas.json`, with the Expo, React and React Native
+  versions.
 - **Vulnerable dependencies** — each row is a dependency with a published
   advisory (CVE/GHSA): its **severity**, the **package@version**, and the
   advisory. A red **Exploited** badge means the CVE is in CISA's Known Exploited
