@@ -91,8 +91,12 @@ func Pretty(w io.Writer, r Result, opts PrettyOptions) error {
 
 	// Header. This exact line (sans color) is part of the CLI's contract.
 	fmt.Fprintf(&b, "%s  %s (%s)  mode %s\n", p.paint(bold, "Scout"), s.Target.Name, s.Target.Environment, s.Mode)
-	fmt.Fprintf(&b, "%s\n\n", p.paint(muted, fmt.Sprintf("scan %s · %s · %d findings · %d skipped · %d errors",
+	fmt.Fprintf(&b, "%s\n", p.paint(muted, fmt.Sprintf("scan %s · %s · %d findings · %d skipped · %d errors",
 		shortID(s.ID), duration(s), len(s.Findings), len(s.Skipped), len(s.Errors))))
+	if line := stackLine(s.Target.Stack); line != "" {
+		fmt.Fprintf(&b, "%s  %s\n", p.paint(muted, "stack"), p.paint(accent, line))
+	}
+	b.WriteString("\n")
 
 	// Grade.
 	if r.Report.Grade == "" {
@@ -193,6 +197,22 @@ func Pretty(w io.Writer, r Result, opts PrettyOptions) error {
 	}
 	_, err := io.WriteString(w, b.String())
 	return err
+}
+
+// stackLine renders the detected stack as "Next.js 16 · React · Go".
+func stackLine(cs []core.StackComponent) string {
+	if len(cs) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(cs))
+	for _, c := range cs {
+		s := c.Name
+		if c.Version != "" {
+			s += " " + c.Version
+		}
+		parts = append(parts, s)
+	}
+	return strings.Join(parts, " · ")
 }
 
 func location(f core.Finding) string {

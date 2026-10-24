@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/MUKE-coder/scout/core"
+	"github.com/MUKE-coder/scout/intel/stack"
 	"github.com/MUKE-coder/scout/scoring"
 	"github.com/MUKE-coder/scout/selftest"
 	"github.com/MUKE-coder/scout/storage"
@@ -154,6 +155,8 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 		"mode", policy.Effective, "run", len(run), "skipped", len(res.Skipped))
 	e.opts.Bus.Publish(Event{Type: EventScanStarted, ScanID: res.ID, Time: res.StartedAt, Total: len(run)})
 	res.Findings, res.Errors = e.runChecks(ctx, res.ID, req.Target, run)
+	// Detect the technology stack from the repo and the fingerprint findings.
+	res.Target.Stack = stack.Detect(req.Target, res.Findings)
 	res.FinishedAt = e.opts.Now()
 	e.finish(ctx, &res, categoriesOf(run), !req.Ephemeral)
 	return res, nil

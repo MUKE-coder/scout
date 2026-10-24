@@ -9,6 +9,13 @@ export type Change = "new" | "regressed" | "unchanged";
 export const SEVERITIES: Severity[] = ["critical", "high", "medium", "low", "info"];
 export const STATUSES: Status[] = ["open", "fixed", "accepted-risk", "false-positive"];
 
+export interface StackComponent {
+  kind: string; // language | framework | runtime | server | package-manager
+  name: string;
+  version?: string;
+  source?: string;
+}
+
 export interface Target {
   name: string;
   url?: string;
@@ -16,6 +23,7 @@ export interface Target {
   environment: Environment;
   allow_active?: boolean;
   criticality?: number;
+  stack?: StackComponent[];
 }
 
 export interface Asset {

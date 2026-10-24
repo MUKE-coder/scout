@@ -52,6 +52,19 @@ type Target struct {
 	// config file; empty disables the identity-dependent checks for this
 	// target. Not serialized in scan results (may carry credentials).
 	Identities []Identity `json:"-" yaml:"identities"`
+
+	// Stack is the languages, frameworks and runtimes detected on this target
+	// during a scan (filled by the engine). It drives stack-aware checks and
+	// the dashboard's "Stack" view.
+	Stack []StackComponent `json:"stack,omitempty" yaml:"-"`
+}
+
+// StackComponent is one detected part of a target's technology stack.
+type StackComponent struct {
+	Kind    string `json:"kind"`              // language | framework | runtime | server | package-manager
+	Name    string `json:"name"`              // e.g. "Next.js", "Django", "Go"
+	Version string `json:"version,omitempty"` // when known
+	Source  string `json:"source,omitempty"`  // how it was detected (e.g. "package.json", "Server header")
 }
 
 // Host returns the hostname of the target URL, or "" if there is none.
