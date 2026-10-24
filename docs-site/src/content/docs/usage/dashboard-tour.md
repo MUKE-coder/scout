@@ -41,6 +41,24 @@ already filled in at their defaults, then edit what you need.
 - **Categories** — per-area sub-scores; the lowest bar is where to look next.
 - **Fix next** — the highest-impact fixes, ranked by how many points they recover.
 
+### Scan coverage
+
+Scout is a **diagnostic tool**, so the Overview also shows how thoroughly a target
+has been examined and what to run next.
+
+![Scan coverage panel](/screens/coverage.png)
+
+**How to read it:**
+- The **progress bar** (e.g. *1 of 4 diagnostics · 25%*) is how many of the
+  diagnostic dimensions you've run for this target.
+- ✅ a dimension with a check is **done**; ⬜ one without is **recommended next** —
+  each says exactly **what it diagnoses** (injection, source & dependencies, …).
+- For a recommended dimension you get either a **Run** button (for a configured
+  target — it starts the scan right here) or the **exact command** to copy.
+
+**What to do:** work down to 100% — run an **active** scan for injection/auth, a
+`--repo` scan for secrets and CVEs, and a second scan to establish a trend.
+
 ## Findings
 
 **Purpose:** every open finding, with filters to slice by severity, category,
@@ -55,6 +73,9 @@ status, change and target. Click a row for evidence, CWE/OWASP and the fix.
   ✅ **Fixed** is gone. Filter to **New** in CI to see only what a change introduced.
 - **Status** — **Open** (❌ still live) vs **Accepted risk / False positive**
   (✅ triaged — you marked it, with a reason).
+
+**What to do:** sort by severity, open a finding to read its **cause and fix**,
+apply it, and re-scan — the Change column will flip it to ✅ **Fixed**.
 
 ### Export
 
@@ -81,11 +102,18 @@ route — so you can see what's exposed.
 ![Attack surface map](/screens/surface.png)
 
 **How to read it:**
-- Each **service** shows its port and how many routes hang off it. A smaller tree
-  is ✅ a smaller attack surface.
-- Watch for things that shouldn't be public: ❌ an exposed **`:22` (SSH)**,
-  admin UIs (`/sentinel/ui`, `/pulse/ui`), or **deprecated API versions**
-  (`/api/v1` alongside `/api/v2`). The number on a node is the findings on it.
+- **The number on each node is the count of _open findings_ at or below it.**
+  So a domain shows the total across all its hosts; a host shows its total; a
+  service (`https :443`) shows the findings on that port; a route shows its own.
+  - ✅ **A smaller tree with low numbers** = a small, clean attack surface.
+  - ❌ **A big number** points you straight to the host/port/route carrying the
+    most risk — start there.
+- Also watch for things that shouldn't be exposed at all: ❌ an open **`:22`
+  (SSH)**, admin UIs (`/sentinel/ui`, `/pulse/ui`), or **deprecated API
+  versions** (`/api/v1` still live next to `/api/v2`).
+
+**What to do:** open the node with the highest number, jump to those findings,
+and fix or lock down the exposed services you didn't expect.
 
 ## Compliance
 
@@ -109,6 +137,17 @@ below it), plus how much of each category Scout's checks actually cover.
 
 So on the screenshot, **A05 = 11 ❌** (fix these) while **A01, A03, A04 = · ✅**
 (nothing open there right now).
+
+**Pass or fail?** There's no single pass/fail stamp — read it per category:
+- **`·` (dot) = ✅ pass** for that OWASP category: Scout tested it and found
+  nothing open.
+- **A number = ❌ fail** for that category: that many open findings — fix them to
+  turn the cell back to a dot.
+- A category Scout can't test (no mapped checks, rare here since 10/10 are
+  covered) is simply blank — not a pass, just untested.
+
+**What to do:** treat every non-dot cell as a to-do for that OWASP area; click
+into Findings filtered by that category to see the specific issues and fixes.
 
 ## Live scan
 

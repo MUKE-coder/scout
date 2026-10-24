@@ -80,6 +80,7 @@ export default defineConfig({
           label: "Reference",
           items: [
             { label: "CLI reference", slug: "reference/cli" },
+            { label: "Scan flags, explained", slug: "reference/flags" },
             { label: "Checks catalog", slug: "reference/checks" },
             { label: "Configuration", slug: "reference/configuration" },
             { label: "Safety model", slug: "reference/safety" },
