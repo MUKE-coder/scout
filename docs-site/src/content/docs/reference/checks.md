@@ -70,6 +70,7 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `app.directory-listing` | safe | Directory autoindex |
 | `app.missing-sri` | safe | Cross-origin script/style without SRI |
 | `app.vulnerable-js-lib` | safe | Known-vulnerable client-side library (jQuery, Bootstrap, Angular…) loaded by the page, via OSV + KEV/EPSS |
+| `app.php-runtime-rce` | safe | Outdated PHP runtime vulnerable to php2shell (CVE-2026-109618 / 109619), from the Server/X-Powered-By header or a Dockerfile base image |
 | `app.mixed-content` | safe | HTTPS page loading HTTP resources |
 | `app.csrf-form` | safe | State-changing form with no CSRF token |
 | `app.open-redirect` | active | Open redirect |

@@ -1,5 +1,5 @@
 /** The Scout release these docs describe. */
-export const SCOUT_VERSION = "0.4.6";
+export const SCOUT_VERSION = "0.4.7";
 export const RELEASE_URL = `https://github.com/MUKE-coder/scout/releases/tag/v${SCOUT_VERSION}`;
 export const REPO_URL = "https://github.com/MUKE-coder/scout";
 

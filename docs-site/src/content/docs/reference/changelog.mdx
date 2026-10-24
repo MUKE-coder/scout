@@ -5,6 +5,15 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.7
+
+- **php2shell detection** (`app.php-runtime-rce`): Scout flags servers running a
+  PHP runtime vulnerable to the critical, unauthenticated RCE pair
+  **CVE-2026-109618 / CVE-2026-109619** (CVSS 9.2, fixed 2026-10-21). It reads the
+  PHP version from the live `Server`/`X-Powered-By` header and from a repo's
+  Dockerfile `FROM php:…` base image, and flags anything below PHP 8.2.35 / 8.3.36
+  / 8.4.27 / 8.5.12 (and all end-of-life branches).
+
 ## v0.4.6
 
 - **Scan a repo straight from its URL**: `scout scan --repo https://github.com/owner/repo`
