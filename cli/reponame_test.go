@@ -30,6 +30,55 @@ func TestGitRemoteName(t *testing.T) {
 	}
 }
 
+func TestIsRemoteRepo(t *testing.T) {
+	remote := []string{
+		"https://github.com/MUKE-coder/gorm-studio",
+		"http://example.com/x/y",
+		"git@github.com:owner/repo.git",
+		"ssh://git@host/owner/repo.git",
+		"git://host/repo",
+	}
+	local := []string{".", "./sub", "/abs/path", "C:\\repo", "repo"}
+	for _, s := range remote {
+		if !isRemoteRepo(s) {
+			t.Errorf("isRemoteRepo(%q) = false, want true", s)
+		}
+	}
+	for _, s := range local {
+		if isRemoteRepo(s) {
+			t.Errorf("isRemoteRepo(%q) = true, want false", s)
+		}
+	}
+}
+
+func TestOwnerRepoFromGitURL(t *testing.T) {
+	cases := map[string]string{
+		"https://github.com/MUKE-coder/gorm-studio":     "MUKE-coder/gorm-studio",
+		"https://github.com/MUKE-coder/gorm-studio.git": "MUKE-coder/gorm-studio",
+		"git@github.com:owner/repo.git":                 "owner/repo",
+		"https://example.com/only":                      "",
+	}
+	for in, want := range cases {
+		if got := ownerRepoFromGitURL(in); got != want {
+			t.Errorf("ownerRepoFromGitURL(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestCloneURLInjectsToken(t *testing.T) {
+	t.Setenv("GITHUB_TOKEN", "")
+	t.Setenv("SCOUT_GIT_TOKEN", "secret123")
+	got := cloneURL("https://github.com/owner/repo")
+	want := "https://x-access-token:secret123@github.com/owner/repo"
+	if got != want {
+		t.Errorf("cloneURL = %q, want %q", got, want)
+	}
+	// SSH URLs and already-credentialed URLs are untouched.
+	if u := cloneURL("git@github.com:owner/repo.git"); u != "git@github.com:owner/repo.git" {
+		t.Errorf("ssh url changed: %q", u)
+	}
+}
+
 func TestRepoNameFallsBackToFolder(t *testing.T) {
 	dir := t.TempDir() // no .git
 	want := filepath.Base(dir)

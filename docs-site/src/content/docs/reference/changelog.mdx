@@ -5,6 +5,13 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.6
+
+- **Scan a repo straight from its URL**: `scout scan --repo https://github.com/owner/repo`
+  now clones the repository to a temporary checkout, scans it, and cleans up.
+  Public repos work out of the box; private ones use your existing git
+  credentials (`gh auth login`, an SSH key, or a `SCOUT_GIT_TOKEN`/`GITHUB_TOKEN`).
+
 ## v0.4.5
 
 - **Target always visible**: the repo or site you are viewing is now shown in the

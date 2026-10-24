@@ -62,6 +62,13 @@ previous scan count. With no previous scan, every finding counts as new.`,
 			if err != nil {
 				return err
 			}
+			cleanup, err := f.resolveRemoteRepo(cmd)
+			if cleanup != nil {
+				defer cleanup()
+			}
+			if err != nil {
+				return err
+			}
 			cfg, err := f.config(cmd)
 			if err != nil {
 				return err

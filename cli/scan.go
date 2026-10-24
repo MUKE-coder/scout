@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -20,24 +21,25 @@ import (
 
 // scanFlags are shared by scan and ci.
 type scanFlags struct {
-	targets      []string
-	repo         string
-	mode         string
-	env          string
-	db           string
-	dryRun       bool
-	optIn        bool
-	json         bool
-	sarif        string
-	export       []string
-	serve        bool
-	serveAddr    string
-	checkTimeout time.Duration
+	targets         []string
+	repo            string
+	repoDisplayName string // set when --repo is a remote URL we cloned
+	mode            string
+	env             string
+	db              string
+	dryRun          bool
+	optIn           bool
+	json            bool
+	sarif           string
+	export          []string
+	serve           bool
+	serveAddr       string
+	checkTimeout    time.Duration
 }
 
 func (f *scanFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVarP(&f.targets, "target", "t", nil, "target URL (repeatable)")
-	cmd.Flags().StringVar(&f.repo, "repo", "", "local repo path for code and supply-chain checks")
+	cmd.Flags().StringVar(&f.repo, "repo", "", "repo to scan: a local path, or a git URL to clone (e.g. https://github.com/owner/repo)")
 	cmd.Flags().StringVarP(&f.mode, "mode", "m", "safe", "scan mode: passive, safe, active, intrusive")
 	cmd.Flags().StringVarP(&f.env, "env", "e", "dev", "environment: dev, staging, prod (caps the mode)")
 	cmd.Flags().StringVar(&f.db, "db", "scout.db", `SQLite file for scan history ("" keeps nothing)`)
@@ -97,7 +99,11 @@ func (f *scanFlags) config(cmd *cobra.Command) (scout.Config, error) {
 		}
 	}
 	if f.repo != "" {
-		cfg.Targets = append(cfg.Targets, core.Target{Name: repoName(f.repo), Repo: f.repo, Environment: cfg.Environment})
+		name := repoName(f.repo)
+		if f.repoDisplayName != "" {
+			name = f.repoDisplayName // a cloned remote keeps its owner/repo name
+		}
+		cfg.Targets = append(cfg.Targets, core.Target{Name: name, Repo: f.repo, Environment: cfg.Environment})
 	}
 	if changed("allow-active") {
 		for i := range cfg.Targets {
@@ -153,6 +159,14 @@ func newScanCmd() *cobra.Command {
   scout scan --target https://example.com --mode safe
   scout scan --target https://example.com --json > result.json`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			// A remote --repo URL is cloned to a temp checkout first.
+			cleanup, err := f.resolveRemoteRepo(cmd)
+			if cleanup != nil {
+				defer cleanup()
+			}
+			if err != nil {
+				return err
+			}
 			cfg, err := f.config(cmd)
 			if err != nil {
 				return err
@@ -312,6 +326,70 @@ func writeOutputs(cmd *cobra.Command, f scanFlags, results []report.Result) erro
 	return nil
 }
 
+// isRemoteRepo reports whether a --repo value is a URL to clone rather than a
+// local path.
+func isRemoteRepo(s string) bool {
+	for _, p := range []string{"https://", "http://", "git://", "ssh://", "git@"} {
+		if strings.HasPrefix(s, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveRemoteRepo clones a remote --repo URL into a temp directory and points
+// f.repo at it, so the rest of the pipeline scans a local checkout. It returns a
+// cleanup func (always call it when non-nil) that removes the checkout.
+//
+// Auth: it uses the caller's git credentials — a credential helper (e.g. `gh
+// auth login`), SSH keys, or a token in SCOUT_GIT_TOKEN/GITHUB_TOKEN injected
+// into an https URL. Interactive prompts are disabled so a private repo without
+// credentials fails fast with a clear message instead of hanging.
+func (f *scanFlags) resolveRemoteRepo(cmd *cobra.Command) (func(), error) {
+	if f.repo == "" || !isRemoteRepo(f.repo) {
+		return nil, nil
+	}
+	if _, err := exec.LookPath("git"); err != nil {
+		return nil, fmt.Errorf("git is required to clone %s: %w", f.repo, err)
+	}
+	tmp, err := os.MkdirTemp("", "scout-repo-")
+	if err != nil {
+		return nil, err
+	}
+	cleanup := func() { _ = os.RemoveAll(tmp) }
+	dst := filepath.Join(tmp, "repo")
+
+	fmt.Fprintf(cmd.ErrOrStderr(), "Cloning %s …\n", f.repo)
+	// #nosec G204 -- "git clone" with fixed subcommands; URL is the user's own argument
+	c := exec.CommandContext(cmd.Context(), "git", "clone", "--depth", "1", cloneURL(f.repo), dst)
+	c.Stdout, c.Stderr = cmd.ErrOrStderr(), cmd.ErrOrStderr()
+	c.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if err := c.Run(); err != nil {
+		cleanup()
+		return nil, fmt.Errorf("could not clone %s — make sure it is public, or that your git credentials (e.g. `gh auth login`, SSH key, or SCOUT_GIT_TOKEN) can read it: %w", f.repo, err)
+	}
+	f.repoDisplayName = ownerRepoFromGitURL(f.repo)
+	f.repo = dst
+	return cleanup, nil
+}
+
+// cloneURL injects a token into an https git URL when one is configured, so
+// private repos can be cloned in CI without a credential helper. Credential
+// helpers and SSH URLs are left untouched.
+func cloneURL(raw string) string {
+	if !strings.HasPrefix(raw, "https://") {
+		return raw
+	}
+	token := os.Getenv("SCOUT_GIT_TOKEN")
+	if token == "" {
+		token = os.Getenv("GITHUB_TOKEN")
+	}
+	if token == "" || strings.Contains(raw, "@") {
+		return raw
+	}
+	return "https://x-access-token:" + token + "@" + strings.TrimPrefix(raw, "https://")
+}
+
 // repoName derives a friendly display name for a repo target, so the dashboard
 // shows something recognizable instead of "." or an absolute path. It prefers
 // the git remote's "owner/repo", then the folder name.
@@ -346,24 +424,32 @@ func gitRemoteName(repoDir string) string {
 		if !ok {
 			continue
 		}
-		u := strings.TrimSpace(val)
-		u = strings.TrimSuffix(u, ".git")
-		// Normalize to a "/"-separated path for both URL and scp-style remotes.
-		if _, after, ok := strings.Cut(u, "://"); ok { // https://host/owner/repo or ssh://…
-			u = after
-		} else if _, after, ok := strings.Cut(u, "@"); ok { // git@host:owner/repo
-			u = after
+		if name := ownerRepoFromGitURL(strings.TrimSpace(val)); name != "" {
+			return name
 		}
-		u = strings.Replace(u, ":", "/", 1) // host:owner/repo -> host/owner/repo
-		parts := strings.Split(strings.Trim(u, "/"), "/")
-		// The leading segment is the host (e.g. github.com); drop it so we keep
-		// owner/repo, not host/repo.
-		if len(parts) > 0 && strings.Contains(parts[0], ".") {
-			parts = parts[1:]
-		}
-		if n := len(parts); n >= 2 {
-			return parts[n-2] + "/" + parts[n-1]
-		}
+	}
+	return ""
+}
+
+// ownerRepoFromGitURL turns a git remote URL into "owner/repo", handling https,
+// ssh:// and scp-style (git@host:owner/repo) forms. Returns "" if it cannot.
+func ownerRepoFromGitURL(u string) string {
+	u = strings.TrimSuffix(strings.TrimSpace(u), ".git")
+	// Normalize to a "/"-separated path for both URL and scp-style remotes.
+	if _, after, ok := strings.Cut(u, "://"); ok { // https://host/owner/repo or ssh://…
+		u = after
+	} else if _, after, ok := strings.Cut(u, "@"); ok { // git@host:owner/repo
+		u = after
+	}
+	u = strings.Replace(u, ":", "/", 1) // host:owner/repo -> host/owner/repo
+	parts := strings.Split(strings.Trim(u, "/"), "/")
+	// The leading segment is the host (e.g. github.com); drop it so we keep
+	// owner/repo, not host/repo.
+	if len(parts) > 0 && strings.Contains(parts[0], ".") {
+		parts = parts[1:]
+	}
+	if n := len(parts); n >= 2 {
+		return parts[n-2] + "/" + parts[n-1]
 	}
 	return ""
 }

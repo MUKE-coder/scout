@@ -19,6 +19,25 @@ Point it anywhere:
 scout scan --repo /path/to/project
 ```
 
+## Scan straight from a Git URL
+
+`--repo` also accepts a repository URL. Scout clones it to a temporary checkout,
+scans it, and removes it afterwards — nothing is left on disk:
+
+```bash
+scout scan --repo https://github.com/MUKE-coder/gorm-studio
+```
+
+- **Public repos** work with no setup.
+- **Private repos** use your existing git credentials: a credential helper
+  (`gh auth login`), an SSH URL with your key (`git@github.com:owner/repo.git`),
+  or a token in `SCOUT_GIT_TOKEN` (or `GITHUB_TOKEN`) for an `https://` URL — the
+  last is handy in CI. Interactive prompts are disabled, so a repo you cannot read
+  fails fast with a clear message instead of hanging.
+
+The target is named after the repo (`owner/repo`), so it reads clearly in the
+report and the dashboard.
+
 ## What the repo checks find
 
 | Check | Catches |
