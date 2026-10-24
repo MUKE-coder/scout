@@ -22,6 +22,27 @@ const capabilities = [
   { icon: "export", title: "Dashboard & export", body: "A local dashboard, then export findings as Markdown, HTML or text to hand to a developer." },
 ];
 
+// On-page "how to scan" guide — so a visitor can learn without the docs.
+const guides = [
+  { id: "local", label: "Local app", desc: "Scan an app running on your machine — full depth, no setup.", code: "scout scan --target http://localhost:3000 --mode active --env dev", note: "Runs every check, including injection and auth probes. Localhost needs no ownership proof." },
+  { id: "live", label: "Live site", desc: "Scan a deployed site you own.", code: "scout scan --target https://example.com --mode safe", note: "Safe mode needs nothing. For active probes on a public host, verify ownership first (scout ownership --target …) then add --mode active --allow-active." },
+  { id: "repo", label: "Code repo", desc: "Scan source for secrets, Dockerfiles and vulnerable dependencies.", code: "scout scan --repo .", note: "No running app needed — ideal at review time and in CI." },
+  { id: "lab", label: "Try the lab", desc: "No target handy? Scan Scout's deliberately-vulnerable demo app.", code: "scout lab", note: "Clones the lab and scans its source in one command, then shows how to scan the running app too." },
+  { id: "ci", label: "Gate CI", desc: "Fail a build on findings at or above a severity.", code: "scout ci --repo . --fail-on high --new-only", note: "--new-only fails only on what a change introduced. Add --sarif for GitHub code scanning." },
+  { id: "dash", label: "Dashboard", desc: "Explore and export the findings in your browser.", code: "scout scan --target http://localhost:3000 --serve", note: "Scans, then opens the dashboard at http://localhost:9090/scout/ui/ — log in with admin / scout in dev." },
+];
+
+// Dashboard screenshots, for the on-page gallery.
+const pages = [
+  { id: "overview", label: "Overview", img: "/screens/overview.png", cap: "Grade, severity breakdown, categories, Fix next and scan coverage at a glance." },
+  { id: "coverage", label: "Scan coverage", img: "/screens/coverage.png", cap: "A progress bar over the diagnostic scans, each with what it checks and a Run button." },
+  { id: "findings", label: "Findings", img: "/screens/findings.png", cap: "Every finding, filterable — click one for the cause, evidence and fix. Export menu for MD/HTML/txt." },
+  { id: "surface", label: "Attack surface", img: "/screens/surface.png", cap: "A domain → host → service → route map of everything exposed, with finding counts." },
+  { id: "compliance", label: "Compliance", img: "/screens/compliance.png", cap: "Open findings mapped onto the OWASP Top 10, and how much Scout's checks cover." },
+  { id: "history", label: "History", img: "/screens/history.png", cap: "Every past scan; pick two to diff and see what changed." },
+  { id: "settings", label: "Settings", img: "/screens/settings.png", cap: "The configuration Scout is running with, from scout.yaml." },
+];
+
 const catches = [
   "Missing security headers & cookie flags",
   "Exposed .env / .git / backups / metrics",
@@ -124,16 +145,41 @@ function icon(name: string): string {
     </div>
   </section>
 
-  <!-- ============ dashboard showcase ============ -->
-  <section class="sc-showcase" data-reveal>
-    <div class="sc-shot">
-      <img src="/screens/overview.png" alt="The Scout dashboard: grade over time, findings and attack surface" loading="lazy" width="1262" height="568" />
+  <!-- ============ dashboard gallery (every page) ============ -->
+  <section class="sc-gallery" data-reveal>
+    <h2 class="sc-h2 sc-center">Every page of the dashboard</h2>
+    <p class="sc-lead-c">Run <code>scout serve</code> or <code>scout scan --serve</code> for an embedded dashboard — explore every page below.</p>
+    <div class="g-tabs" role="tablist" aria-label="Dashboard pages">
+      {pages.map((p, i) => (
+        <button type="button" role="tab" class:list={["g-tab", { active: i === 0 }]} data-tab-group="pages" data-tab={p.id} aria-selected={i === 0 ? "true" : "false"}>{p.label}</button>
+      ))}
     </div>
-    <p class="sc-shot-cap">
-      The embedded dashboard — grade over time, findings, attack-surface map, OWASP
-      coverage and one-click export. Run <code>scout serve</code>, or
-      <code>scout scan --serve</code> to go straight from a scan to the UI.
-    </p>
+    {pages.map((p, i) => (
+      <div class:list={["g-panel", { active: i === 0 }]} data-panel-group="pages" data-panel={p.id}>
+        <div class="sc-shot">
+          <img src={p.img} alt={`Scout dashboard: ${p.label}`} loading="lazy" width="1262" height="568" />
+        </div>
+        <p class="sc-shot-cap">{p.cap}</p>
+      </div>
+    ))}
+  </section>
+
+  <!-- ============ how to scan (tabbed guide) ============ -->
+  <section class="sc-guide" data-reveal>
+    <h2 class="sc-h2 sc-center">How to scan</h2>
+    <p class="sc-lead-c">Pick what you're scanning — copy the command and go. No docs trip required.</p>
+    <div class="g-tabs" role="tablist" aria-label="How to scan">
+      {guides.map((g, i) => (
+        <button type="button" role="tab" class:list={["g-tab", { active: i === 0 }]} data-tab-group="guide" data-tab={g.id} aria-selected={i === 0 ? "true" : "false"}>{g.label}</button>
+      ))}
+    </div>
+    {guides.map((g, i) => (
+      <div class:list={["g-panel", "guide-panel", { active: i === 0 }]} data-panel-group="guide" data-panel={g.id}>
+        <p class="guide-desc">{g.desc}</p>
+        <Code code={g.code} lang="bash" frame="none" />
+        <p class="guide-note">{g.note}</p>
+      </div>
+    ))}
   </section>
 
   <!-- ============ gridline-framed, Supabase-style sections ============ -->
@@ -252,6 +298,23 @@ function icon(name: string): string {
       document.querySelectorAll<HTMLElement>(".sc-panel").forEach((p) => { p.classList.toggle("active", p.dataset.panel === id); });
     });
   });
+
+  // Generic tab groups: the dashboard gallery and the how-to-scan guide.
+  document.querySelectorAll<HTMLElement>("[data-tab-group]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const group = tab.dataset.tabGroup;
+      const id = tab.dataset.tab;
+      document.querySelectorAll<HTMLElement>(`[data-tab-group="${group}"]`).forEach((t) => {
+        const on = t === tab;
+        t.classList.toggle("active", on);
+        t.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.querySelectorAll<HTMLElement>(`[data-panel-group="${group}"]`).forEach((p) => {
+        p.classList.toggle("active", p.dataset.panel === id);
+      });
+    });
+  });
+
   document.querySelectorAll<HTMLButtonElement>("[data-copy-btn]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const panel = btn.closest<HTMLElement>(".sc-panel");
@@ -334,13 +397,29 @@ function icon(name: string): string {
   .sc-grade { display: inline-block; font-weight: 700; color: var(--sc-crit); border: 1px solid var(--sc-crit); border-radius: 0.3rem; padding: 0 0.3rem; margin: 0 0.2rem; }
   .sc-score { color: var(--fl-muted); }
 
-  /* ============ dashboard showcase ============ */
-  .sc-showcase { max-width: 68rem; margin: 1rem auto 0; padding: 0 var(--gutter, 1.5rem); }
+  /* ============ dashboard gallery + how-to-scan guide ============ */
+  .sc-gallery, .sc-guide { max-width: 64rem; margin: 2.5rem auto 0; padding: 0 var(--gutter, 1.5rem); }
+  .sc-center { text-align: center; }
+  .sc-lead-c { max-width: 40rem; margin: 0 auto 1.5rem; text-align: center; font-size: 1rem; line-height: 1.55; color: var(--fl-muted); }
+  .sc-lead-c code, .guide-note code { font-family: var(--sl-font-mono); font-size: 0.88em; color: var(--fl-ember-strong); }
+  :root:not([data-theme="light"]) .sc-lead-c code, :root:not([data-theme="light"]) .guide-note code { color: var(--fl-ember); }
+
+  .g-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-bottom: 1.25rem; }
+  .g-tab { appearance: none; border: 1px solid var(--fl-rule); background: var(--fl-paper); font: inherit; font-size: 0.84rem; font-weight: 500; color: var(--fl-muted); padding: 0.4rem 0.85rem; border-radius: 999px; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
+  .g-tab:hover { color: var(--fl-ink); border-color: var(--fl-rule-strong); }
+  .g-tab.active { color: var(--fl-on-ember); background: var(--fl-ember-strong); border-color: var(--fl-ember-strong); }
+  :root:not([data-theme="light"]) .g-tab.active { color: #06220f; background: var(--fl-ember); border-color: var(--fl-ember); }
+  .g-panel { display: none; }
+  .g-panel.active { display: block; }
+
   .sc-shot { border: 1px solid var(--fl-rule); border-radius: 1rem; overflow: hidden; background: var(--fl-surface); box-shadow: var(--sl-shadow-lg); }
   .sc-shot img { display: block; width: 100%; height: auto; }
-  .sc-shot-cap { margin: 1rem auto 0; max-width: 42rem; text-align: center; font-size: 0.95rem; line-height: 1.55; color: var(--fl-muted); }
-  .sc-shot-cap code { font-family: var(--sl-font-mono); font-size: 0.88em; color: var(--fl-ember-strong); }
-  :root:not([data-theme="light"]) .sc-shot-cap code { color: var(--fl-ember); }
+  .sc-shot-cap { margin: 1rem auto 0; max-width: 44rem; text-align: center; font-size: 0.95rem; line-height: 1.55; color: var(--fl-muted); }
+
+  .guide-panel { max-width: 46rem; margin: 0 auto; }
+  .guide-desc { margin: 0 0 0.75rem; font-size: 1rem; color: var(--fl-ink); font-weight: 500; }
+  .guide-panel :global(.expressive-code) { margin: 0; }
+  .guide-note { margin: 0.9rem 0 0; font-size: 0.9rem; line-height: 1.55; color: var(--fl-muted); }
 
   /* ============ editorial: gridlines + Supabase layout ============ */
   .ed { position: relative; max-width: 80rem; margin: 2rem auto 0; padding: 0 var(--gutter, 1.5rem); }
