@@ -134,8 +134,10 @@ RustSec, PyPA and the Go vuln DB).
   Next.js/React frontend all appear here.
 - **Vulnerable dependencies** — each row is a dependency with a published
   advisory (CVE/GHSA): its **severity**, the **package@version**, and the
-  advisory. ❌ any row is a to-do; ✅ an empty table means no known-vulnerable
-  deps right now.
+  advisory. A red **Exploited** badge means the CVE is in CISA's Known Exploited
+  Vulnerabilities catalog — fix those first. Open any row to see its EPSS
+  exploit-probability. ❌ any row is a to-do; ✅ an empty table means no
+  known-vulnerable deps right now.
 
 **What to do:** update each listed package to its fixed version, then re-scan.
 From the CLI, `scout scan --repo .` produces the same findings (every major

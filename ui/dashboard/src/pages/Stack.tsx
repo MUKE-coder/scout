@@ -9,6 +9,7 @@ import { Recommendation } from "../components/Recommendation";
 import { SeverityBadge } from "../components/Severity";
 
 const DEP_CHECKS = new Set(["code.vulnerable-deps", "code.go-vulncheck"]);
+const EXPLOITED = "[Exploited] ";
 const KIND_LABEL: Record<string, string> = {
   language: "Languages",
   framework: "Frameworks",
@@ -136,8 +137,20 @@ export function Stack() {
                   </td>
                   <td className="px-6 py-3 font-mono text-[13px]">{f.asset?.value}</td>
                   <td className="px-6 py-3">
+                    {f.title.startsWith(EXPLOITED) && (
+                      <span
+                        title="In CISA's Known Exploited Vulnerabilities catalog — exploited in the wild"
+                        className="mr-2 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                        style={{
+                          color: "var(--sev-critical)",
+                          backgroundColor: "color-mix(in srgb, var(--sev-critical) 14%, transparent)",
+                        }}
+                      >
+                        Exploited
+                      </span>
+                    )}
                     <Link to={`/findings?open=${f.fingerprint}`} className="hover:underline">
-                      {f.title}
+                      {f.title.startsWith(EXPLOITED) ? f.title.slice(EXPLOITED.length) : f.title}
                     </Link>
                   </td>
                 </tr>

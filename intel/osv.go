@@ -33,6 +33,27 @@ type Vuln struct {
 	Severity string   // normalized: Critical | High | Medium | Low | Unknown
 	Fixed    string   // first fixed version for the queried package, if known
 	Ref      string   // a canonical reference URL
+
+	// Exploitation intelligence, filled by an Enricher (CISA KEV + FIRST EPSS).
+	CVE        string  // canonical CVE id resolved from ID/Aliases, if any
+	KEV        bool    // listed in the CISA Known Exploited Vulnerabilities catalog
+	Ransomware bool    // KEV: known use in ransomware campaigns
+	EPSS       float64 // FIRST EPSS exploitation probability, 0..1
+	EPSSPctl   float64 // EPSS percentile among all scored CVEs, 0..1
+}
+
+// CVEID returns the canonical CVE identifier for the vuln: its own ID if it is a
+// CVE, otherwise the first CVE alias. Empty when no CVE is associated.
+func (v Vuln) CVEID() string {
+	if strings.HasPrefix(v.ID, "CVE-") {
+		return v.ID
+	}
+	for _, a := range v.Aliases {
+		if strings.HasPrefix(a, "CVE-") {
+			return a
+		}
+	}
+	return ""
 }
 
 // DB is a source of vulnerability intelligence. Live (OSV API) and offline

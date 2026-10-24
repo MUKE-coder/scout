@@ -9,6 +9,7 @@ package sca
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -24,6 +25,12 @@ func init() { core.Register(Deps{}) }
 
 // db is the vulnerability source; a package var so tests can inject a fake.
 var db intel.DB = intel.NewOSV()
+
+// enrich adds exploitation intelligence (CISA KEV + FIRST EPSS) to the matched
+// vulns. A package var so tests can disable or fake it. nil skips enrichment.
+var enrich enricherFunc = intel.NewEnricher().Enrich
+
+type enricherFunc func(ctx context.Context, vulns []*intel.Vuln)
 
 // skipDirs are not walked: they hold dependencies' own manifests, which would
 // double-count, and build output.
@@ -60,6 +67,18 @@ func (Deps) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
 		return nil, nil // database unreachable — skip, don't fail the scan
 	}
 
+	// Enrich with exploitation intelligence (best-effort; leaves vulns unchanged
+	// on failure). Done across all results at once so the feeds load just once.
+	if enrich != nil {
+		var flat []*intel.Vuln
+		for i := range results {
+			for j := range results[i] {
+				flat = append(flat, &results[i][j])
+			}
+		}
+		enrich(ctx, flat)
+	}
+
 	var out []core.Finding
 	seen := map[string]bool{}
 	for i, vulns := range results {
@@ -88,11 +107,19 @@ func (Deps) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
 
 func finding(t core.Target, p intel.Package, v intel.Vuln) core.Finding {
 	sev, conf := severity(v.Severity)
+	// Observed in-the-wild exploitation (CISA KEV) makes a dependency urgent
+	// regardless of its advisory severity: escalate to at least High.
+	if v.KEV && sev < core.SeverityHigh {
+		sev, conf = core.SeverityHigh, core.ConfidenceConfirmed
+	}
 	id := v.ID
 	if len(v.Aliases) > 0 {
 		id = strings.Join(append([]string{v.ID}, v.Aliases...), " / ")
 	}
 	title := "Vulnerable dependency " + p.Name + "@" + p.Version
+	if v.KEV {
+		title = "[Exploited] " + title
+	}
 	if v.Summary != "" {
 		title += ": " + v.Summary
 	}
@@ -106,6 +133,21 @@ func finding(t core.Target, p intel.Package, v intel.Vuln) core.Finding {
 			refs = append(refs, "https://nvd.nist.gov/vuln/detail/"+a)
 		}
 	}
+
+	notes := p.Ecosystem + " package " + p.PURL + " — " + id
+	if sig := exploitSignal(v); sig != "" {
+		notes += " · " + sig
+	}
+	why := "Published advisories are tracked by attackers; a vulnerable dependency is an exploit path into your app, independent of your own code."
+	if v.KEV {
+		why = "This CVE is in CISA's Known Exploited Vulnerabilities catalog — it is being exploited in the wild right now"
+		if v.Ransomware {
+			why += ", including in ransomware campaigns"
+		}
+		why += ". Patch it ahead of advisories that are only theoretically exploitable."
+		refs = append(refs, "https://www.cisa.gov/known-exploited-vulnerabilities-catalog")
+	}
+
 	return core.Finding{
 		Title:      title,
 		Category:   core.CategoryCode,
@@ -113,17 +155,34 @@ func finding(t core.Target, p intel.Package, v intel.Vuln) core.Finding {
 		Confidence: conf,
 		Asset:      core.Asset{Kind: core.AssetFile, Value: p.Name + "@" + p.Version, File: p.File, Criticality: t.Criticality},
 		Location:   id,
-		Evidence:   core.Evidence{Notes: p.Ecosystem + " package " + p.PURL + " — " + id},
+		Evidence:   core.Evidence{Notes: notes},
 		CWE:        []string{"CWE-1395"},
 		OWASP:      []string{"A06:2021"},
 		Remediation: core.Remediation{
 			What:       "A third-party dependency (" + p.Name + ") has a known, published vulnerability (" + id + ").",
-			Why:        "Published advisories are tracked by attackers; a vulnerable dependency is an exploit path into your app, independent of your own code.",
+			Why:        why,
 			How:        []core.Fix{{Stack: "generic", Language: "text", Code: fix + "\nThen re-run your package manager's audit (npm audit, pip-audit, govulncheck, cargo audit, composer audit …)."}},
 			Effort:     core.EffortS,
 			References: refs,
 		},
 	}
+}
+
+// exploitSignal renders the KEV/EPSS signals as a short, human line for a
+// finding's evidence, e.g. "CISA KEV (ransomware) · EPSS 97% (p99)".
+func exploitSignal(v intel.Vuln) string {
+	var parts []string
+	if v.KEV {
+		s := "CISA KEV: exploited in the wild"
+		if v.Ransomware {
+			s = "CISA KEV: exploited in the wild (ransomware)"
+		}
+		parts = append(parts, s)
+	}
+	if v.EPSS > 0 {
+		parts = append(parts, fmt.Sprintf("EPSS %.0f%% (p%.0f)", v.EPSS*100, v.EPSSPctl*100))
+	}
+	return strings.Join(parts, " · ")
 }
 
 // severity maps the normalized label to Scout's scale. "Unknown" is treated as

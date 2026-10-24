@@ -110,6 +110,7 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `code.dangerous-sink` | `eval` / `exec` / unsafe deserialization / raw HTML |
 | `code.secret-logging` | Secrets written to logs |
 | `code.unpinned-deps` | Loose dependency version ranges |
+| `code.vulnerable-deps` | Known-vulnerable deps (OSV), enriched with CISA KEV + FIRST EPSS |
 | `code.go-vulncheck` | Reachable Go CVEs (via `govulncheck`) |
 
 ## Configuration (passive)

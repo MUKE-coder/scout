@@ -5,6 +5,15 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.3
+
+- **Exploitation intelligence**: every vulnerable-dependency finding is now
+  enriched with **CISA KEV** (is it being exploited in the wild?) and **FIRST
+  EPSS** (how likely is exploitation in the next 30 days?). KEV vulnerabilities
+  are marked `[Exploited]`, escalated to at least High, and sorted to the top of
+  "Fix next" — so you patch what attackers are actually using first. The feeds
+  are cached on disk, so repeat scans are fast and work offline.
+
 ## v0.4.2
 
 - **Grit framework, first-class**: Scout recognizes a [Grit](https://gritframework.dev)
