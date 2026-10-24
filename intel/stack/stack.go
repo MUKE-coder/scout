@@ -5,6 +5,7 @@ package stack
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -142,6 +143,83 @@ func fromFindings(findings []core.Finding) []core.StackComponent {
 		out = append(out, core.StackComponent{Kind: kind, Name: strings.TrimSpace(name), Version: strings.TrimSpace(version), Source: header + " header"})
 	}
 	return out
+}
+
+// pageMarkers detect a framework from HTML body signatures.
+var pageMarkers = []struct {
+	needle, name string
+}{
+	{"__NEXT_DATA__", "Next.js"},
+	{"/_next/static", "Next.js"},
+	{"wp-content", "WordPress"},
+	{"wp-json", "WordPress"},
+	{`content="WordPress`, "WordPress"},
+	{"window.Laravel", "Laravel"},
+	{"ng-version", "Angular"},
+	{"__NUXT__", "Nuxt"},
+	{"data-reactroot", "React"},
+	{`content="Drupal`, "Drupal"},
+	{`content="Joomla`, "Joomla"},
+	{"/sites/default/files", "Drupal"},
+}
+
+// cookieMarkers detect a framework/runtime from a Set-Cookie name.
+var cookieMarkers = []struct {
+	needle, name, kind string
+}{
+	{"laravel_session", "Laravel", "framework"},
+	{"XSRF-TOKEN", "Laravel", "framework"},
+	{"JSESSIONID", "Java", "language"},
+	{"ASP.NET_SessionId", "ASP.NET", "framework"},
+	{".AspNetCore", "ASP.NET Core", "framework"},
+	{"_rails_session", "Rails", "framework"},
+	{"csrftoken", "Django", "framework"},
+	{"PHPSESSID", "PHP", "language"},
+}
+
+// DetectFromPage detects frameworks/runtimes from a response's headers and HTML
+// body — the black-box signal, when there is no repo to read.
+func DetectFromPage(header http.Header, body []byte) []core.StackComponent {
+	var out []core.StackComponent
+	// Headers: Server, X-Powered-By, X-Generator.
+	for _, h := range []string{"X-Powered-By", "X-Generator", "Server"} {
+		if v := strings.TrimSpace(header.Get(h)); v != "" {
+			name, version := v, ""
+			if i := strings.IndexAny(v, "/ "); i >= 0 {
+				name, version = v[:i], strings.TrimLeft(v[i:], "/ ")
+			}
+			kind := "server"
+			if h != "Server" {
+				kind = "framework"
+			}
+			out = append(out, core.StackComponent{Kind: kind, Name: strings.TrimSpace(name), Version: strings.TrimSpace(version), Source: h + " header"})
+		}
+	}
+	for _, c := range cookieMarkers {
+		for _, sc := range header.Values("Set-Cookie") {
+			if strings.Contains(sc, c.needle) {
+				out = append(out, core.StackComponent{Kind: c.kind, Name: c.name, Source: "cookie"})
+				break
+			}
+		}
+	}
+	html := string(body)
+	for _, m := range pageMarkers {
+		if strings.Contains(html, m.needle) {
+			out = append(out, core.StackComponent{Kind: "framework", Name: m.name, Source: "page"})
+		}
+	}
+	return dedupe(out)
+}
+
+// Has reports whether the components include a framework/language with name.
+func Has(cs []core.StackComponent, name string) bool {
+	for _, c := range cs {
+		if strings.EqualFold(c.Name, name) {
+			return true
+		}
+	}
+	return false
 }
 
 var verClean = regexp.MustCompile(`[0-9][0-9A-Za-z.\-]*`)
