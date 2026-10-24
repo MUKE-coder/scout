@@ -41,6 +41,15 @@ var rules = []rule{
 // placeholder values that look like secrets but are not.
 var placeholder = regexp.MustCompile(`(?i)(example|changeme|your[_-]?|placeholder|dummy|test|xxxx|\*\*\*\*|<[a-z]|\$\{|redacted|sample)`)
 
+// suppress matches inline "a human reviewed this" annotations (gosec, Biome,
+// ESLint, Semgrep). Honouring them is the ecosystem convention.
+var suppress = regexp.MustCompile(`(?i)(#nosec|nolint|nosemgrep|biome-ignore|eslint-disable|lgtm\[|noqa)`)
+
+// routeOrPath marks a quoted value that is a URL path or route, not a credential
+// — it starts with "/" or contains a scheme. These match generic-secret when the
+// key happens to contain a word like PASSWORD (e.g. RESET_PASSWORD: "/auth/...").
+var routeOrPath = regexp.MustCompile(`^/|://`)
+
 // strongRules are specific enough that a hit is a real secret even in a test
 // file or doc, so they keep their severity and the exposed-secret tag there.
 var strongRules = map[string]bool{"aws-access-key": true, "private-key": true, "google-api-key": true, "slack-token": true, "github-token": true, "stripe-key": true}
@@ -66,13 +75,23 @@ func (Scanner) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
 	var out []core.Finding
 	seen := map[string]bool{} // rule|file|line — one finding per spot
 	err := repo.Walk(root, func(f repo.File) error {
-		for i, line := range repo.Lines(f.Data) {
+		lines := repo.Lines(f.Data)
+		for i, line := range lines {
 			if len(line) > 4000 {
 				continue // skip minified / data lines
+			}
+			// Honour a suppression on this line or the one directly above it.
+			if suppress.MatchString(line) || (i > 0 && suppress.MatchString(lines[i-1])) {
+				continue
 			}
 			for _, r := range rules {
 				m := r.re.FindString(line)
 				if m == "" || placeholder.MatchString(line) {
+					continue
+				}
+				// A generic-secret whose value is a URL path/route is not a
+				// credential (e.g. RESET_PASSWORD: "/api/auth/reset-password").
+				if r.id == "generic-secret" && routeOrPath.MatchString(quotedValue(m)) {
 					continue
 				}
 				key := r.id + "|" + f.Rel + "|" + itoa(i+1)
@@ -119,6 +138,21 @@ func finding(t core.Target, file string, line int, r rule, match, raw string, so
 			References: []string{"https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password", "https://cwe.mitre.org/data/definitions/798.html"},
 		},
 	}
+}
+
+// quotedValue returns the contents of the first quoted string in a match, which
+// for the generic-secret rule is the assigned value.
+func quotedValue(m string) string {
+	i := strings.IndexAny(m, `"'`)
+	if i < 0 {
+		return ""
+	}
+	q := m[i]
+	j := strings.IndexByte(m[i+1:], q)
+	if j < 0 {
+		return ""
+	}
+	return m[i+1 : i+1+j]
 }
 
 // mask shows only the shape of a secret, never its value.

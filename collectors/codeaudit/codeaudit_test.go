@@ -78,14 +78,39 @@ func TestSecretLogging(t *testing.T) {
 
 func TestInsecureRandomAndComments(t *testing.T) {
 	dir := repoWith(t, map[string]string{
-		"rng.go":  "import \"math/rand\"\n",
-		"note.go": "// we avoid md5 here on purpose\n", // a comment must not be flagged
+		"rng.go":    "func f() { sessionToken = rand.Intn(1000000) }\n", // security-relevant → flag
+		"jitter.js": "const d = base/2 + Math.random()*(base/2)\n",      // jitter → no flag
+		"note.go":   "// we avoid md5 here on purpose\n",                // a comment must not be flagged
 	})
 	if n := len(run(t, InsecureRandom{}, dir)); n != 1 {
-		t.Fatalf("insecure random = %d", n)
+		t.Fatalf("insecure random = %d (want 1: only the security-relevant use)", n)
 	}
 	if n := len(run(t, WeakCrypto{}, dir)); n != 0 {
 		t.Fatalf("comment should not be flagged, got %d", n)
+	}
+}
+
+// TestFalsePositives locks in the fixes from GitHub issues #4, #5 and #6: the
+// patterns below are all legitimate code that must NOT be flagged.
+func TestFalsePositives(t *testing.T) {
+	dir := repoWith(t, map[string]string{
+		// #5: RegExp.exec is not child_process.exec.
+		"re.ts": "const m = /^#?([0-9a-f]{3})$/i.exec(raw.trim())\n",
+		// #5: Math.random for a width / React key is not security-relevant.
+		"ui.tsx": "const w = `${50 + Math.random()*50}%`\nconst k = 'new-'+Math.random().toString(36)\n",
+		// #5: a block comment mentioning a sink must not be flagged.
+		"doc.tsx": "/*\n dangerouslySetInnerHTML is the only way to inline a script.\n*/\nexport const x = 1\n",
+		// #4: a credential word in a format string (logging an error) is not a leak.
+		"log.go": "log.Printf(\"auth: preparing the password hash: %v\", err)\n",
+		// #6: HMAC-SHA1 (RFC 6238 TOTP) is not broken SHA-1.
+		"totp.go": "mac := hmac.New(sha1.New, key)\n",
+		// #6: a line annotated #nosec was already human-reviewed.
+		"hibp.go": "sum := sha1.Sum([]byte(candidate)) // #nosec G401 -- HIBP range API key, not a password hash\n",
+	})
+	for _, c := range []core.Check{DangerousSink{}, InsecureRandom{}, SecretLogging{}, WeakCrypto{}} {
+		if got := run(t, c, dir); len(got) != 0 {
+			t.Errorf("%s produced false positives: %+v", c.ID(), got)
+		}
 	}
 }
 

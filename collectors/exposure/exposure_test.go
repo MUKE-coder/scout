@@ -180,9 +180,10 @@ func TestDirListing(t *testing.T) {
 }
 
 func TestDashboards(t *testing.T) {
-	t.Run("open sentinel ui", func(t *testing.T) {
+	t.Run("open dashboard: ui shell + unauthenticated api", func(t *testing.T) {
 		srv := serve(t, map[string]route{
-			"/sentinel/ui": {200, "text/html", "<html><title>Sentinel Dashboard</title></html>"},
+			"/sentinel/ui":         {200, "text/html", "<html><title>Sentinel Dashboard</title></html>"},
+			"/sentinel/api/health": {200, "application/json", `{"status":"ok"}`},
 		})
 		got, err := Dashboards{}.Run(scanCtx(srv), target(srv))
 		if err != nil {
@@ -192,13 +193,28 @@ func TestDashboards(t *testing.T) {
 			t.Fatalf("want 1 finding for /sentinel/ui, got %+v", got)
 		}
 	})
-	t.Run("protected dashboard (401) is clean", func(t *testing.T) {
+	t.Run("login shell but protected api is clean (issue #3)", func(t *testing.T) {
+		// The HTML shell is public (that is how the login screen loads); the API
+		// requires a session. This must NOT be a finding.
 		srv := serve(t, map[string]route{
-			"/sentinel/ui": {401, "text/html", "unauthorized"},
+			"/scout/ui/":          {200, "text/html", "<html><title>Scout</title></html>"},
+			"/scout/api/overview": {401, "application/json", `{"error":"authentication required"}`},
 		})
 		got, _ := Dashboards{}.Run(scanCtx(srv), target(srv))
 		if len(got) != 0 {
-			t.Fatalf("want 0 findings for protected dashboard, got %d", len(got))
+			t.Fatalf("want 0 findings when the API is protected, got %+v", got)
+		}
+	})
+	t.Run("a missing product does not hide the others (issue #3)", func(t *testing.T) {
+		// Pulse is not mounted (probed first); Scout is mounted and exposed. The
+		// check must still reach and report Scout.
+		srv := serve(t, map[string]route{
+			"/scout/ui/":          {200, "text/html", "<html><title>Scout</title></html>"},
+			"/scout/api/overview": {200, "application/json", `{"grade":"A"}`},
+		})
+		got, _ := Dashboards{}.Run(scanCtx(srv), target(srv))
+		if len(got) != 1 || got[0].Location != "/scout/ui/" {
+			t.Fatalf("want 1 finding for /scout/ui/, got %+v", got)
 		}
 	})
 }

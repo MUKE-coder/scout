@@ -399,44 +399,51 @@ func (Dashboards) OWASP() []string { return []string{"A05:2021"} }
 func (Dashboards) ASVS() []string  { return []string{"V14.3.2"} }
 
 func (Dashboards) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
-	type probe struct{ path, marker string }
-	// Sorted by path for determinism.
-	probes := []probe{
-		{"/pulse/ui/", "pulse"},
-		{"/scout/ui/", "scout"},
-		{"/sentinel/ui", "sentinel"},
+	if t.URL == "" {
+		return nil, nil
+	}
+	// The UI probe decides whether the dashboard is mounted here; the API probe
+	// decides whether it is actually exposed. These dashboards all serve an
+	// unauthenticated HTML shell (that is how the login screen loads), so a 200 on
+	// the UI is not evidence — reachable *data* is. See GitHub issue #3.
+	probes := []struct{ ui, api, marker string }{
+		{"/pulse/ui/", "/pulse/api/overview", "pulse"},
+		{"/scout/ui/", "/scout/api/overview", "scout"},
+		{"/sentinel/ui", "/sentinel/api/health", "sentinel"},
 	}
 	var out []core.Finding
 	for _, pr := range probes {
-		p, ok, err := fetch(ctx, t, pr.path)
-		if err != nil {
-			return out, err
-		}
-		if !ok {
-			return out, nil
-		}
-		// A login redirect (3xx) or 401/403 means it is protected: good.
-		if !reachable(p) {
+		ui, ok, err := fetch(ctx, t, pr.ui)
+		// A fetch error or non-2xx (or a different product) just means this
+		// dashboard is not mounted here — move on, do not abandon the rest.
+		if err != nil || !ok || !reachable(ui) {
 			continue
 		}
-		if !strings.Contains(strings.ToLower(bodyText(p)), pr.marker) {
+		if !strings.Contains(strings.ToLower(bodyText(ui)), pr.marker) {
+			continue
+		}
+		// The dashboard is mounted. Is its data exposed? Probe the API with no
+		// credentials: a 2xx is a real gap; a 401/403/redirect means it is
+		// protected and the open HTML shell is just the login page.
+		api, ok, err := fetch(ctx, t, pr.api)
+		if err != nil || !ok || !reachable(api) {
 			continue
 		}
 		out = append(out, core.Finding{
-			Title:      "Dashboard reachable without authentication: " + pr.path,
+			Title:      "Dashboard data reachable without authentication: " + pr.ui,
 			Category:   core.CategoryExposure,
 			Severity:   core.SeverityHigh,
-			Confidence: core.ConfidenceLikely,
-			Asset:      httpx.Asset(t, p.URL),
-			Location:   pr.path,
-			Evidence:   core.Evidence{Request: p.Request, Response: p.Response},
+			Confidence: core.ConfidenceConfirmed,
+			Asset:      httpx.Asset(t, ui.URL),
+			Location:   pr.ui,
+			Evidence:   core.Evidence{Request: api.Request, Response: api.Response, Notes: "unauthenticated GET of " + pr.api + " returned 2xx"},
 			CWE:        []string{"CWE-306"},
 			OWASP:      []string{"A05:2021"},
 			Remediation: core.Remediation{
-				What: "The dashboard at " + pr.path + " returned a 2xx page without requiring a login.",
+				What: "The dashboard at " + pr.ui + " is mounted, and its API (" + pr.api + ") returned data without requiring a login.",
 				Why:  "An open admin or observability dashboard exposes internal data and controls to anyone who finds the URL.",
 				How: []core.Fix{
-					{Stack: "generic", Language: "text", Code: "Require authentication for the dashboard, and refuse the shipped default credentials outside development."},
+					{Stack: "generic", Language: "text", Code: "Require authentication for the dashboard API, and refuse the shipped default credentials outside development."},
 				},
 				Effort:     core.EffortM,
 				References: []string{"https://owasp.org/Top10/A05_2021-Security_Misconfiguration/"},

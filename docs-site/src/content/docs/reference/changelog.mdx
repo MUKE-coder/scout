@@ -5,6 +5,24 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.9
+
+- **Far fewer false positives in the code scanners.** The static checks now honour
+  `#nosec` / `biome-ignore` / `eslint-disable` suppressions, skip block comments
+  and string literals, and judge intent, not keywords:
+  - `code.secret-logging` flags a credential-named **argument** to a log call, not
+    the word appearing in a format string (35 → 1 on a real app).
+  - `code.dangerous-sink` no longer treats `RegExp.exec` or comments as sinks.
+  - `code.insecure-random` fires only when the value is security-relevant, and
+    never on `crypto/rand`.
+  - `code.weak-crypto` leaves HMAC-SHA1 (RFC 6238 TOTP, AWS SigV4) alone.
+  - `code.secrets` ignores URL-path constants whose key happens to contain
+    "password".
+  - `auth.missing` no longer treats every `/api` route as sensitive, skips
+    sign-in/health/webhook/OAuth routes, and honours a `Route.Public` flag.
+  - `exposure.dashboards` reports a dashboard only when its **API** answers without
+    auth (not the public login shell), and no longer stops at the first probe.
+
 ## v0.4.8
 
 - **Expo detection**: Scout now identifies [Expo](https://expo.dev) (React Native)

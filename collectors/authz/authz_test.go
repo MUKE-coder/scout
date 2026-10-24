@@ -263,6 +263,34 @@ func TestMissingAuthRouteTable(t *testing.T) {
 	}
 }
 
+// From GitHub issue #2: a namespaced API must not make every route "sensitive",
+// sign-in/health routes are public by design, and the Public flag is honoured.
+func TestMissingAuthPublicRoutes(t *testing.T) {
+	ctx := core.WithScanCache(context.Background())
+	tgt := core.Target{
+		URL:         "https://app.example.com",
+		Environment: core.EnvProd,
+		Routes: []core.Route{
+			{Method: "POST", Path: "/api/v1/auth/login", Middleware: nil},                // sign-in → public
+			{Method: "GET", Path: "/api/health", Middleware: nil},                        // health → public
+			{Method: "GET", Path: "/api/v1/auth/oauth/google/callback", Middleware: nil}, // OAuth callback → public
+			{Method: "GET", Path: "/api/v1/users", Middleware: nil, Public: true},        // declared public
+			{Method: "GET", Path: "/api/v1/admin/users", Middleware: nil},                // genuinely unprotected → finding
+		},
+	}
+	prev := crawlFn
+	crawlFn = func(context.Context, core.Target) (*crawlResult, error) { return &crawlResult{}, nil }
+	t.Cleanup(func() { crawlFn = prev })
+
+	got, err := MissingAuth{}.Run(ctx, tgt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Location != "GET /api/v1/admin/users" {
+		t.Fatalf("want only the admin route flagged, got %d: %+v", len(got), got)
+	}
+}
+
 func TestMissingAuthHTTP(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// /api/account returns data with no auth check.

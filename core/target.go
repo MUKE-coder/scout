@@ -14,6 +14,10 @@ type Route struct {
 	Path       string   `json:"path"`
 	Handler    string   `json:"handler,omitempty"`
 	Middleware []string `json:"middleware,omitempty"`
+	// Public marks a route that is unauthenticated by design (sign-in, health,
+	// webhook receivers, OAuth callbacks). The missing-auth check skips it rather
+	// than reporting the absence of the auth it was told not to expect.
+	Public bool `json:"public,omitempty"`
 }
 
 // Identity is a disposable test account the access-control checks use to probe

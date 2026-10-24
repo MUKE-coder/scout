@@ -223,7 +223,7 @@ func inventory(root string) []intel.Package {
 		if err != nil || info.Size() > maxManifest {
 			return nil
 		}
-		data, err := os.ReadFile(path) // #nosec G304 -- path from a walk of the user's own repo
+		data, err := os.ReadFile(path) // #nosec G304 G122 -- reading the user's own repo tree is the point; symlink TOCTOU is not a concern for a local read-only scan
 		if err != nil {
 			return nil
 		}

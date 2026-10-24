@@ -130,16 +130,43 @@ func resolveOwnedURL(base, owned string) string {
 	return b.ResolveReference(ref).String()
 }
 
-// sensitiveWords flag a path that probably needs authentication.
+// sensitiveWords flag a path that probably needs authentication. Note "/api" is
+// deliberately absent: every route of a namespaced API matches it, so it carries
+// no signal (see GitHub issue #2).
 var sensitiveWords = []string{
 	"admin", "account", "accounts", "user", "users", "dashboard", "settings",
-	"billing", "payment", "invoice", "profile", "/api", "api/", "internal",
+	"billing", "payment", "invoice", "profile", "internal",
 	"manage", "config", "secret", "token", "order", "orders", "customer",
 }
 
+// publicWords name paths that are unauthenticated by design: a sign-in endpoint
+// cannot require a signed-in user, and health/webhook/OAuth-callback routes are
+// public on purpose. Reporting these as missing-auth is a false positive.
+var publicWords = []string{
+	"login", "signin", "sign-in", "logout", "register", "signup", "sign-up",
+	"refresh", "forgot", "reset-password", "forgot-password", "magic-link",
+	"oauth", "callback", "saml", "sso", "passkey", "webauthn", "health",
+	"healthz", "livez", "readyz", "ping", "status", "webhook", "well-known",
+	"verify-email", "confirm",
+}
+
+// looksPublic reports whether a path is unauthenticated by design.
+func looksPublic(path string) bool {
+	p := strings.ToLower(path)
+	for _, w := range publicWords {
+		if strings.Contains(p, w) {
+			return true
+		}
+	}
+	return false
+}
+
 // looksSensitive is a heuristic: does this path probably expose protected
-// functionality or data?
+// functionality or data? A path that is public by design never qualifies.
 func looksSensitive(path string) bool {
+	if looksPublic(path) {
+		return false
+	}
 	p := strings.ToLower(path)
 	for _, w := range sensitiveWords {
 		if strings.Contains(p, w) {

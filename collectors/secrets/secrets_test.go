@@ -87,6 +87,19 @@ func TestIgnoresPlaceholders(t *testing.T) {
 	}
 }
 
+// From GitHub issue #6: a route constant whose key contains PASSWORD is not a
+// secret, and a line annotated #nosec was already reviewed.
+func TestGenericSecretFalsePositives(t *testing.T) {
+	dir := repoWith(t, map[string]string{
+		"routes.ts": "export const FORGOT_PASSWORD = \"/api/auth/forgot-password\"\n" +
+			"export const RESET_PASSWORD = \"/api/auth/reset-password\"\n",
+		"seed.go": "password = \"admin123dev\" // #nosec G101 -- guarded dev-only default\n",
+	})
+	if got := run(t, dir); len(got) != 0 {
+		t.Fatalf("route constants and #nosec lines should not be flagged: %+v", got)
+	}
+}
+
 func TestTestFixturesSoftened(t *testing.T) {
 	dir := repoWith(t, map[string]string{
 		"api/user_test.go": "package api\n\nfunc login() {\n\tpassword := \"hunter2hunter2\"\n\t_ = password\n}\n", // weak pattern, test path

@@ -249,7 +249,10 @@ func (c MissingAuth) Run(ctx context.Context, t core.Target) ([]core.Finding, er
 	// middleware chain contains no auth gate is a confirmed gap in the config,
 	// independent of any request.
 	for _, r := range t.Routes {
-		if !looksSensitive(r.Path) || hasAuthMiddleware(r.Middleware) {
+		// Skip routes the caller declared public by design, and routes whose path
+		// is a sign-in/health/webhook/OAuth endpoint (looksSensitive excludes
+		// those). A sign-in route cannot require a signed-in user.
+		if r.Public || !looksSensitive(r.Path) || hasAuthMiddleware(r.Middleware) {
 			continue
 		}
 		key := "route:" + strings.ToUpper(r.Method) + " " + r.Path
