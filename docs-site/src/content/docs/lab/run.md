@@ -3,6 +3,21 @@ title: Run the lab
 description: Clone the Scout repo and start the deliberately-vulnerable lab app on localhost.
 ---
 
+## One command (quickest)
+
+If you just want to see Scout find real issues, let Scout clone the lab and scan
+its source for you:
+
+```bash
+scout lab
+```
+
+This clones the repo into `./scout-lab`, runs a **source scan** on `lab/`, and
+prints the steps to also scan the **running app**. Everything below is the manual
+version of the same thing, including the live (black-box) scan.
+
+## The lab app
+
 The lab lives in the Scout repo under `lab/`. It is a Next.js app that runs on
 port 4000.
 

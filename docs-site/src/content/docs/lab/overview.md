@@ -36,9 +36,19 @@ A Next.js app (port 4000) with:
 - Committed secrets (`.env`), an insecure `Dockerfile`, weak crypto and dangerous
   sinks in the source — for the `--repo` checks.
 
+## The fastest way in
+
+```bash
+scout lab
+```
+
+Scout clones the repo, runs a **source scan** on `lab/`, and prints the steps to
+scan the **running app** too — so you can demo it in one command. The pages below
+are the manual walkthrough.
+
 ## Next
 
-1. [Run the lab](/lab/run/).
+1. [Run the lab](/lab/run/) (or just `scout lab`).
 2. [Black-box scan](/lab/black-box/) it.
 3. [Source scan](/lab/source/) it.
 4. See [what each check catches](/lab/coverage/).

@@ -27,6 +27,17 @@ scout init          # writes scout.yaml
 scout init --force  # overwrite an existing one
 ```
 
+## `scout lab`
+
+Clone Scout's deliberately-vulnerable lab app and run a source scan on it — the
+fastest way to see Scout find real issues. Prints the steps to also scan it live.
+
+```bash
+scout lab                  # clones into ./scout-lab and scans lab/ source
+scout lab --dir ./demo     # clone somewhere else
+scout lab --mode safe      # scan mode for the source scan
+```
+
 ## `scout scan`
 
 Run a scan and print the report.

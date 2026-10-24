@@ -77,6 +77,10 @@ function icon(name: string): string {
           View on GitHub
         </a>
       </div>
+
+      <p class="sc-demo" data-anim>
+        New here? <code>scout lab</code> clones a vulnerable demo app and scans it in one command.
+      </p>
     </div>
 
     <div class="sc-visual" data-anim>
@@ -281,6 +285,9 @@ function icon(name: string): string {
   .sc-accent { display: block; color: var(--fl-ember-strong); }
   :root:not([data-theme="light"]) .sc-accent { color: var(--fl-ember); }
   .sc-sub { max-width: 34rem; margin: 1.35rem 0 0; font-size: 1.05rem; line-height: 1.6; color: var(--fl-muted); }
+  .sc-demo { margin: 1.1rem 0 0; font-size: 0.9rem; color: var(--fl-muted); }
+  .sc-demo code { font-family: var(--sl-font-mono); font-size: 0.85em; color: var(--fl-ember-strong); background: var(--fl-ember-soft); padding: 0.1rem 0.4rem; border-radius: 0.3rem; }
+  :root:not([data-theme="light"]) .sc-demo code { color: var(--fl-ember); }
   .sc-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.9rem; }
   .sc-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.25rem; border-radius: 0.625rem; font-size: 0.95rem; font-weight: 600; text-decoration: none; border: 1px solid transparent; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, filter 0.15s ease; }
   .sc-btn.sc-btn-primary { background: var(--fl-ember-strong) !important; color: var(--fl-on-ember) !important; box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--fl-ember) 60%, transparent); }
