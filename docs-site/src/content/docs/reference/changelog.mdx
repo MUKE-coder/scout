@@ -5,6 +5,12 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.1
+
+- **Framework-aware checks** (`app.framework-exposure`): gated by the detected
+  stack, Scout probes Spring Boot actuators, WordPress REST/XML-RPC and Laravel
+  debug tools — never probing a framework that was not detected.
+
 ## v0.4.0
 
 - **Software composition analysis**: `scout scan --repo .` now matches your

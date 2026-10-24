@@ -66,6 +66,7 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `app.info-disclosure` | safe | Stack traces / verbose errors |
 | `app.host-header` | safe | Host-header injection |
 | `app.version-disclosure` | safe | Software/version banners |
+| `app.framework-exposure` | safe | Framework-specific exposure, gated by the detected stack: Spring Boot actuators, WordPress REST user-enumeration & XML-RPC, Laravel Telescope/Ignition |
 | `app.directory-listing` | safe | Directory autoindex |
 | `app.missing-sri` | safe | Cross-origin script/style without SRI |
 | `app.mixed-content` | safe | HTTPS page loading HTTP resources |
