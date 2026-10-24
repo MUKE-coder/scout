@@ -5,6 +5,15 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.2
+
+- **Grit framework, first-class**: Scout recognizes a [Grit](https://gritframework.dev)
+  monorepo by its `grit.json` and reports the whole stack from it — the Grit
+  version and architecture, its Go API and its Next.js/React frontend — so a Grit
+  repo scan names the framework and then finds known CVEs across its apps.
+- **Dashboard polish**: the per-page recommendation banner is a cleaner, flat
+  callout (no rounded box), and the History page spaces its scan cards.
+
 ## v0.4.1
 
 - **Framework-aware checks** (`app.framework-exposure`): gated by the detected

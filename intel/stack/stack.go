@@ -59,6 +59,35 @@ func fromRepo(repoPath string) []core.StackComponent {
 		}
 	}
 
+	// Grit framework (first-class): a monorepo marked by grit.json, with a Go
+	// API and a JS frontend. grit.json carries the version, architecture and
+	// chosen frontend, so we can describe the whole stack from one file.
+	if b, ok := read("grit.json"); ok {
+		var g struct {
+			Architecture string `json:"architecture"`
+			Frontend     string `json:"frontend"`
+			Version      string `json:"version"`
+		}
+		_ = json.Unmarshal(b, &g)
+		name := "Grit"
+		if g.Architecture != "" {
+			name = "Grit (" + g.Architecture + ")"
+		}
+		add(core.StackComponent{Kind: "framework", Name: name, Version: g.Version, Source: "grit.json"})
+		// Grit's API is always Go; the frontend is TypeScript/React-based.
+		add(core.StackComponent{Kind: "language", Name: "Go", Source: "grit.json (API)"})
+		add(core.StackComponent{Kind: "language", Name: "TypeScript", Source: "grit.json"})
+		switch strings.ToLower(g.Frontend) {
+		case "next", "nextjs", "next.js":
+			add(core.StackComponent{Kind: "framework", Name: "Next.js", Source: "grit.json"})
+			add(core.StackComponent{Kind: "framework", Name: "React", Source: "grit.json"})
+		case "react":
+			add(core.StackComponent{Kind: "framework", Name: "React", Source: "grit.json"})
+		case "vue":
+			add(core.StackComponent{Kind: "framework", Name: "Vue", Source: "grit.json"})
+		}
+	}
+
 	// JS/TS frameworks from package.json dependencies (with declared versions).
 	if b, ok := read("package.json"); ok {
 		var pj struct {

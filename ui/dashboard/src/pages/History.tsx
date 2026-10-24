@@ -79,7 +79,7 @@ export function History() {
         <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
           <Card className="p-2">
             <p className="px-3 pt-2 pb-3 text-[12px] text-subtle">Select two scans to compare.</p>
-            <ul className="max-h-[calc(100vh-260px)] overflow-y-auto">
+            <ul className="max-h-[calc(100vh-260px)] space-y-1 overflow-y-auto">
               {scans.map((s) => {
                 const role = s.id === from ? "From" : s.id === to ? "To" : null;
                 return (

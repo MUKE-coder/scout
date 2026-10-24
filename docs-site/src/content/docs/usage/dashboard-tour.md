@@ -129,6 +129,9 @@ RustSec, PyPA and the Go vuln DB).
 **How to read it:**
 - **Detected stack** — languages and frameworks with versions (e.g. *Next.js
   16.4.2 · React 19.3.1*). Confirms Scout is testing the right thing.
+  [Grit](https://gritframework.dev) monorepos are recognized first-class from
+  their `grit.json` — the Grit version and architecture, the Go API and the
+  Next.js/React frontend all appear here.
 - **Vulnerable dependencies** — each row is a dependency with a published
   advisory (CVE/GHSA): its **severity**, the **package@version**, and the
   advisory. ❌ any row is a to-do; ✅ an empty table means no known-vulnerable

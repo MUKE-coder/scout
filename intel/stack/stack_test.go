@@ -44,6 +44,32 @@ func TestDetectFromRepo(t *testing.T) {
 	}
 }
 
+func TestDetectGrit(t *testing.T) {
+	dir := t.TempDir()
+	// A Grit monorepo is marked by grit.json in the root.
+	body := `{"architecture":"triple","frontend":"next","version":"3.410.1","apps":{"expo":true,"desktop":true,"docs":true}}`
+	if err := os.WriteFile(filepath.Join(dir, "grit.json"), []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got := Detect(core.Target{Repo: dir, Environment: core.EnvDev}, nil)
+	if !has(got, "framework", "Grit (triple)") {
+		t.Errorf("Grit not detected as first-class framework: %+v", got)
+	}
+	for _, c := range got {
+		if c.Name == "Grit (triple)" && c.Version != "3.410.1" {
+			t.Errorf("Grit version = %q, want 3.410.1", c.Version)
+		}
+	}
+	// Grit's monorepo stack: a Go API and a Next.js/React frontend.
+	if !has(got, "language", "Go") || !has(got, "language", "TypeScript") {
+		t.Errorf("Grit sub-stack languages not detected: %+v", got)
+	}
+	if !has(got, "framework", "Next.js") || !has(got, "framework", "React") {
+		t.Errorf("Grit frontend frameworks not detected: %+v", got)
+	}
+}
+
 func TestDetectFromFindings(t *testing.T) {
 	findings := []core.Finding{
 		{CheckID: "app.version-disclosure", Evidence: core.Evidence{Matched: "Server: nginx/1.18.0"}},
