@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router";
 import { Boxes } from "lucide-react";
 import { useApi } from "../lib/useApi";
+import { useTarget } from "../lib/target";
 import type { Overview, FindingRow, StackComponent } from "../lib/types";
 import { Card, PageTitle, Spinner } from "../components/ui";
 import { EmptyState, ErrorNote } from "../components/EmptyState";
@@ -21,7 +21,7 @@ const KIND_LABEL: Record<string, string> = {
 export function Stack() {
   const { data, error, loading } = useApi<Overview>("/overview");
   const findings = useApi<{ findings: FindingRow[] }>("/findings").data;
-  const [selected, setSelected] = useState<string | null>(null);
+  const { current: selectedTarget } = useTarget();
 
   if (loading && !data) return <Spinner />;
   if (error) return <ErrorNote message={error} />;
@@ -38,7 +38,7 @@ export function Stack() {
   }
 
   const targets = data.targets;
-  const current = targets.find((t) => t.target.name === selected) ?? targets[0];
+  const current = targets.find((t) => t.target.name === selectedTarget?.name) ?? targets[0];
   const stack = current.target.stack ?? [];
   const deps = (findings?.findings ?? []).filter(
     (f) => DEP_CHECKS.has(f.check_id) && f.target === current.target.name,
@@ -49,26 +49,7 @@ export function Stack() {
 
   return (
     <>
-      <PageTitle
-        action={
-          targets.length > 1 && (
-            <select
-              aria-label="Target"
-              value={current.target.name}
-              onChange={(e) => setSelected(e.target.value)}
-              className="h-9 rounded-lg border border-border bg-bg px-3 text-[14px]"
-            >
-              {targets.map((t) => (
-                <option key={t.target.name} value={t.target.name}>
-                  {t.target.name}
-                </option>
-              ))}
-            </select>
-          )
-        }
-      >
-        Stack &amp; dependencies
-      </PageTitle>
+      <PageTitle>Stack &amp; dependencies</PageTitle>
 
       <Recommendation tone={deps.length ? "warn" : "info"}>
         {deps.length

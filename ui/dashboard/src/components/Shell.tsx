@@ -1,11 +1,12 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { LiveProvider, useLive } from "../lib/live";
-import { Activity, Boxes, History, LayoutDashboard, ListChecks, LogOut, Moon, Network, Settings as SettingsIcon, ShieldCheck, Sun } from "lucide-react";
+import { Activity, Boxes, ChevronDown, FolderGit2, Globe, History, LayoutDashboard, ListChecks, LogOut, Moon, Network, Settings as SettingsIcon, ShieldCheck, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { setToken } from "../lib/api";
 import { useApi } from "../lib/useApi";
 import type { Settings } from "../lib/types";
 import { NewScanButton } from "./NewScanButton";
+import { TargetProvider, useTarget } from "../lib/target";
 
 const nav = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
@@ -39,11 +40,51 @@ function ScanStatusPill() {
   );
 }
 
+// TargetSwitcher shows which repo or site the dashboard is currently about, on
+// every page. With several targets it is a dropdown; with one, a static label.
+function TargetSwitcher() {
+  const { targets, current, setCurrent } = useTarget();
+  if (!current) {
+    return <span className="text-[13px] text-subtle">No scans yet</span>;
+  }
+  const Icon = current.kind === "repo" ? FolderGit2 : Globe;
+  const label = (
+    <span className="flex min-w-0 items-center gap-2">
+      <Icon size={15} strokeWidth={1.75} className="shrink-0 text-accent" aria-hidden />
+      <span className="truncate text-[14px] font-semibold text-text">{current.name}</span>
+      <span className="hidden truncate font-mono text-[12px] text-muted sm:inline">{current.detail}</span>
+    </span>
+  );
+  if (targets.length < 2) {
+    return <div className="flex min-w-0 items-center">{label}</div>;
+  }
+  return (
+    <label className="relative flex min-w-0 cursor-pointer items-center rounded-lg px-2 py-1 hover:bg-surface-2">
+      {label}
+      <ChevronDown size={15} strokeWidth={1.75} className="ml-1.5 shrink-0 text-muted" aria-hidden />
+      <select
+        aria-label="Select target"
+        value={current.name}
+        onChange={(e) => setCurrent(e.target.value)}
+        className="absolute inset-0 cursor-pointer opacity-0"
+      >
+        {targets.map((t) => (
+          <option key={t.name} value={t.name}>
+            {t.name} — {t.detail}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 // App shell: 240px sidebar, 56px top bar, one scrollable main area.
 export function Shell() {
   return (
     <LiveProvider>
-      <ShellLayout />
+      <TargetProvider>
+        <ShellLayout />
+      </TargetProvider>
     </LiveProvider>
   );
 }
@@ -96,12 +137,15 @@ function ShellLayout() {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border px-4 md:px-8">
-          <span className="text-[13px] font-medium text-muted">
-            <span className="md:hidden">Scout · </span>
-            {settings.data?.app_name}
-            {settings.data && <span className="text-subtle"> · {settings.data.environment}</span>}
-          </span>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <TargetSwitcher />
+            {settings.data && (
+              <span className="hidden shrink-0 rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] font-medium tracking-[0.04em] text-subtle uppercase lg:inline">
+                {settings.data.environment}
+              </span>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
             <ScanStatusPill />
             <NewScanButton targets={settings.data?.targets ?? []} />
           </div>

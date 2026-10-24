@@ -7,6 +7,14 @@ Run `scout serve` (or `scout scan --serve`) and open the URL it prints — the
 dashboard is compiled into the binary, so there is nothing else to host. Each
 section below explains what the page is **for** and how to **read** it.
 
+## Which target am I looking at?
+
+The **top bar shows the current target on every page** — a 🌐 for a site or a 📁
+for a repo, with its name and address. When you have scanned more than one target,
+it is a dropdown: pick the repo or site and the Overview and Stack pages follow
+it. The Findings table also shows a Target column, so a finding's app is never
+ambiguous. Repo scans are named after their git remote (`owner/repo`) or folder.
+
 ## Signing in
 
 The dashboard is protected by a username and password.

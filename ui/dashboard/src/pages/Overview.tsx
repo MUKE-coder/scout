@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Radar } from "lucide-react";
 import { useApi } from "../lib/useApi";
+import { useTarget } from "../lib/target";
 import type { Environment, Overview as OverviewData, Severity, TargetOverview } from "../lib/types";
 import { SEVERITIES } from "../lib/types";
 import { ago, categoryLabel, effortLabel } from "../lib/format";
@@ -14,7 +14,7 @@ import { SeverityDot, severityVar, gradeVar } from "../components/Severity";
 
 export function Overview() {
   const { data, error, loading } = useApi<OverviewData>("/overview");
-  const [selected, setSelected] = useState<string | null>(null);
+  const { current: selectedTarget } = useTarget();
 
   if (loading && !data) return <Spinner />;
   if (error) return <ErrorNote message={error} />;
@@ -33,29 +33,10 @@ export function Overview() {
     );
   }
 
-  const current = targets.find((t) => t.target.name === selected) ?? targets[0];
+  const current = targets.find((t) => t.target.name === selectedTarget?.name) ?? targets[0];
   return (
     <>
-      <PageTitle
-        action={
-          targets.length > 1 && (
-            <select
-              aria-label="Target"
-              value={current.target.name}
-              onChange={(e) => setSelected(e.target.value)}
-              className="h-9 rounded-lg border border-border bg-bg px-3 text-[14px]"
-            >
-              {targets.map((t) => (
-                <option key={t.target.name} value={t.target.name}>
-                  {t.target.name}
-                </option>
-              ))}
-            </select>
-          )
-        }
-      >
-        Overview
-      </PageTitle>
+      <PageTitle>Overview</PageTitle>
 
       <div className="flex flex-col gap-8">
         <div className="grid gap-4 lg:grid-cols-[auto_1fr]">

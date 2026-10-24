@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { ListChecks, Search } from "lucide-react";
 import { useApi } from "../lib/useApi";
+import { useTarget } from "../lib/target";
 import { api, ApiError } from "../lib/api";
 import type { FindingRow, Status } from "../lib/types";
 import { SEVERITIES, STATUSES } from "../lib/types";
@@ -19,6 +20,7 @@ const FILTERS = ["severity", "category", "status", "change", "target", "q"] as c
 
 export function Findings() {
   const [params, setParams] = useSearchParams();
+  const { setCurrent } = useTarget();
   const query = new URLSearchParams();
   for (const k of FILTERS) {
     const v = params.get(k);
@@ -111,7 +113,16 @@ export function Findings() {
         <Filter label="Status" value={params.get("status")} options={STATUSES} format={statusLabel} onChange={(v) => setFilter("status", v)} />
         <Filter label="Change" value={params.get("change")} options={["new", "regressed", "unchanged"]} onChange={(v) => setFilter("change", v)} />
         {targetNames.length > 1 && (
-          <Filter label="Target" value={params.get("target")} options={targetNames} format={(s) => s} onChange={(v) => setFilter("target", v)} />
+          <Filter
+            label="Target"
+            value={params.get("target")}
+            options={targetNames}
+            format={(s) => s}
+            onChange={(v) => {
+              setFilter("target", v);
+              if (v) setCurrent(v); // keep the top-bar switcher in sync
+            }}
+          />
         )}
       </div>
 
@@ -147,6 +158,7 @@ export function Findings() {
                     />
                   </th>
                   <th className="px-2 py-3 font-medium">Finding</th>
+                  {targetNames.length > 1 && <th className="px-2 py-3 font-medium">Target</th>}
                   <th className="px-2 py-3 font-medium">Asset</th>
                   <th className="px-2 py-3 font-medium">Category</th>
                   <th className="px-2 py-3 font-medium">Change</th>
@@ -171,6 +183,11 @@ export function Findings() {
                         <span className="truncate text-[14px]">{f.title}</span>
                       </div>
                     </td>
+                    {targetNames.length > 1 && (
+                      <td className="px-2">
+                        <span className="block max-w-[160px] truncate text-[13px] text-muted" title={f.target}>{f.target}</span>
+                      </td>
+                    )}
                     <td className="max-w-0 px-2">
                       <span className="block truncate font-mono text-[12px] text-muted">{f.location ? `${f.asset.value} (${f.location})` : f.asset.value}</span>
                     </td>

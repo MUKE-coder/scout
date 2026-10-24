@@ -97,7 +97,7 @@ func (f *scanFlags) config(cmd *cobra.Command) (scout.Config, error) {
 		}
 	}
 	if f.repo != "" {
-		cfg.Targets = append(cfg.Targets, core.Target{Name: f.repo, Repo: f.repo, Environment: cfg.Environment})
+		cfg.Targets = append(cfg.Targets, core.Target{Name: repoName(f.repo), Repo: f.repo, Environment: cfg.Environment})
 	}
 	if changed("allow-active") {
 		for i := range cfg.Targets {
@@ -310,6 +310,62 @@ func writeOutputs(cmd *cobra.Command, f scanFlags, results []report.Result) erro
 		}
 	}
 	return nil
+}
+
+// repoName derives a friendly display name for a repo target, so the dashboard
+// shows something recognizable instead of "." or an absolute path. It prefers
+// the git remote's "owner/repo", then the folder name.
+func repoName(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		abs = path
+	}
+	if name := gitRemoteName(abs); name != "" {
+		return name
+	}
+	base := filepath.Base(abs)
+	if base == "" || base == "." || base == string(filepath.Separator) {
+		return path
+	}
+	return base
+}
+
+// gitRemoteName reads .git/config and returns "owner/repo" from the first remote
+// URL it finds, or "" when there is none.
+func gitRemoteName(repoDir string) string {
+	b, err := os.ReadFile(filepath.Join(repoDir, ".git", "config")) // #nosec G304 -- user's own repo
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Split(string(b), "\n") {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "url") {
+			continue
+		}
+		_, val, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		u := strings.TrimSpace(val)
+		u = strings.TrimSuffix(u, ".git")
+		// Normalize to a "/"-separated path for both URL and scp-style remotes.
+		if _, after, ok := strings.Cut(u, "://"); ok { // https://host/owner/repo or ssh://…
+			u = after
+		} else if _, after, ok := strings.Cut(u, "@"); ok { // git@host:owner/repo
+			u = after
+		}
+		u = strings.Replace(u, ":", "/", 1) // host:owner/repo -> host/owner/repo
+		parts := strings.Split(strings.Trim(u, "/"), "/")
+		// The leading segment is the host (e.g. github.com); drop it so we keep
+		// owner/repo, not host/repo.
+		if len(parts) > 0 && strings.Contains(parts[0], ".") {
+			parts = parts[1:]
+		}
+		if n := len(parts); n >= 2 {
+			return parts[n-2] + "/" + parts[n-1]
+		}
+	}
+	return ""
 }
 
 // exportSlug turns a target into a filesystem-safe filename fragment.
