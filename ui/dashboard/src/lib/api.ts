@@ -62,11 +62,15 @@ export async function download(path: string, filename: string) {
     return;
   }
   if (!res.ok) throw new ApiError(res.status, res.statusText);
+  // Prefer the server's filename (it prefixes the target host) when present.
+  const cd = res.headers.get("Content-Disposition") ?? "";
+  const match = cd.match(/filename="?([^"]+)"?/i);
+  const name = match?.[1] ?? filename;
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();

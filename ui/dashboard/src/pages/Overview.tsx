@@ -7,6 +7,7 @@ import { SEVERITIES } from "../lib/types";
 import { ago, categoryLabel, effortLabel } from "../lib/format";
 import { Card, PageTitle, Spinner } from "../components/ui";
 import { GradeRing } from "../components/GradeRing";
+import { CoveragePanel } from "../components/CoveragePanel";
 import { TrendChart } from "../components/TrendChart";
 import { EmptyState, ErrorNote } from "../components/EmptyState";
 import { SeverityDot, severityVar, gradeVar } from "../components/Severity";
@@ -69,6 +70,8 @@ export function Overview() {
           <Subscores t={current} />
           <FixNext t={current} />
         </div>
+
+        <CoveragePanel current={current} data={data} />
 
         <EnvCards targets={targets} />
       </div>

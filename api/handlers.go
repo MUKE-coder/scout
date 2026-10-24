@@ -600,6 +600,14 @@ func (s *Server) export(c *gin.Context) {
 		return
 	}
 	stamp := time.Now().UTC().Format("20060102-150405")
+	// Prefix the file with the target when there's a single one, so downloads
+	// are self-identifying (scout-invoice.desishub.com-....md).
+	base := "scout-report-" + stamp
+	if len(scans) == 1 {
+		if slug := exportSlug(scans[0].Target); slug != "" {
+			base = "scout-" + slug + "-" + stamp
+		}
+	}
 	buildResults := func() []report.Result {
 		results := make([]report.Result, 0, len(scans))
 		for _, sc := range scans {
@@ -608,7 +616,7 @@ func (s *Server) export(c *gin.Context) {
 		return results
 	}
 	attach := func(ext, ctype string) {
-		c.Header("Content-Disposition", `attachment; filename="scout-`+stamp+`.`+ext+`"`)
+		c.Header("Content-Disposition", `attachment; filename="`+base+`.`+ext+`"`)
 		c.Header("Content-Type", ctype)
 	}
 	switch c.DefaultQuery("format", "json") {
@@ -641,6 +649,28 @@ func (s *Server) export(c *gin.Context) {
 	default:
 		fail(c, http.StatusBadRequest, "format must be json, csv, md, txt or html")
 	}
+}
+
+// exportSlug turns a target into a filesystem-safe filename fragment (its host,
+// or its name for a repo target).
+func exportSlug(t core.Target) string {
+	s := t.Host()
+	if s == "" {
+		s = t.Name
+	}
+	s = strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '.', r == '-', r == '_':
+			return r
+		default:
+			return '-'
+		}
+	}, strings.TrimSpace(s))
+	s = strings.Trim(s, "-")
+	if len(s) > 60 {
+		s = s[:60]
+	}
+	return s
 }
 
 // csvSafe neutralizes spreadsheet formula injection in scanned-site text.

@@ -312,6 +312,27 @@ func writeOutputs(cmd *cobra.Command, f scanFlags, results []report.Result) erro
 	return nil
 }
 
+// exportSlug turns a target into a filesystem-safe filename fragment.
+func exportSlug(t core.Target) string {
+	s := t.Host()
+	if s == "" {
+		s = t.Name
+	}
+	s = strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '.', r == '-', r == '_':
+			return r
+		default:
+			return '-'
+		}
+	}, strings.TrimSpace(s))
+	s = strings.Trim(s, "-")
+	if len(s) > 60 {
+		s = s[:60]
+	}
+	return s
+}
+
 // writeExport writes a report file (scout-report.<ext>) in the current
 // directory, so findings are on disk without opening the dashboard.
 func writeExport(cmd *cobra.Command, format string, results []report.Result) error {
@@ -332,6 +353,11 @@ func writeExport(cmd *cobra.Command, format string, results []report.Result) err
 		return fmt.Errorf("unknown export format %q (use md, html, txt or json)", format)
 	}
 	name := "scout-report." + ext
+	if len(results) == 1 {
+		if slug := exportSlug(results[0].Scan.Target); slug != "" {
+			name = "scout-" + slug + "." + ext
+		}
+	}
 	file, err := os.Create(filepath.Clean(name))
 	if err != nil {
 		return err
