@@ -32,39 +32,56 @@ export function CoveragePanel({ current, data }: { current: TargetOverview; data
   const repoScanned = data.targets.some((t) => t.target.repo);
   const hasTrend = (current.scans ?? 0) >= 2;
   const configured = (data.configured ?? []).some((t) => t.name === current.target.name);
-  const host = current.target.url || current.target.name;
+  // Only a URL target can carry a --target command; a repo target uses --repo.
+  const url = current.target.url;
+  const isRepo = !url && !!current.target.repo;
 
-  const dims: Dim[] = [
-    {
-      key: "surface",
-      title: "Surface & misconfiguration",
-      diagnoses: "Security headers, TLS, exposed files, CORS and DNS/email records.",
-      done: true, // a scan exists
-    },
-    {
-      key: "active",
-      title: "Injection & server-side probes",
-      diagnoses: "SQL injection, XSS, open redirect, SSRF and path traversal.",
-      done: ranRank >= RANK.active,
-      mode: "active",
-      cli: `scout scan --target ${host} --mode active --env dev`,
-    },
-    {
-      key: "source",
-      title: "Source & dependencies",
-      diagnoses: "Hard-coded secrets, insecure Dockerfiles, weak crypto and reachable CVEs.",
-      done: repoScanned,
-      cli: "scout scan --repo .",
-    },
-    {
-      key: "baseline",
-      title: "Baseline & trend",
-      diagnoses: "A second scan so regressions (new or returning findings) are caught.",
-      done: hasTrend,
-      mode: "safe",
-      cli: `scout scan --target ${host}`,
-    },
-  ];
+  const source: Dim = {
+    key: "source",
+    title: "Source & dependencies",
+    diagnoses: "Hard-coded secrets, insecure Dockerfiles, weak crypto and reachable CVEs.",
+    done: repoScanned,
+    cli: "scout scan --repo .",
+  };
+  const baseline: Dim = {
+    key: "baseline",
+    title: "Baseline & trend",
+    diagnoses: "A second scan so regressions (new or returning findings) are caught.",
+    done: hasTrend,
+    cli: isRepo ? `scout scan --repo ${current.target.repo}` : `scout scan --target ${url}`,
+    mode: isRepo ? undefined : "safe",
+  };
+
+  const dims: Dim[] = isRepo
+    ? [
+        source,
+        baseline,
+        {
+          key: "live",
+          title: "Live app probes",
+          diagnoses: "Injection, XSS, SSRF and auth — against the running app.",
+          done: false,
+          cli: "scout scan --target http://localhost:3000 --mode active --env dev",
+        },
+      ]
+    : [
+        {
+          key: "surface",
+          title: "Surface & misconfiguration",
+          diagnoses: "Security headers, TLS, exposed files, CORS and DNS/email records.",
+          done: true, // a URL scan exists
+        },
+        {
+          key: "active",
+          title: "Injection & server-side probes",
+          diagnoses: "SQL injection, XSS, open redirect, SSRF and path traversal.",
+          done: ranRank >= RANK.active,
+          mode: "active",
+          cli: `scout scan --target ${url} --mode active --env dev`,
+        },
+        source,
+        baseline,
+      ];
 
   const doneCount = dims.filter((d) => d.done).length;
   const pct = Math.round((doneCount / dims.length) * 100);
