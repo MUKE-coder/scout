@@ -7,6 +7,7 @@ import { dateTime } from "../lib/format";
 import { Card, PageTitle, Spinner } from "../components/ui";
 import { EmptyState, ErrorNote } from "../components/EmptyState";
 import { SeverityDot, gradeVar } from "../components/Severity";
+import { Recommendation } from "../components/Recommendation";
 
 interface ScanMeta {
   id: string;
@@ -52,6 +53,26 @@ export function History() {
   return (
     <>
       <PageTitle>History</PageTitle>
+      {scans.length >= 2 &&
+        (() => {
+          const name = scans[0].target.name;
+          const same = scans.filter((s) => s.target.name === name);
+          const latest = same[0]?.grade;
+          const prev = same[1]?.grade;
+          // Letter grades: "A" < "B" alphabetically but A is better, so a later
+          // letter means a worse grade.
+          const better = latest && prev && latest < prev;
+          const worse = latest && prev && latest > prev;
+          return (
+            <Recommendation tone={worse ? "warn" : "info"}>
+              {worse
+                ? `${name} regressed from ${prev} to ${latest} in its last two scans. Select those two below to see exactly which findings appeared.`
+                : better
+                  ? `${name} improved from ${prev} to ${latest} — nice. Keep re-scanning to hold the trend.`
+                  : `Select two scans to diff and see which findings appeared, regressed or were fixed between them.`}
+            </Recommendation>
+          );
+        })()}
       {scans.length < 2 ? (
         <EmptyState icon={HistoryIcon}>Compare scans once there are at least two.</EmptyState>
       ) : (

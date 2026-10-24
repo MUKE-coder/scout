@@ -2,6 +2,7 @@ import { useApi } from "../lib/useApi";
 import type { Severity } from "../lib/types";
 import { Card, PageTitle, Spinner } from "../components/ui";
 import { ErrorNote } from "../components/EmptyState";
+import { Recommendation } from "../components/Recommendation";
 
 interface Cell {
   open: number;
@@ -37,9 +38,15 @@ export function Compliance() {
   if (!data) return null;
 
   const covered = data.owasp.filter((r) => r.checks > 0).length;
+  const failing = data.owasp.filter((r) => Object.values(r.targets ?? {}).some((c) => c.open > 0));
   return (
     <>
       <PageTitle>Compliance</PageTitle>
+      <Recommendation tone={failing.length ? "warn" : "ok"}>
+        {failing.length
+          ? `${failing.length} OWASP categor${failing.length > 1 ? "ies have" : "y has"} open findings (${failing.map((r) => r.id).join(", ")}). Each number is a to-do for that area; a dot (·) means it passed. Click a finding to see the cause and fix.`
+          : `No open findings map to the OWASP Top 10 — every covered category is passing. Keep coverage up by re-scanning after changes.`}
+      </Recommendation>
       <p className="-mt-4 mb-8 max-w-3xl text-muted">
         Open findings mapped to the OWASP Top 10, and which categories Scout's checks cover. {data.mapped} of {data.total} registered checks
         declare standards mappings; {covered} of 10 Top 10 categories are covered.

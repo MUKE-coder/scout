@@ -104,6 +104,10 @@ type targetOverview struct {
 	FixNext []scoring.FixItem `json:"fix_next"`
 	Open    severityCounts    `json:"open"`
 	Trend   []trendPoint      `json:"trend"`
+	// Modes lists every scan mode ever run against this target (for coverage).
+	Modes []string `json:"modes"`
+	// Scans is how many scans this target has (for the baseline/trend dimension).
+	Scans int `json:"scans"`
 }
 
 func (s *Server) overview(c *gin.Context) {
@@ -127,15 +131,27 @@ func (s *Server) overview(c *gin.Context) {
 			top = top[:5]
 		}
 		var trend []trendPoint
+		seenMode := map[string]bool{}
+		var modes []string
+		scans := 0
 		for i := len(all) - 1; i >= 0; i-- { // oldest first
 			h := all[i]
-			if h.Target.Name == sc.Target.Name && h.StartedAt.After(since) && h.Grade != "" {
+			if h.Target.Name != sc.Target.Name {
+				continue
+			}
+			scans++
+			if m := h.Mode.String(); !seenMode[m] {
+				seenMode[m] = true
+				modes = append(modes, m)
+			}
+			if h.StartedAt.After(since) && h.Grade != "" {
 				trend = append(trend, trendPoint{At: h.StartedAt, Score: h.Score, Grade: h.Grade})
 			}
 		}
 		out = append(out, targetOverview{
 			Target: sc.Target, ScanID: sc.ID, At: sc.StartedAt, Mode: sc.Mode,
 			Report: r.Report, FixNext: top, Open: countOpen(sc.Findings), Trend: trend,
+			Modes: modes, Scans: scans,
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{

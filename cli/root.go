@@ -27,7 +27,7 @@ func NewRootCmd() *cobra.Command {
 	root.PersistentFlags().String("config", "", "path to scout.yaml")
 	root.PersistentFlags().String("color", "auto", "color output: auto, always, never")
 
-	root.AddCommand(newInitCmd(), newScanCmd(), newServeCmd(), newCICmd(), newDiffCmd(), newOwnershipCmd(), newPruneCmd(), newReportCmd(), newVersionCmd())
+	root.AddCommand(newInitCmd(), newScanCmd(), newServeCmd(), newCICmd(), newLabCmd(), newDiffCmd(), newOwnershipCmd(), newPruneCmd(), newReportCmd(), newVersionCmd())
 	return root
 }
 

@@ -12,6 +12,7 @@ import { Pill, SeverityDot } from "../components/Severity";
 import { FindingPanel } from "../components/FindingPanel";
 import { StatusDialog, needsReason } from "../components/StatusDialog";
 import { ExportMenu } from "../components/ExportMenu";
+import { Recommendation } from "../components/Recommendation";
 
 const CATEGORIES = ["app", "api", "auth", "tls", "headers", "exposure", "network", "dns", "host", "code", "config"];
 const FILTERS = ["severity", "category", "status", "change", "target", "q"] as const;
@@ -77,6 +78,21 @@ export function Findings() {
   return (
     <>
       <PageTitle action={<ExportMenu />}>Findings</PageTitle>
+
+      {(() => {
+        const all = targets?.findings ?? [];
+        const open = all.filter((f) => f.status === "open");
+        const hi = open.filter((f) => f.severity === "critical" || f.severity === "high").length;
+        return (
+          <Recommendation tone={hi ? "warn" : open.length ? "info" : "ok"}>
+            {hi
+              ? `Start with the ${hi} critical/high finding${hi > 1 ? "s" : ""} — open one to read its cause and the fix, apply it, then re-scan to confirm it flips to Fixed.`
+              : open.length
+                ? `${open.length} lower-severity finding${open.length > 1 ? "s" : ""} open — triage each (open for the cause and fix) and schedule or accept the risk.`
+                : `No open findings. Re-scan after each change so regressions show up here.`}
+          </Recommendation>
+        );
+      })()}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">

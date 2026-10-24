@@ -133,6 +133,8 @@ export interface TargetOverview {
   fix_next: FixItem[] | null;
   open: Partial<Record<Severity, number>>;
   trend: TrendPoint[] | null;
+  modes: string[] | null;
+  scans: number;
 }
 
 export interface Overview {

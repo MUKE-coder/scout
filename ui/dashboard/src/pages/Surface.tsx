@@ -6,6 +6,7 @@ import type { Severity } from "../lib/types";
 import { Card, PageTitle, Spinner } from "../components/ui";
 import { EmptyState, ErrorNote } from "../components/EmptyState";
 import { severityVar } from "../components/Severity";
+import { Recommendation } from "../components/Recommendation";
 
 interface SurfaceNode {
   id: string;
@@ -88,6 +89,17 @@ export function Surface() {
   return (
     <>
       <PageTitle>Attack surface</PageTitle>
+      {roots.length > 0 &&
+        (() => {
+          const worst = [...roots].sort((a, b) => b.open - a.open)[0];
+          return (
+            <Recommendation tone={worst.open > 0 ? "warn" : "ok"}>
+              {worst.open > 0
+                ? `${worst.label} carries the most exposure (${worst.open} open finding${worst.open > 1 ? "s" : ""}). Expand it to the host, port or route with the findings and start there — and lock down anything public you didn't expect (SSH on :22, admin UIs, deprecated API versions).`
+                : `Nothing open on the mapped surface. Still, review the tree for services that shouldn't be public.`}
+            </Recommendation>
+          );
+        })()}
       {roots.length === 0 ? (
         <EmptyState icon={Network}>The map appears once scans have found hosts, services or routes.</EmptyState>
       ) : (

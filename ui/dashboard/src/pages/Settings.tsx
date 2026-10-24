@@ -9,6 +9,7 @@ import { Button, Card, PageTitle, Spinner } from "../components/ui";
 import { ErrorNote } from "../components/EmptyState";
 import { Pill } from "../components/Severity";
 import { AIButton } from "../components/AIAnswer";
+import { Recommendation } from "../components/Recommendation";
 
 const capText: Record<string, string> = {
   dev: "Every mode is allowed.",
@@ -33,6 +34,11 @@ export function Settings() {
   return (
     <>
       <PageTitle>Settings</PageTitle>
+      <Recommendation tone={(data.targets?.length ?? 0) === 0 ? "warn" : "info"}>
+        {(data.targets?.length ?? 0) === 0
+          ? "No targets configured — add them to scout.yaml (run scout init to scaffold it) so you can start scans from New scan. And set your own username/password/jwt_secret before serving outside dev."
+          : "Settings are read-only here — edit scout.yaml and restart to change them. Run scout init to scaffold a fully-annotated file with every option."}
+      </Recommendation>
       <p className="-mt-4 mb-8 text-muted">
         These are the settings Scout is running with. Change them in <code className="font-mono text-[13px]">scout.yaml</code> or with{" "}
         <code className="font-mono text-[13px]">SCOUT_*</code> environment variables, then restart.

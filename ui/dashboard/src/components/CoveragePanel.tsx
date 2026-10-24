@@ -26,9 +26,11 @@ export function CoveragePanel({ current, data }: { current: TargetOverview; data
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  const mode = RANK[current.mode] ?? 1;
+  // History-exact: every mode ever run against this target, not just the latest.
+  const modesRun = current.modes ?? [current.mode];
+  const ranRank = Math.max(0, ...modesRun.map((m) => RANK[m] ?? 0));
   const repoScanned = data.targets.some((t) => t.target.repo);
-  const hasTrend = (current.trend?.length ?? 0) >= 2;
+  const hasTrend = (current.scans ?? 0) >= 2;
   const configured = (data.configured ?? []).some((t) => t.name === current.target.name);
   const host = current.target.url || current.target.name;
 
@@ -43,7 +45,7 @@ export function CoveragePanel({ current, data }: { current: TargetOverview; data
       key: "active",
       title: "Injection & server-side probes",
       diagnoses: "SQL injection, XSS, open redirect, SSRF and path traversal.",
-      done: mode >= RANK.active,
+      done: ranRank >= RANK.active,
       mode: "active",
       cli: `scout scan --target ${host} --mode active --env dev`,
     },
