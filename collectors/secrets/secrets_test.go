@@ -100,20 +100,22 @@ func TestGenericSecretFalsePositives(t *testing.T) {
 	}
 }
 
-func TestTestFixturesSoftened(t *testing.T) {
+// Weak-pattern secrets in test files are fixtures and are skipped (GitHub issue
+// #7); strong cloud-key patterns still report even in a test file.
+func TestTestFixturesSkipped(t *testing.T) {
 	dir := repoWith(t, map[string]string{
-		"api/user_test.go": "package api\n\nfunc login() {\n\tpassword := \"hunter2hunter2\"\n\t_ = password\n}\n", // weak pattern, test path
+		"api/user_test.go": "package api\n\nfunc login() {\n\tpassword := \"hunter2hunter2\"\n\t_ = password\n}\n", // weak pattern, test path → skipped
 		"deploy/key.pem":   "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----\n",
-		"api/key_test.go":  "const k = \"AKIA1234567890ABCDEF\"\n", // strong pattern, even in a test
+		"api/key_test.go":  "const k = \"AKIA1234567890ABCDEF\"\n", // strong pattern, even in a test → reported
 	})
 	got := run(t, dir)
 	by := map[string]core.Finding{}
 	for _, f := range got {
 		by[f.Asset.File] = f
 	}
-	// Generic secret in a *_test.go is low and not tagged (won't cap the grade).
-	if f := by["api/user_test.go"]; f.Severity != core.SeverityLow || f.HasTag(core.TagExposedSecret) {
-		t.Fatalf("test-file generic secret should be softened: %+v", f)
+	// The generic secret in a *_test.go is a fixture: no finding at all.
+	if _, ok := by["api/user_test.go"]; ok {
+		t.Fatalf("weak secret in a test file should be skipped: %+v", by["api/user_test.go"])
 	}
 	// A private key and an AWS key stay strong even in a test file.
 	if f := by["deploy/key.pem"]; f.Severity != core.SeverityCritical || !f.HasTag(core.TagExposedSecret) {
@@ -121,6 +123,17 @@ func TestTestFixturesSoftened(t *testing.T) {
 	}
 	if f := by["api/key_test.go"]; f.Severity != core.SeverityHigh || !f.HasTag(core.TagExposedSecret) {
 		t.Fatalf("AWS key must stay high even in a test: %+v", f)
+	}
+}
+
+// From GitHub issue #7: a value that is an env-var NAME is a reference, not a
+// secret.
+func TestEnvVarNameNotSecret(t *testing.T) {
+	dir := repoWith(t, map[string]string{
+		"cfg.go": "cfg := Config{SecretEnv: \"UNUSED_SECRET\"}\n",
+	})
+	if got := run(t, dir); len(got) != 0 {
+		t.Fatalf("an env-var name should not be flagged as a secret: %+v", got)
 	}
 }
 

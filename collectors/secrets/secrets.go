@@ -50,6 +50,11 @@ var suppress = regexp.MustCompile(`(?i)(#nosec|nolint|nosemgrep|biome-ignore|esl
 // key happens to contain a word like PASSWORD (e.g. RESET_PASSWORD: "/auth/...").
 var routeOrPath = regexp.MustCompile(`^/|://`)
 
+// envVarName marks a quoted value that is the NAME of an environment variable
+// (SecretEnv: "UNUSED_SECRET"), i.e. a reference to where a secret lives, not the
+// secret itself.
+var envVarName = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+
 // strongRules are specific enough that a hit is a real secret even in a test
 // file or doc, so they keep their severity and the exposed-secret tag there.
 var strongRules = map[string]bool{"aws-access-key": true, "private-key": true, "google-api-key": true, "slack-token": true, "github-token": true, "stripe-key": true}
@@ -84,25 +89,34 @@ func (Scanner) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
 			if suppress.MatchString(line) || (i > 0 && suppress.MatchString(lines[i-1])) {
 				continue
 			}
+			// A weak-pattern "secret" in a test file or doc is a fixture, not a
+			// leak — a test that signs a token must contain a signing key. Skip
+			// those files for the weak rules; strong patterns (real cloud keys)
+			// still report even here.
+			weakSkip := testOrDoc.MatchString(f.Rel)
 			for _, r := range rules {
+				if weakSkip && !strongRules[r.id] {
+					continue
+				}
 				m := r.re.FindString(line)
 				if m == "" || placeholder.MatchString(line) {
 					continue
 				}
-				// A generic-secret whose value is a URL path/route is not a
-				// credential (e.g. RESET_PASSWORD: "/api/auth/reset-password").
-				if r.id == "generic-secret" && routeOrPath.MatchString(quotedValue(m)) {
-					continue
+				// A generic-secret whose value is a URL path/route (RESET_PASSWORD:
+				// "/api/auth/reset-password") or an env-var name (SecretEnv:
+				// "UNUSED_SECRET") is a reference, not a credential.
+				if r.id == "generic-secret" {
+					v := quotedValue(m)
+					if routeOrPath.MatchString(v) || envVarName.MatchString(v) {
+						continue
+					}
 				}
 				key := r.id + "|" + f.Rel + "|" + itoa(i+1)
 				if seen[key] {
 					continue
 				}
 				seen[key] = true
-				// A weak-pattern hit in a test file or doc is very likely a
-				// fixture: report it as low and do not let it cap the grade.
-				softened := !strongRules[r.id] && testOrDoc.MatchString(f.Rel)
-				out = append(out, finding(t, f.Rel, i+1, r, m, line, softened))
+				out = append(out, finding(t, f.Rel, i+1, r, m, line))
 			}
 		}
 		return nil
@@ -110,22 +124,16 @@ func (Scanner) Run(_ context.Context, t core.Target) ([]core.Finding, error) {
 	return out, err
 }
 
-func finding(t core.Target, file string, line int, r rule, match, raw string, softened bool) core.Finding {
-	sev, tags := r.sev, []string{core.TagExposedSecret}
-	title := r.desc + " in " + file
-	if softened {
-		sev, tags = core.SeverityLow, nil // likely a test fixture; don't cap the grade
-		title = r.desc + " in " + file + " (test/doc — verify it is not real)"
-	}
+func finding(t core.Target, file string, line int, r rule, match, raw string) core.Finding {
 	return core.Finding{
-		Title:      title,
+		Title:      r.desc + " in " + file,
 		Category:   core.CategoryCode,
-		Severity:   sev,
+		Severity:   r.sev,
 		Confidence: core.ConfidenceLikely, // may be a revoked or test value
 		Asset:      core.Asset{Kind: core.AssetFile, Value: file + ":" + itoa(line), File: file, Line: line, Criticality: t.Criticality},
 		Location:   r.id,
 		Evidence:   core.Evidence{ConfigLine: maskLine(raw, match), Matched: mask(match), Redacted: true},
-		Tags:       tags,
+		Tags:       []string{core.TagExposedSecret},
 		CWE:        []string{"CWE-798"},
 		OWASP:      []string{"A05:2021"},
 		Remediation: core.Remediation{

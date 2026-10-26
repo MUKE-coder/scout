@@ -28,7 +28,13 @@ type Config struct {
 	// as IDOR. They are attached to configured targets that declare none.
 	// Never real users; carried into scans but never written to results.
 	Identities []core.Identity `json:"-" yaml:"identities"`
-	Scope      Scope           `json:"scope" yaml:"scope"`
+	// Repo is a local source path for the code and supply-chain collectors,
+	// attached to configured targets that declare none (set via WithRepo, e.g.
+	// by a mounted app that knows its own project root). It is honoured only in
+	// the dev environment — a dashboard reachable in staging/prod must not serve
+	// source fragments — and ignored with a log line elsewhere.
+	Repo  string `json:"-" yaml:"repo"`
+	Scope Scope  `json:"scope" yaml:"scope"`
 	// Criticality weights findings by asset (payments API 1.5, marketing
 	// site 0.7). First matching rule wins.
 	Criticality []scoring.CriticalityRule `json:"criticality,omitempty" yaml:"criticality"`
@@ -125,6 +131,21 @@ func WithRoutes(routes ...core.Route) Option {
 	return func(c *Config) { c.Routes = append(c.Routes, routes...) }
 }
 
+// WithRepo attaches a local source path for the code and supply-chain
+// collectors (code.secrets, code.vulnerable-deps, SAST, …) to configured targets
+// that declare no repo. Use it from a mounted app that knows its own project
+// root, so the dashboard shows source findings for the same target as the live
+// checks, in one scan series:
+//
+//	scout.Mount(r, cfg, scout.WithTarget(cfg.AppURL), scout.WithRepo(projectRoot))
+//
+// For safety it is honoured only when the environment is dev — findings quote
+// source lines, so a dashboard reachable in staging/prod must not read the tree —
+// and is ignored with a log line otherwise. The CLI's --repo is unaffected.
+func WithRepo(path string) Option {
+	return func(c *Config) { c.Repo = path }
+}
+
 // WithTestIdentities registers disposable test accounts for the access-control
 // checks (IDOR and future identity-dependent probes). Each identity carries
 // the headers that authenticate it and the private resources it owns; the
@@ -170,6 +191,11 @@ func (c *Config) applyDefaults() {
 		}
 		if len(c.Targets[i].Identities) == 0 {
 			c.Targets[i].Identities = c.Identities
+		}
+		// Attach a WithRepo path to targets that have none — dev only, so a
+		// dashboard outside dev never serves source fragments.
+		if c.Repo != "" && c.Targets[i].Repo == "" && c.Targets[i].Environment == core.EnvDev {
+			c.Targets[i].Repo = c.Repo
 		}
 	}
 }

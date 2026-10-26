@@ -196,6 +196,12 @@ func (s *Scout) resolveRoutes(r gin.IRouter) {
 		if len(s.cfg.Targets[i].Identities) == 0 {
 			s.cfg.Targets[i].Identities = s.cfg.Identities
 		}
+		// WithRepo is honoured only in dev (applyDefaults attaches it there); say
+		// so when it was given but the target is not dev.
+		if s.cfg.Repo != "" && s.cfg.Targets[i].Repo == "" && s.cfg.Targets[i].Environment != core.EnvDev {
+			s.log.Warn("WithRepo ignored outside dev: code/supply-chain checks need the dev environment so the dashboard never serves source",
+				"target", s.cfg.Targets[i].Name, "environment", s.cfg.Targets[i].Environment)
+		}
 	}
 }
 
