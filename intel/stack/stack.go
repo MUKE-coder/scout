@@ -133,8 +133,35 @@ func fromRepo(repoPath string) []core.StackComponent {
 			}
 		}
 	}
-	// PHP / Ruby / Rust / Java frameworks by substring in their manifest.
-	byFile := map[string]string{"composer.json": "php", "Gemfile": "rb", "Cargo.toml": "rust", "pom.xml": "java", "build.gradle": "java"}
+	// PHP frameworks from composer.json require blocks (with declared versions).
+	if b, ok := read("composer.json"); ok {
+		var cj struct {
+			Require    map[string]string `json:"require"`
+			RequireDev map[string]string `json:"require-dev"`
+		}
+		if json.Unmarshal(b, &cj) == nil {
+			deps := map[string]string{}
+			for k, v := range cj.Require {
+				deps[k] = v
+			}
+			for k, v := range cj.RequireDev {
+				deps[k] = v
+			}
+			for dep, name := range frameworks["php"] {
+				if v, ok := deps[dep]; ok {
+					add(core.StackComponent{Kind: "framework", Name: name, Version: cleanVer(v), Source: "composer.json"})
+				}
+			}
+		}
+	}
+	// An `artisan` console script in the root is a definitive Laravel marker,
+	// even if composer.json could not be parsed.
+	if _, err := os.Stat(filepath.Join(repoPath, "artisan")); err == nil {
+		add(core.StackComponent{Kind: "framework", Name: "Laravel", Source: "artisan"})
+	}
+
+	// Ruby / Rust / Java frameworks by substring in their manifest.
+	byFile := map[string]string{"Gemfile": "rb", "Cargo.toml": "rust", "pom.xml": "java", "build.gradle": "java"}
 	for file, key := range byFile {
 		if b, ok := read(file); ok {
 			text := string(b)

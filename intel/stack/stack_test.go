@@ -105,6 +105,42 @@ func TestDetectExpo(t *testing.T) {
 	}
 }
 
+func TestDetectLaravel(t *testing.T) {
+	dir := t.TempDir()
+	write := func(name, body string) {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// A Laravel + Inertia + React starter (composer.json carries the version;
+	// artisan is the console script).
+	write("composer.json", `{"require":{"php":"^8.2","laravel/framework":"^12.0","inertiajs/inertia-laravel":"^2.0"}}`)
+	write("artisan", "#!/usr/bin/env php\n")
+	write("package.json", `{"dependencies":{"react":"19.0.0"}}`)
+
+	got := Detect(core.Target{Repo: dir, Environment: core.EnvDev}, nil)
+	if !has(got, "framework", "Laravel") {
+		t.Fatalf("Laravel not detected: %+v", got)
+	}
+	if !has(got, "language", "PHP") || !has(got, "framework", "React") {
+		t.Errorf("Laravel+React stack not detected: %+v", got)
+	}
+	for _, c := range got {
+		if c.Name == "Laravel" && c.Version != "12.0" {
+			t.Errorf("Laravel version = %q, want 12.0 (from composer.json)", c.Version)
+		}
+	}
+
+	// artisan alone (composer.json missing/unparseable) still identifies Laravel.
+	dir2 := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir2, "artisan"), []byte("#!php\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !has(Detect(core.Target{Repo: dir2, Environment: core.EnvDev}, nil), "framework", "Laravel") {
+		t.Error("Laravel not detected from artisan alone")
+	}
+}
+
 func TestDetectFromFindings(t *testing.T) {
 	findings := []core.Finding{
 		{CheckID: "app.version-disclosure", Evidence: core.Evidence{Matched: "Server: nginx/1.18.0"}},

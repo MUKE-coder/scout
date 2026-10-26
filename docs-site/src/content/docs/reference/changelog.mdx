@@ -5,6 +5,20 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.10
+
+- **`code.secrets` skips test fixtures** (issue #7): a weak-pattern secret in a
+  test file or doc (a signing key a test must contain) is no longer reported;
+  strong cloud-key patterns still fire anywhere. Values that are a URL path or an
+  env-var name are treated as references, not credentials.
+- **`scout.WithRepo(path)`** (issue #8): a mounted app can attach its project root
+  so the dashboard runs the `code.*` collectors against the same target as the
+  live checks, in one scan series. Honoured only in the dev environment (a
+  dashboard outside dev must not serve source), ignored with a log line otherwise.
+- **Laravel detection improved**: the version is read from `composer.json`
+  (`Laravel 12.0`) and the `artisan` console script is a definitive marker, so a
+  Laravel + Inertia + React app is identified even without a running server.
+
 ## v0.4.9
 
 - **Far fewer false positives in the code scanners.** The static checks now honour
