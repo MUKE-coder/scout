@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MUKE-coder/scout"
+	"github.com/MUKE-coder/scout/collectors/templates"
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/engine"
 	"github.com/MUKE-coder/scout/report"
@@ -35,6 +36,8 @@ type scanFlags struct {
 	serve           bool
 	serveAddr       string
 	checkTimeout    time.Duration
+	templatesDir    string
+	sbomOut         string
 }
 
 func (f *scanFlags) bind(cmd *cobra.Command) {
@@ -51,6 +54,8 @@ func (f *scanFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&f.serve, "serve", false, "after the scan, open the dashboard (keeps running until Ctrl+C)")
 	cmd.Flags().StringVar(&f.serveAddr, "serve-addr", ":9090", "address for the --serve dashboard")
 	cmd.Flags().DurationVar(&f.checkTimeout, "check-timeout", 0, "max time per check (e.g. 120s); 0 keeps the default (60s). Raise it for slow targets")
+	cmd.Flags().StringVar(&f.templatesDir, "templates", "", "directory of extra YAML detection templates (also honoured via SCOUT_TEMPLATES)")
+	cmd.Flags().StringVar(&f.sbomOut, "sbom", "", "also write a CycloneDX SBOM (with KEV/EPSS) of --repo to this file")
 }
 
 // config validates the flags and turns them into a scout.Config.
@@ -167,6 +172,9 @@ func newScanCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if f.templatesDir != "" {
+				templates.UserDir = f.templatesDir
+			}
 			cfg, err := f.config(cmd)
 			if err != nil {
 				return err
@@ -182,6 +190,11 @@ func newScanCmd() *cobra.Command {
 			}
 			if err := writeOutputs(cmd, f, results); err != nil {
 				return err
+			}
+			if f.sbomOut != "" {
+				if err := writeSBOM(cmd, f.repo, f.sbomOut); err != nil {
+					return err
+				}
 			}
 			printDashboardHint(cmd, f, cfg, results)
 

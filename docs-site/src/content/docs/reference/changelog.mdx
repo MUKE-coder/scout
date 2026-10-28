@@ -5,6 +5,18 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.12
+
+- **Detection templates** (`app.template`): Scout now runs declarative YAML
+  detection templates — a safe, Nuclei-compatible subset — so a new exposed-panel,
+  misconfiguration or CVE-signature check is *data*, not Go code. Built-ins ship
+  for exposed Apache mod_status, phpinfo and Adminer; add your own with
+  `--templates <dir>` (or `SCOUT_TEMPLATES`). Only GET/HEAD detection requests
+  run — raw requests, payloads and fuzzing are skipped, so Scout stays detective.
+  See [Detection templates](/usage/templates/).
+- **`scout scan --repo … --sbom <file>`**: emit the CycloneDX SBOM (with KEV/EPSS)
+  as part of a repo scan, without a separate `scout sbom` run.
+
 ## v0.4.11
 
 - **`scout sbom`**: generate a **CycloneDX 1.6** software bill of materials for a

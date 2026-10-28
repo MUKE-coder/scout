@@ -67,6 +67,8 @@ Run a scan and print the report.
 | `--sarif <file>` | — | Also write SARIF 2.1.0 to this file |
 | `--export <formats>` | — | Also write `scout-report.<ext>` here: any of `md,html,txt,json` |
 | `--check-timeout <dur>` | `60s` | Max time per check (e.g. `120s`); raise it for slow targets |
+| `--templates <dir>` | — | Directory of extra YAML [detection templates](/usage/templates/) (also `SCOUT_TEMPLATES`) |
+| `--sbom <file>` | — | Also write a CycloneDX SBOM (with KEV/EPSS) of `--repo` to this file |
 | `--serve` | `false` | After the scan, open the dashboard (runs until Ctrl+C) |
 | `--serve-addr <addr>` | `:9090` | Address for the `--serve` dashboard |
 

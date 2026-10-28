@@ -37,6 +37,7 @@ import (
 	_ "github.com/MUKE-coder/scout/collectors/ports"
 	_ "github.com/MUKE-coder/scout/collectors/sca"
 	_ "github.com/MUKE-coder/scout/collectors/secrets"
+	_ "github.com/MUKE-coder/scout/collectors/templates"
 	_ "github.com/MUKE-coder/scout/collectors/tls"
 	_ "github.com/MUKE-coder/scout/collectors/vulncheck"
 )

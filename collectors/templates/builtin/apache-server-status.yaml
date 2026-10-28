@@ -1,0 +1,33 @@
+id: apache-server-status
+
+info:
+  name: Apache mod_status (/server-status) is publicly exposed
+  severity: medium
+  description: |
+    Apache's mod_status page is reachable without authentication. It discloses
+    active requests, client IPs, requested URLs, and server internals that help
+    an attacker map and target the application.
+  remediation: |
+    Restrict /server-status to localhost or trusted IPs (Require local), or
+    disable mod_status in production.
+  reference:
+    - https://httpd.apache.org/docs/current/mod/mod_status.html
+  classification:
+    cwe-id: CWE-200
+    owasp: A05:2021
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/server-status"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "Apache Server Status"
+          - "Scoreboard"
+        condition: and

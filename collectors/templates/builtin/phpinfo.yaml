@@ -1,0 +1,36 @@
+id: phpinfo-exposure
+
+info:
+  name: phpinfo() page is publicly exposed
+  severity: medium
+  description: |
+    A phpinfo() page is reachable. It leaks the PHP version, loaded modules,
+    absolute paths, environment variables and configuration — a detailed map for
+    an attacker, and sometimes secrets passed through the environment.
+  remediation: |
+    Remove phpinfo pages from any deployed environment; they are a development
+    convenience and should never be reachable in staging or production.
+  reference:
+    - https://www.php.net/manual/en/function.phpinfo.php
+  classification:
+    cwe-id: CWE-200
+    owasp: A05:2021
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/phpinfo.php"
+      - "{{BaseURL}}/info.php"
+      - "{{BaseURL}}/php_info.php"
+      - "{{BaseURL}}/test.php"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "PHP Version"
+          - "<title>phpinfo()"
+        condition: or

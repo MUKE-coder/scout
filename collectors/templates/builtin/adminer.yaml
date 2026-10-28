@@ -1,0 +1,35 @@
+id: adminer-panel
+
+info:
+  name: Adminer database panel is publicly exposed
+  severity: high
+  description: |
+    An Adminer database-management panel is reachable. Left public, it is a login
+    surface onto the database and a frequent target for credential brute-forcing
+    and SSRF via its "server" field.
+  remediation: |
+    Remove Adminer from production, or put it behind authentication and an IP
+    allowlist. Never ship adminer.php to a public host.
+  reference:
+    - https://www.adminer.org/
+  classification:
+    cwe-id: CWE-284
+    owasp: A05:2021
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/adminer.php"
+      - "{{BaseURL}}/adminer/"
+      - "{{BaseURL}}/db/adminer.php"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "Adminer"
+          - "Login"
+        condition: and

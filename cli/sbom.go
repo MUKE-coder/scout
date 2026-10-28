@@ -136,6 +136,34 @@ func newSBOMCmd() *cobra.Command {
 	return cmd
 }
 
+// writeSBOM builds a vulnerability-enriched SBOM of repoPath and writes it to
+// out. Used by `scout scan --sbom`; degrades gracefully when offline.
+func writeSBOM(cmd *cobra.Command, repoPath, out string) error {
+	if repoPath == "" {
+		return fmt.Errorf("--sbom needs --repo")
+	}
+	pkgs := sca.Inventory(repoPath)
+	if len(pkgs) == 0 {
+		fmt.Fprintf(cmd.ErrOrStderr(), "note: --sbom: no dependencies found under %q; skipping SBOM\n", repoPath)
+		return nil
+	}
+	doc := buildSBOM(repoPath, pkgs)
+	if err := addVulns(cmd.Context(), &doc, pkgs); err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "note: --sbom: vulnerability data unavailable (%v); emitting components only\n", err)
+	}
+	b, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		return err
+	}
+	b = append(b, '\n')
+	if err := os.WriteFile(out, b, 0o600); err != nil {
+		return err
+	}
+	fmt.Fprintf(cmd.ErrOrStderr(), "Wrote CycloneDX SBOM (%d components, %d with vulnerabilities) to %s\n",
+		len(doc.Components), len(doc.Vulnerabilities), out)
+	return nil
+}
+
 func buildSBOM(repoPath string, pkgs []intel.Package) cdxDoc {
 	name := filepath.Base(absOrSelf(repoPath))
 	if name == "." || name == "" || name == string(filepath.Separator) {
