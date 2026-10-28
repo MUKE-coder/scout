@@ -13,6 +13,55 @@ as a single graded scan.
 scout scan --network 192.168.1.0/24
 ```
 
+## Step 1 — find your network range
+
+You need the CIDR of the network you are on. Find your own IP address and subnet
+mask, then combine them into a range.
+
+**Windows** (PowerShell or Command Prompt):
+
+```powershell
+ipconfig
+```
+
+Look under your active adapter (Wi-Fi or Ethernet) for **IPv4 Address** and
+**Subnet Mask**, e.g. `192.168.1.37` with `255.255.255.0`.
+
+**macOS:**
+
+```bash
+ipconfig getifaddr en0          # your IP (en0 = Wi-Fi, en1/en5 = Ethernet)
+ifconfig en0 | grep netmask     # the mask, shown in hex (0xffffff00)
+```
+
+**Linux:**
+
+```bash
+ip -br addr        # shows the address with its prefix directly, e.g. 192.168.1.37/24
+```
+
+`ip addr` is easiest: it prints the prefix (`/24`) for you.
+
+## Step 2 — turn it into a CIDR
+
+Replace the last part of your IP with `0` and add the prefix for your mask:
+
+| Subnet mask | Prefix | Your IP | Scan this range |
+|---|---|---|---|
+| `255.255.255.0` | `/24` | `192.168.1.37` | `192.168.1.0/24` (254 hosts — a typical home/office LAN) |
+| `255.255.0.0` | `/16` | `10.0.5.9` | `10.0.0.0/16` (large; the maximum Scout allows) |
+| `255.255.255.128` | `/25` | `192.168.1.200` | `192.168.1.128/25` |
+
+Most home and small-office networks are a `/24` — if your IP is `192.168.1.37`,
+the range is **`192.168.1.0/24`**. On Linux, `ip -br addr` already shows the
+prefix, so `192.168.1.37/24` means you scan `192.168.1.0/24`.
+
+## Step 3 — run the scan
+
+```bash
+scout scan --network 192.168.1.0/24
+```
+
 Repeat it for several ranges, and combine it with ordinary targets:
 
 ```bash
