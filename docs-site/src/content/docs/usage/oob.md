@@ -52,3 +52,12 @@ A confirmed finding names the parameter and the source of the callback:
 This complements the reflected SSRF check (`app.ssrf`), which confirms SSRF
 against the cloud metadata service when its response is reflected back. Together
 they cover both the visible and the blind case.
+
+## Blind command injection
+
+The same listener confirms **blind OS command injection** (`app.blind-cmd-injection`,
+active mode). Scout injects a benign command that fetches the listener
+(`curl`/`wget` to a tokenized URL) behind shell metacharacters; if the server
+runs it, the callback confirms execution — the case `app.cmd-injection` (which
+needs the command's output reflected) cannot see. The injected command only
+GETs Scout's own listener; it performs no destructive action.

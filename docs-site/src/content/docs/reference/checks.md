@@ -77,7 +77,8 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `app.open-redirect` | active | Open redirect |
 | `app.reflected-xss` | active | Reflected XSS |
 | `app.sqli` | active | SQL injection |
-| `app.cmd-injection` | active | OS command injection |
+| `app.cmd-injection` | active | OS command injection (output reflected) |
+| `app.blind-cmd-injection` | active | Blind OS command injection, confirmed [out-of-band](/usage/oob/) |
 | `app.ssrf` | active | Reflected SSRF (cloud-metadata response reflected back) |
 | `app.blind-ssrf` | active | Blind SSRF, confirmed [out-of-band](/usage/oob/) via Scout's own OAST listener |
 | `app.path-traversal` | active | Path traversal |
@@ -115,6 +116,7 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `code.secret-logging` | Secrets written to logs |
 | `code.unpinned-deps` | Loose dependency version ranges |
 | `code.vulnerable-deps` | Known-vulnerable deps (OSV), enriched with CISA KEV + FIRST EPSS |
+| `code.obfuscation` | Supply-chain tamper: config/CI fetching & running remote code, or obfuscated payloads (`eval(atob(…))`, `curl \| sh`) |
 | `code.go-vulncheck` | Reachable Go CVEs (via `govulncheck`) |
 
 ## Configuration (passive)

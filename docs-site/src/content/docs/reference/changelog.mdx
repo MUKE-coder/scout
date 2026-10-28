@@ -5,6 +5,18 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.14
+
+- **Blind command injection** (`app.blind-cmd-injection`): built on the OAST
+  listener — Scout injects a benign `curl`/`wget` to its own listener behind shell
+  metacharacters and confirms command injection when the callback arrives, even
+  when the command's output never shows in the response. Detection only.
+- **Supply-chain tamper detection** (`code.obfuscation`): flags the patterns a
+  compromised repo shows — install/CI scripts that fetch and run remote code
+  (`curl … | sh`, `eval "$(curl …)"`) and obfuscated payloads (`eval(atob(…))`,
+  `Function(Buffer.from(…))`, long `String.fromCharCode` chains, dense `\x` hex
+  strings). Honours suppression comments; skips legitimate base64 assets.
+
 ## v0.4.13
 
 - **Out-of-band testing (OAST)** — `app.blind-ssrf`: Scout now confirms **blind**

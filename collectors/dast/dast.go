@@ -43,7 +43,7 @@ func init() {
 // scaffold probes (registered, but no-ops until their logic is written).
 func Checks() []core.Check {
 	impl := []core.Check{
-		SQLi{}, CommandInjection{}, SSRF{}, BlindSSRF{}, PathTraversal{}, OpenRedirect{}, ReflectedXSS{},
+		SQLi{}, CommandInjection{}, BlindCommandInjection{}, SSRF{}, BlindSSRF{}, PathTraversal{}, OpenRedirect{}, ReflectedXSS{},
 	}
 	return append(impl, scaffoldChecks()...)
 }
