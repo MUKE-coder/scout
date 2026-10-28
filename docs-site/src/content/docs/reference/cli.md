@@ -38,6 +38,18 @@ scout lab --dir ./demo     # clone somewhere else
 scout lab --mode safe      # scan mode for the source scan
 ```
 
+## `scout sbom`
+
+Generate a CycloneDX 1.6 SBOM of a repo's dependencies, with each component's
+known vulnerabilities (CISA KEV + FIRST EPSS) embedded. See
+[Generate an SBOM](/usage/sbom/).
+
+```bash
+scout sbom --repo .                 # print to stdout
+scout sbom --repo . -o sbom.cdx.json
+scout sbom --repo . --no-vulns      # components only (no network)
+```
+
 ## `scout scan`
 
 Run a scan and print the report.

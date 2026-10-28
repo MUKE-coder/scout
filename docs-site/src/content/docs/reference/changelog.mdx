@@ -5,6 +5,15 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.11
+
+- **`scout sbom`**: generate a **CycloneDX 1.6** software bill of materials for a
+  repo, across every supported ecosystem. Scout embeds each component's known
+  vulnerabilities — enriched with CISA KEV and FIRST EPSS as CycloneDX properties
+  — so the SBOM carries its own exploitation triage, not just a component list.
+  `--no-vulns` emits components only; `-o` writes to a file. See
+  [Generate an SBOM](/usage/sbom/).
+
 ## v0.4.10
 
 - **`code.secrets` skips test fixtures** (issue #7): a weak-pattern secret in a

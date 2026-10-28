@@ -202,6 +202,11 @@ func severity(label string) (core.Severity, core.Confidence) {
 	}
 }
 
+// Inventory walks a repo for known dependency manifests/lockfiles across every
+// supported ecosystem and returns the deduped packages. Exported so the SBOM
+// generator can reuse the same inventory the vulnerable-deps check scans.
+func Inventory(root string) []intel.Package { return inventory(repo.Base(root)) }
+
 // inventory walks the repo for known manifests and returns the deduped packages.
 func inventory(root string) []intel.Package {
 	var pkgs []intel.Package
