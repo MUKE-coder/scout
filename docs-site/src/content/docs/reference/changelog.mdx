@@ -5,6 +5,17 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.13
+
+- **Out-of-band testing (OAST)** — `app.blind-ssrf`: Scout now confirms **blind**
+  vulnerabilities by observing the target call back. It starts its own OAST
+  listener, injects a unique callback URL into candidate parameters, and reports a
+  confirmed blind SSRF when the server fetches it — the case the reflected SSRF
+  check can't see. The listener is Scout's own (no third-party interaction
+  service); it works out of the box for local targets, and takes `SCOUT_OOB_ADDR`
+  for a remote, reachable listener. Detection only — Scout observes, never
+  exploits. See [Out-of-band testing](/usage/oob/).
+
 ## v0.4.12
 
 - **Detection templates** (`app.template`): Scout now runs declarative YAML

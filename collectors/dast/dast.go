@@ -43,7 +43,7 @@ func init() {
 // scaffold probes (registered, but no-ops until their logic is written).
 func Checks() []core.Check {
 	impl := []core.Check{
-		SQLi{}, CommandInjection{}, SSRF{}, PathTraversal{}, OpenRedirect{}, ReflectedXSS{},
+		SQLi{}, CommandInjection{}, SSRF{}, BlindSSRF{}, PathTraversal{}, OpenRedirect{}, ReflectedXSS{},
 	}
 	return append(impl, scaffoldChecks()...)
 }
@@ -257,13 +257,12 @@ func (c SSRF) Run(ctx context.Context, t core.Target) ([]core.Finding, error) {
 	if err != nil || res == nil {
 		return nil, err
 	}
-	// Scout has no out-of-band listener yet, so blind SSRF (where the fetched
-	// content never returns to us) cannot be confirmed here. We confirm only
-	// REFLECTED SSRF against the cloud metadata service: if pointing a URL
-	// parameter at the metadata endpoint makes its unmistakable response come
-	// back in the body, the server fetched it on our behalf. This yields no
-	// false positives and never reaches a third party. Blind SSRF is left for
-	// the OAST-backed probe (tracked in the collector's docs).
+	// This check confirms only REFLECTED SSRF against the cloud metadata service:
+	// if pointing a URL parameter at the metadata endpoint makes its unmistakable
+	// response come back in the body, the server fetched it on our behalf. This
+	// yields no false positives and never reaches a third party. The *blind* case
+	// (where the fetched content never returns to us) is confirmed out-of-band by
+	// the app.blind-ssrf check via Scout's own OAST listener (see blind_ssrf.go).
 	probes := []struct {
 		value     string
 		signature string

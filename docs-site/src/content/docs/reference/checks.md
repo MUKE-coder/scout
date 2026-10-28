@@ -78,7 +78,8 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `app.reflected-xss` | active | Reflected XSS |
 | `app.sqli` | active | SQL injection |
 | `app.cmd-injection` | active | OS command injection |
-| `app.ssrf` | active | Reflected SSRF |
+| `app.ssrf` | active | Reflected SSRF (cloud-metadata response reflected back) |
+| `app.blind-ssrf` | active | Blind SSRF, confirmed [out-of-band](/usage/oob/) via Scout's own OAST listener |
 | `app.path-traversal` | active | Path traversal |
 | `app.ssti` | active | Template injection *(scaffold)* |
 | `app.xxe` | active | XML external entity *(scaffold)* |
