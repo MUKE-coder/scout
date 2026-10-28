@@ -25,6 +25,7 @@ type scanFlags struct {
 	targets         []string
 	repo            string
 	repoDisplayName string // set when --repo is a remote URL we cloned
+	network         []string
 	mode            string
 	env             string
 	db              string
@@ -43,6 +44,7 @@ type scanFlags struct {
 func (f *scanFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVarP(&f.targets, "target", "t", nil, "target URL (repeatable)")
 	cmd.Flags().StringVar(&f.repo, "repo", "", "repo to scan: a local path, or a git URL to clone (e.g. https://github.com/owner/repo)")
+	cmd.Flags().StringSliceVar(&f.network, "network", nil, "CIDR range to sweep for exposed services, e.g. 192.168.1.0/24 (repeatable; only scan networks you are authorized to test)")
 	cmd.Flags().StringVarP(&f.mode, "mode", "m", "safe", "scan mode: passive, safe, active, intrusive")
 	cmd.Flags().StringVarP(&f.env, "env", "e", "dev", "environment: dev, staging, prod (caps the mode)")
 	cmd.Flags().StringVar(&f.db, "db", "scout.db", `SQLite file for scan history ("" keeps nothing)`)
@@ -109,6 +111,9 @@ func (f *scanFlags) config(cmd *cobra.Command) (scout.Config, error) {
 			name = f.repoDisplayName // a cloned remote keeps its owner/repo name
 		}
 		cfg.Targets = append(cfg.Targets, core.Target{Name: name, Repo: f.repo, Environment: cfg.Environment})
+	}
+	for _, cidr := range f.network {
+		cfg.Targets = append(cfg.Targets, core.Target{Name: cidr, Network: cidr, Environment: cfg.Environment})
 	}
 	if changed("allow-active") {
 		for i := range cfg.Targets {
@@ -243,7 +248,11 @@ func runScan(cmd *cobra.Command, f scanFlags, cfg scout.Config) ([]report.Result
 		if prog != nil {
 			prog.setTarget(t.Name)
 		}
-		res, err := eng.Run(cmd.Context(), engine.Request{Target: t, Mode: cfg.Mode})
+		req := engine.Request{Target: t, Mode: cfg.Mode}
+		if t.Network != "" {
+			req.Checks = []string{"network.sweep"} // a CIDR target runs only the sweep
+		}
+		res, err := eng.Run(cmd.Context(), req)
 		if err != nil {
 			return nil, err
 		}

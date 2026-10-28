@@ -40,6 +40,8 @@ type Target struct {
 	URL string `json:"url,omitempty" yaml:"url"`
 	// Repo is a local path for code and supply-chain collectors.
 	Repo string `json:"repo,omitempty" yaml:"repo"`
+	// Network is a CIDR range ("192.168.1.0/24") for the host/service sweep.
+	Network string `json:"network,omitempty" yaml:"network"`
 
 	Environment Environment `json:"environment" yaml:"environment"`
 	// AllowActive is the explicit per-target opt-in required for Active
@@ -99,8 +101,13 @@ func (t Target) IsLocal() bool {
 
 // Validate checks that the target names something scannable.
 func (t Target) Validate() error {
-	if t.URL == "" && t.Repo == "" {
-		return fmt.Errorf("target %q: needs a URL or a repo", t.Name)
+	if t.URL == "" && t.Repo == "" && t.Network == "" {
+		return fmt.Errorf("target %q: needs a URL, a repo or a network", t.Name)
+	}
+	if t.Network != "" {
+		if _, _, err := net.ParseCIDR(t.Network); err != nil {
+			return fmt.Errorf("target %q: %q is not a CIDR range", t.Name, t.Network)
+		}
 	}
 	if t.URL != "" {
 		u, err := url.Parse(t.URL)

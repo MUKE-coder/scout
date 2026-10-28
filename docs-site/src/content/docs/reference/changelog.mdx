@@ -5,6 +5,16 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.15
+
+- **Network sweep** (`network.sweep`, `scout scan --network <cidr>`): scan a whole
+  subnet for exposed back-end services — databases, Redis, Docker APIs,
+  Elasticsearch, SSH — not just a single host. Scout expands the CIDR, connect-scans
+  each host (TCP connect only, no payloads), and reports every open service as one
+  graded scan under a target named after the range. IPv4 up to /16; network and
+  broadcast addresses skipped. **Only scan networks you are authorized to test.**
+  See [Scan a network](/usage/network/).
+
 ## v0.4.14
 
 - **Blind command injection** (`app.blind-cmd-injection`): built on the OAST

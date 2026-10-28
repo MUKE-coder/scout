@@ -33,6 +33,7 @@ import (
 	_ "github.com/MUKE-coder/scout/collectors/framework"
 	_ "github.com/MUKE-coder/scout/collectors/headers"
 	_ "github.com/MUKE-coder/scout/collectors/infodisc"
+	_ "github.com/MUKE-coder/scout/collectors/netsweep"
 	_ "github.com/MUKE-coder/scout/collectors/phpruntime"
 	_ "github.com/MUKE-coder/scout/collectors/ports"
 	_ "github.com/MUKE-coder/scout/collectors/sca"

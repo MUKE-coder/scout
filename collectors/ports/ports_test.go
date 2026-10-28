@@ -32,7 +32,7 @@ func listener(t *testing.T) int {
 func TestExposedServiceDetected(t *testing.T) {
 	open := listener(t)
 	closed := freePort(t) // nothing listening here
-	ctx := WithServices(context.Background(), map[int]service{
+	ctx := WithServices(context.Background(), map[int]ServiceInfo{
 		open:   {"Redis", core.SeverityHigh, "no auth"},
 		closed: {"MongoDB", core.SeverityHigh, "no auth"},
 	})
@@ -60,7 +60,7 @@ func TestNoHostNoScan(t *testing.T) {
 }
 
 func TestAllClosed(t *testing.T) {
-	ctx := WithServices(context.Background(), map[int]service{freePort(t): {"Redis", core.SeverityHigh, "x"}})
+	ctx := WithServices(context.Background(), map[int]ServiceInfo{freePort(t): {"Redis", core.SeverityHigh, "x"}})
 	got, _ := ExposedServices{}.Run(ctx, core.Target{URL: "http://127.0.0.1", Environment: core.EnvDev})
 	if len(got) != 0 {
 		t.Fatalf("closed port should yield no finding: %+v", got)

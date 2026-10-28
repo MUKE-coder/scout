@@ -57,7 +57,8 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 
 | Check | Detects |
 |---|---|
-| `network.exposed-services` | Unexpected open ports / services |
+| `network.exposed-services` | Unexpected open ports / services on the target host |
+| `network.sweep` | Risky services across a whole CIDR range ([`--network`](/usage/network/)) |
 
 ## Application (safe & active)
 
