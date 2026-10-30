@@ -50,6 +50,17 @@ scout sbom --repo . -o sbom.cdx.json
 scout sbom --repo . --no-vulns      # components only (no network)
 ```
 
+## `scout update`
+
+Update Scout to the latest [release](https://github.com/MUKE-coder/scout/releases).
+Scout also self-updates automatically (once a day, on your next run); see
+[Updating Scout](/start/updating/).
+
+```bash
+scout update          # check and install the latest
+scout update --check  # only report whether one is available
+```
+
 ## `scout scan`
 
 Run a scan and print the report.

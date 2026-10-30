@@ -5,6 +5,16 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.16
+
+- **Self-update** (`scout update`): Scout now keeps itself current. On a normal
+  command it checks GitHub at most once a day and, when a newer release is out,
+  downloads it, replaces its own binary and relaunches your command on the new
+  version — so you are on the latest the next time you run it after a release.
+  Run `scout update` to upgrade on demand (`--check` to only look). Skipped in CI,
+  for `serve`/`ci`, for dev builds, and when `SCOUT_NO_UPDATE=1`. See
+  [Updating Scout](/start/updating/).
+
 ## v0.4.15
 
 - **Network sweep** (`network.sweep`, `scout scan --network <cidr>`): scan a whole

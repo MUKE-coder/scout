@@ -21,13 +21,16 @@ func NewRootCmd() *cobra.Command {
 		Long:          "Scout is a self-hosted vulnerability scanner and attack-surface mapper for developers.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		// Before any command, check at most once a day for a newer release and
+		// self-update (unless disabled). Never blocks or fails the command.
+		PersistentPreRun: func(cmd *cobra.Command, _ []string) { maybeAutoUpdate(cmd) },
 	}
 	root.PersistentFlags().String("log-level", "info", "log level: debug, info, warn, error")
 	root.PersistentFlags().String("log-format", "text", "log format: text or json")
 	root.PersistentFlags().String("config", "", "path to scout.yaml")
 	root.PersistentFlags().String("color", "auto", "color output: auto, always, never")
 
-	root.AddCommand(newInitCmd(), newScanCmd(), newServeCmd(), newCICmd(), newLabCmd(), newSBOMCmd(), newDiffCmd(), newOwnershipCmd(), newPruneCmd(), newReportCmd(), newVersionCmd())
+	root.AddCommand(newInitCmd(), newScanCmd(), newServeCmd(), newCICmd(), newLabCmd(), newSBOMCmd(), newDiffCmd(), newOwnershipCmd(), newPruneCmd(), newReportCmd(), newUpdateCmd(), newVersionCmd())
 	return root
 }
 
