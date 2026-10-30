@@ -5,6 +5,16 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.17
+
+- **AI / LLM application security** (`code.llm-security`): a new check for insecure
+  LLM and agent constructs (OWASP Top 10 for LLM apps) — LangChain/LlamaIndex
+  `allow_dangerous_*` flags, Python/shell REPL tools, eval-based chains
+  (`LLMMathChain`, `PALChain`), dataframe/SQL agents, and LLM output passed into
+  `eval`/`exec` (insecure output handling). Covers Python, JS/TS and notebooks.
+  The secrets scanner also now recognises OpenAI, Anthropic, Hugging Face and
+  Replicate keys. See [AI / LLM application security](/usage/llm/).
+
 ## v0.4.16
 
 - **Self-update** (`scout update`): Scout now keeps itself current. On a normal

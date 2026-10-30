@@ -34,6 +34,10 @@ var rules = []rule{
 	{"slack-token", "Slack token", regexp.MustCompile(`\bxox[baprs]-[0-9A-Za-z-]{10,}\b`), core.SeverityHigh},
 	{"github-token", "GitHub token", regexp.MustCompile(`\bgh[pousr]_[0-9A-Za-z]{36,}\b`), core.SeverityHigh},
 	{"stripe-key", "Stripe secret key", regexp.MustCompile(`\bsk_live_[0-9A-Za-z]{16,}\b`), core.SeverityCritical},
+	{"anthropic-key", "Anthropic API key", regexp.MustCompile(`\bsk-ant-[0-9A-Za-z_\-]{20,}\b`), core.SeverityHigh},
+	{"openai-key", "OpenAI API key", regexp.MustCompile(`\bsk-(?:proj-)?[0-9A-Za-z]{20,}\b`), core.SeverityHigh},
+	{"huggingface-token", "Hugging Face token", regexp.MustCompile(`\bhf_[0-9A-Za-z]{30,}\b`), core.SeverityHigh},
+	{"replicate-token", "Replicate API token", regexp.MustCompile(`\br8_[0-9A-Za-z]{30,}\b`), core.SeverityHigh},
 	{"jwt", "Hard-coded JWT", regexp.MustCompile(`\beyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\b`), core.SeverityMedium},
 	{"generic-secret", "Hard-coded secret assignment", regexp.MustCompile(`(?i)(?:password|passwd|secret|api[_-]?key|access[_-]?token|private[_-]?key|client[_-]?secret)\s*(?::=|[:=])\s*["'][^"'\s]{8,}["']`), core.SeverityMedium},
 }
@@ -57,7 +61,7 @@ var envVarName = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 
 // strongRules are specific enough that a hit is a real secret even in a test
 // file or doc, so they keep their severity and the exposed-secret tag there.
-var strongRules = map[string]bool{"aws-access-key": true, "private-key": true, "google-api-key": true, "slack-token": true, "github-token": true, "stripe-key": true}
+var strongRules = map[string]bool{"aws-access-key": true, "private-key": true, "google-api-key": true, "slack-token": true, "github-token": true, "stripe-key": true, "anthropic-key": true, "openai-key": true, "huggingface-token": true, "replicate-token": true}
 
 // testOrDoc matches paths where a "secret" is probably a fixture or example.
 var testOrDoc = regexp.MustCompile(`(?i)(_test\.|\.test\.|\.spec\.|/__tests__/|/tests?/|/testdata/|/learning-guides/|/docs?/|\.md$|\.txt$)`)

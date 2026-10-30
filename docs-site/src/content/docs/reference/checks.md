@@ -118,6 +118,7 @@ a [mode](/start/modes/). This is the catalog as of the current release; run
 | `code.unpinned-deps` | Loose dependency version ranges |
 | `code.vulnerable-deps` | Known-vulnerable deps (OSV), enriched with CISA KEV + FIRST EPSS |
 | `code.obfuscation` | Supply-chain tamper: config/CI fetching & running remote code, or obfuscated payloads (`eval(atob(…))`, `curl \| sh`) |
+| `code.llm-security` | Insecure LLM/agent constructs ([OWASP LLM Top 10](/usage/llm/)): model-driven code/shell tools, eval-based chains, LLM output into an exec sink |
 | `code.go-vulncheck` | Reachable Go CVEs (via `govulncheck`) |
 
 ## Configuration (passive)

@@ -22,7 +22,7 @@ func init() {
 
 // Checks returns the static-analysis checks.
 func Checks() []core.Check {
-	return []core.Check{WeakCrypto{}, InsecureRandom{}, DangerousSink{}, SecretLogging{}, UnpinnedDeps{}, Obfuscation{}}
+	return []core.Check{WeakCrypto{}, InsecureRandom{}, DangerousSink{}, SecretLogging{}, UnpinnedDeps{}, Obfuscation{}, LLMSecurity{}}
 }
 
 // UnpinnedDeps flags npm dependencies declared with a loose version range.
