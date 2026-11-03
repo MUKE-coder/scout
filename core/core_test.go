@@ -120,3 +120,28 @@ func TestTarget(t *testing.T) {
 		t.Error("empty target should be rejected")
 	}
 }
+
+func TestNormalizeURL(t *testing.T) {
+	cases := map[string]string{
+		"tesla.com":           "https://tesla.com",
+		"tesla.com/path":      "https://tesla.com/path",
+		"example.com:8443":    "https://example.com:8443",
+		"https://already.com": "https://already.com",
+		"http://already.com":  "http://already.com",
+		"  spaced.com  ":      "https://spaced.com",
+		"localhost:3000":      "http://localhost:3000",
+		"127.0.0.1:8080":      "http://127.0.0.1:8080",
+		"192.168.1.5":         "http://192.168.1.5",
+		"app.localhost":       "http://app.localhost",
+		"":                    "",
+	}
+	for in, want := range cases {
+		if got := NormalizeURL(in); got != want {
+			t.Errorf("NormalizeURL(%q) = %q, want %q", in, got, want)
+		}
+	}
+	// The normalized bare host must then validate.
+	if err := (Target{Name: "t", URL: NormalizeURL("tesla.com"), Environment: EnvDev}).Validate(); err != nil {
+		t.Errorf("normalized bare host should validate: %v", err)
+	}
+}

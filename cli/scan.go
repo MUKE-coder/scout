@@ -98,6 +98,7 @@ func (f *scanFlags) config(cmd *cobra.Command) (scout.Config, error) {
 	if changed("target") {
 		cfg.Targets = nil
 		for _, u := range f.targets {
+			u = core.NormalizeURL(u)
 			t := core.Target{Name: u, URL: u, Environment: cfg.Environment}
 			if err := t.Validate(); err != nil {
 				return cfg, err

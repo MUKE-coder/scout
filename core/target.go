@@ -74,6 +74,33 @@ type StackComponent struct {
 }
 
 // Host returns the hostname of the target URL, or "" if there is none.
+// NormalizeURL adds a scheme to a bare host so "tesla.com" or "localhost:3000"
+// are accepted as targets. It defaults to https, but uses http for loopback and
+// private addresses, where TLS is usually not configured. A value that already
+// carries a scheme is returned unchanged (trimmed).
+func NormalizeURL(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" || strings.Contains(s, "://") {
+		return s
+	}
+	host := s
+	if i := strings.IndexAny(host, "/:"); i >= 0 {
+		host = host[:i]
+	}
+	if isLocalHostname(host) {
+		return "http://" + s
+	}
+	return "https://" + s
+}
+
+func isLocalHostname(h string) bool {
+	if h == "localhost" || strings.HasSuffix(h, ".localhost") {
+		return true
+	}
+	ip := net.ParseIP(h)
+	return ip != nil && (ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified())
+}
+
 func (t Target) Host() string {
 	if t.URL == "" {
 		return ""

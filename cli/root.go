@@ -57,7 +57,8 @@ func newOwnershipCmd() *cobra.Command {
 		Use:   "ownership",
 		Short: "Print the token that proves you own a target (required for active scans)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			t := core.Target{Name: target, URL: target, Environment: core.EnvProd}
+			url := core.NormalizeURL(target)
+			t := core.Target{Name: url, URL: url, Environment: core.EnvProd}
 			if err := t.Validate(); err != nil {
 				return err
 			}
