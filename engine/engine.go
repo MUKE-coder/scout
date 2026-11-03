@@ -16,6 +16,7 @@ import (
 
 	"github.com/MUKE-coder/scout/core"
 	"github.com/MUKE-coder/scout/intel/stack"
+	"github.com/MUKE-coder/scout/recon"
 	"github.com/MUKE-coder/scout/scoring"
 	"github.com/MUKE-coder/scout/selftest"
 	"github.com/MUKE-coder/scout/storage"
@@ -61,6 +62,9 @@ type Options struct {
 	Bus *Bus
 	// Scoring tunes the score; Assessed is filled from the checks that ran.
 	Scoring scoring.Options
+	// DisableRecon turns off passive reconnaissance (WHOIS/DNS/subdomains). It is
+	// on by default; tests set this to avoid real network lookups.
+	DisableRecon bool
 }
 
 // Engine runs scans. It is safe for concurrent use.
@@ -157,6 +161,15 @@ func (e *Engine) Run(ctx context.Context, req Request) (core.ScanResult, error) 
 	res.Findings, res.Errors = e.runChecks(ctx, res.ID, req.Target, run)
 	// Detect the technology stack from the repo and the fingerprint findings.
 	res.Target.Stack = stack.Detect(req.Target, res.Findings)
+	// Passive reconnaissance (WHOIS, DNS, subdomains) for a real domain target.
+	// Best-effort and bounded; skipped for repos, IPs and localhost.
+	if !e.opts.DisableRecon && !req.Ephemeral && req.Target.Host() != "" {
+		rctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		if r := recon.Gather(rctx, req.Target.Host()); r != nil {
+			res.Target.Recon = r
+		}
+		cancel()
+	}
 	res.FinishedAt = e.opts.Now()
 	e.finish(ctx, &res, categoriesOf(run), !req.Ephemeral)
 	return res, nil

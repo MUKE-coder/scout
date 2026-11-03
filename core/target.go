@@ -42,6 +42,9 @@ type Target struct {
 	Repo string `json:"repo,omitempty" yaml:"repo"`
 	// Network is a CIDR range ("192.168.1.0/24") for the host/service sweep.
 	Network string `json:"network,omitempty" yaml:"network"`
+	// Recon is the reconnaissance (WHOIS, DNS, subdomains) gathered for the
+	// target's domain during a scan. Set by the engine; not from YAML.
+	Recon *Recon `json:"recon,omitempty" yaml:"-"`
 
 	Environment Environment `json:"environment" yaml:"environment"`
 	// AllowActive is the explicit per-target opt-in required for Active
@@ -83,14 +86,28 @@ func NormalizeURL(s string) string {
 	if s == "" || strings.Contains(s, "://") {
 		return s
 	}
+	hadColon := strings.ContainsAny(firstSeg(s), ":")
 	host := s
 	if i := strings.IndexAny(host, "/:"); i >= 0 {
 		host = host[:i]
+	}
+	// Only prepend a scheme to something that actually looks like a host — a dot,
+	// a port, or localhost. Bare junk ("notaurl") is left for Validate to reject.
+	if !strings.Contains(host, ".") && host != "localhost" && !strings.HasSuffix(host, ".localhost") && !hadColon {
+		return s
 	}
 	if isLocalHostname(host) {
 		return "http://" + s
 	}
 	return "https://" + s
+}
+
+// firstSeg returns s up to the first "/", so a path can't be mistaken for a port.
+func firstSeg(s string) string {
+	if i := strings.IndexByte(s, '/'); i >= 0 {
+		return s[:i]
+	}
+	return s
 }
 
 func isLocalHostname(h string) bool {

@@ -5,6 +5,16 @@ description: What changed in each Scout release.
 
 Releases are tagged on [GitHub](https://github.com/MUKE-coder/scout/releases).
 
+## v0.4.19
+
+- **Reconnaissance** in every URL scan: Scout now gathers passive recon for the
+  target's domain — **WHOIS** (registrar, dates, name servers, status, contacts),
+  **DNS** records (A/AAAA/MX/NS/TXT/CNAME + reverse), and **subdomains** from
+  certificate transparency (crt.sh). Shown as a Reconnaissance section in the report
+  and a new **Recon** page in the dashboard. Passive (queries public services, not
+  the target), best-effort, and skipped for localhost/IPs/repos. See
+  [Reconnaissance](/usage/recon/).
+
 ## v0.4.18
 
 - **Bare hostnames just work**: `scout scan --target tesla.com` no longer errors —

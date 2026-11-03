@@ -12,6 +12,7 @@ const Live = lazy(() => import("./pages/Live").then((m) => ({ default: m.Live })
 const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
 const History = lazy(() => import("./pages/History").then((m) => ({ default: m.History })));
 const Surface = lazy(() => import("./pages/Surface").then((m) => ({ default: m.Surface })));
+const Recon = lazy(() => import("./pages/Recon").then((m) => ({ default: m.Recon })));
 const Stack = lazy(() => import("./pages/Stack").then((m) => ({ default: m.Stack })));
 const Compliance = lazy(() => import("./pages/Compliance").then((m) => ({ default: m.Compliance })));
 
@@ -26,6 +27,7 @@ export function App() {
           <Route path="findings" element={<Findings />} />
           <Route path="live" element={<Live />} />
           <Route path="surface" element={<Surface />} />
+          <Route path="recon" element={<Recon />} />
           <Route path="stack" element={<Stack />} />
           <Route path="compliance" element={<Compliance />} />
           <Route path="history" element={<History />} />

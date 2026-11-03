@@ -56,6 +56,7 @@ export default defineConfig({
           items: [
             { label: "Use Scout with Claude", slug: "usage/claude" },
             { label: "Scan a running app", slug: "usage/scan-app" },
+            { label: "Reconnaissance", slug: "usage/recon" },
             { label: "Scan a repo (source)", slug: "usage/scan-repo" },
             { label: "Scan a network (CIDR)", slug: "usage/network" },
             { label: "Active scanning", slug: "usage/active" },

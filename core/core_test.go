@@ -133,6 +133,7 @@ func TestNormalizeURL(t *testing.T) {
 		"127.0.0.1:8080":      "http://127.0.0.1:8080",
 		"192.168.1.5":         "http://192.168.1.5",
 		"app.localhost":       "http://app.localhost",
+		"notaurl":             "notaurl",
 		"":                    "",
 	}
 	for in, want := range cases {

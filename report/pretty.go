@@ -98,6 +98,10 @@ func Pretty(w io.Writer, r Result, opts PrettyOptions) error {
 	}
 	b.WriteString("\n")
 
+	if s.Target.Recon != nil {
+		writeRecon(&b, p, s.Target.Recon)
+	}
+
 	// Grade.
 	if r.Report.Grade == "" {
 		b.WriteString("Grade –  no checks ran, so nothing was assessed\n\n")
@@ -197,6 +201,69 @@ func Pretty(w io.Writer, r Result, opts PrettyOptions) error {
 	}
 	_, err := io.WriteString(w, b.String())
 	return err
+}
+
+// writeRecon renders the passive-reconnaissance section: WHOIS, DNS and the
+// subdomains discovered via certificate transparency.
+func writeRecon(b *strings.Builder, p painter, r *core.Recon) {
+	b.WriteString(p.paint(bold+accent, "Reconnaissance"))
+	if r.Domain != "" {
+		b.WriteString(p.paint(muted, "  "+r.Domain))
+	}
+	b.WriteString("\n")
+
+	row := func(label, val string) {
+		if val != "" {
+			fmt.Fprintf(b, "  %-11s %s\n", p.paint(muted, label), val)
+		}
+	}
+	if w := r.WHOIS; w != nil {
+		var parts []string
+		for _, kv := range []struct{ k, v string }{
+			{"registrar", w.Registrar}, {"org", w.Org}, {"created", w.Created}, {"expires", w.Expires},
+		} {
+			if kv.v != "" {
+				parts = append(parts, kv.k+" "+kv.v)
+			}
+		}
+		row("whois", strings.Join(parts, " · "))
+		row("nameservers", strings.Join(w.NameServers, ", "))
+		if len(w.Status) > 0 {
+			row("status", strings.Join(w.Status, ", "))
+		}
+		row("emails", strings.Join(w.Emails, ", "))
+	}
+	if d := r.DNS; d != nil {
+		var parts []string
+		for _, kv := range []struct {
+			k string
+			v []string
+		}{
+			{"A", d.A}, {"AAAA", d.AAAA}, {"MX", d.MX}, {"NS", d.NS},
+		} {
+			if len(kv.v) > 0 {
+				parts = append(parts, kv.k+" "+strings.Join(kv.v, ","))
+			}
+		}
+		if d.CNAME != "" {
+			parts = append(parts, "CNAME "+d.CNAME)
+		}
+		row("dns", strings.Join(parts, " · "))
+		row("txt", strings.Join(d.TXT, " | "))
+		row("reverse", strings.Join(d.PTR, ", "))
+	}
+	if n := len(r.Subdomains); n > 0 {
+		shown, extra := r.Subdomains, 0
+		if n > 12 {
+			shown, extra = r.Subdomains[:12], n-12
+		}
+		line := strings.Join(shown, ", ")
+		if extra > 0 {
+			line += fmt.Sprintf(" … (+%d more)", extra)
+		}
+		fmt.Fprintf(b, "  %-11s %s %s\n", p.paint(muted, "subdomains"), p.paint(accent, fmt.Sprintf("%d", n)), line)
+	}
+	b.WriteString("\n")
 }
 
 // stackLine renders the detected stack as "Next.js 16 · React · Go".

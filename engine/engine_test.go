@@ -33,6 +33,7 @@ func returns(titles ...string) func(context.Context, core.Target) ([]core.Findin
 
 func newEngine(t *testing.T, opts Options, checks ...core.Check) *Engine {
 	t.Helper()
+	opts.DisableRecon = true // tests must not make real WHOIS/DNS/crt.sh calls
 	reg := core.NewRegistry()
 	for _, c := range checks {
 		reg.MustRegister(c)

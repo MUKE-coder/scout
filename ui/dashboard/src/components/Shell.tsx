@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router";
 import { LiveProvider, useLive } from "../lib/live";
-import { Activity, Boxes, ChevronDown, FolderGit2, Globe, History, LayoutDashboard, ListChecks, LogOut, Moon, Network, Settings as SettingsIcon, ShieldCheck, Sun } from "lucide-react";
+import { Activity, Boxes, ChevronDown, FolderGit2, Globe, History, LayoutDashboard, ListChecks, LogOut, Moon, Network, Radar, Settings as SettingsIcon, ShieldCheck, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { setToken } from "../lib/api";
 import { useApi } from "../lib/useApi";
@@ -12,6 +12,7 @@ const nav = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/findings", label: "Findings", icon: ListChecks },
   { to: "/surface", label: "Attack surface", icon: Network },
+  { to: "/recon", label: "Recon", icon: Radar },
   { to: "/stack", label: "Stack & deps", icon: Boxes },
   { to: "/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/live", label: "Live scan", icon: Activity },

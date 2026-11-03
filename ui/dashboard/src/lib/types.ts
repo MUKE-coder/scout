@@ -16,14 +16,43 @@ export interface StackComponent {
   source?: string;
 }
 
+export interface Whois {
+  registrar?: string;
+  org?: string;
+  created?: string;
+  expires?: string;
+  name_servers?: string[];
+  emails?: string[];
+  status?: string[];
+}
+
+export interface Dns {
+  a?: string[];
+  aaaa?: string[];
+  mx?: string[];
+  ns?: string[];
+  txt?: string[];
+  cname?: string;
+  ptr?: string[];
+}
+
+export interface Recon {
+  domain?: string;
+  whois?: Whois;
+  dns?: Dns;
+  subdomains?: string[];
+}
+
 export interface Target {
   name: string;
   url?: string;
   repo?: string;
+  network?: string;
   environment: Environment;
   allow_active?: boolean;
   criticality?: number;
   stack?: StackComponent[];
+  recon?: Recon;
 }
 
 export interface Asset {
